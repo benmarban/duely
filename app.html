@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Dayflow - your whole day in one place: class, athletics, work, personal, and deadlines.">
-<meta name="theme-color" content="#2563EB">
+<meta name="theme-color" content="#0D9488">
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&display=swap" rel="stylesheet">
 <title>Dayflow — your student command center</title>
 <style>
   :root{
     --bg:#F3F6FC; --surface:#FFFFFF; --surface-2:#F1F5FB; --surface-3:#E6EDF8;
     --text:#152139; --text-dim:#586274; --text-faint:#8791A3;
     --line:#E5EAF3; --line-strong:#D3DBEA;
-    --accent:#2563EB; --accent-ink:#1E3A8A; --accent-soft:#DEE9FE;
+    --accent:#0D9488; --accent-ink:#0F766E; --accent-soft:#D6F2EE;
     --urgent:#D42B2B; --urgent-soft:#FBE1E1; --soon:#B7791F; --soon-soft:#FBEFD3;
     --ok:#2E9A50; --ok-soft:#DEF0E4;
     --canvas:#C2410C; --canvas-soft:#FBE6DA; --email:#5566A8; --email-soft:#E5E9F7;
@@ -25,13 +25,14 @@
     --shadow-lg:0 12px 40px -12px rgba(20,30,55,.28);
     --r:16px; --r-sm:11px;
     --font:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --font-display:"Schibsted Grotesk","Hanken Grotesk",-apple-system,system-ui,sans-serif;
   }
   @media (prefers-color-scheme:dark){
     :root{
       --bg:#0B1220; --surface:#121B2E; --surface-2:#0F1728; --surface-3:#1C2942;
       --text:#E8EDF7; --text-dim:#98A6C0; --text-faint:#657092;
       --line:#22304C; --line-strong:#2E3E5E;
-      --accent:#5B8DEF; --accent-ink:#93B4F7; --accent-soft:#17284A;
+      --accent:#2DD4BF; --accent-ink:#5EEAD4; --accent-soft:#123B36;
       --urgent:#F26D6D; --urgent-soft:#2E1717; --soon:#E4A93A; --soon-soft:#2C2410;
       --ok:#4FBE71; --ok-soft:#16281C;
       --canvas:#E0876B; --canvas-soft:#2C1E18; --email:#8C9AD6; --email-soft:#1A2138;
@@ -41,10 +42,10 @@
     }
   }
   :root[data-theme="light"]{
-    --bg:#F3F6FC;--surface:#FFFFFF;--surface-2:#F1F5FB;--surface-3:#E6EDF8;--text:#152139;--text-dim:#586274;--text-faint:#8791A3;--line:#E5EAF3;--line-strong:#D3DBEA;--accent:#2563EB;--accent-ink:#1E3A8A;--accent-soft:#DEE9FE;--urgent:#D42B2B;--urgent-soft:#FBE1E1;--soon:#B7791F;--soon-soft:#FBEFD3;--ok:#2E9A50;--ok-soft:#DEF0E4;--canvas:#C2410C;--canvas-soft:#FBE6DA;--email:#5566A8;--email-soft:#E5E9F7;--c-math:#7C5CFC;--c-engl:#E0568A;--c-biol:#17A673;--c-chem:#E08C1E;--c-hist:#0EA5C4;--shadow:0 1px 2px rgba(20,30,55,.05),0 6px 20px -10px rgba(20,30,55,.16);--shadow-lg:0 12px 40px -12px rgba(20,30,55,.28);
+    --bg:#F3F6FC;--surface:#FFFFFF;--surface-2:#F1F5FB;--surface-3:#E6EDF8;--text:#152139;--text-dim:#586274;--text-faint:#8791A3;--line:#E5EAF3;--line-strong:#D3DBEA;--accent:#0D9488;--accent-ink:#0F766E;--accent-soft:#D6F2EE;--urgent:#D42B2B;--urgent-soft:#FBE1E1;--soon:#B7791F;--soon-soft:#FBEFD3;--ok:#2E9A50;--ok-soft:#DEF0E4;--canvas:#C2410C;--canvas-soft:#FBE6DA;--email:#5566A8;--email-soft:#E5E9F7;--c-math:#7C5CFC;--c-engl:#E0568A;--c-biol:#17A673;--c-chem:#E08C1E;--c-hist:#0EA5C4;--shadow:0 1px 2px rgba(20,30,55,.05),0 6px 20px -10px rgba(20,30,55,.16);--shadow-lg:0 12px 40px -12px rgba(20,30,55,.28);
   }
   :root[data-theme="dark"]{
-    --bg:#0B1220;--surface:#121B2E;--surface-2:#0F1728;--surface-3:#1C2942;--text:#E8EDF7;--text-dim:#98A6C0;--text-faint:#657092;--line:#22304C;--line-strong:#2E3E5E;--accent:#5B8DEF;--accent-ink:#93B4F7;--accent-soft:#17284A;--urgent:#F26D6D;--urgent-soft:#2E1717;--soon:#E4A93A;--soon-soft:#2C2410;--ok:#4FBE71;--ok-soft:#16281C;--canvas:#E0876B;--canvas-soft:#2C1E18;--email:#8C9AD6;--email-soft:#1A2138;--c-math:#9B8AFF;--c-engl:#F080AB;--c-biol:#3FC98D;--c-chem:#E7B24E;--c-hist:#45BEDC;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.55);--shadow-lg:0 16px 50px -12px rgba(0,0,0,.7);
+    --bg:#0B1220;--surface:#121B2E;--surface-2:#0F1728;--surface-3:#1C2942;--text:#E8EDF7;--text-dim:#98A6C0;--text-faint:#657092;--line:#22304C;--line-strong:#2E3E5E;--accent:#2DD4BF;--accent-ink:#5EEAD4;--accent-soft:#123B36;--urgent:#F26D6D;--urgent-soft:#2E1717;--soon:#E4A93A;--soon-soft:#2C2410;--ok:#4FBE71;--ok-soft:#16281C;--canvas:#E0876B;--canvas-soft:#2C1E18;--email:#8C9AD6;--email-soft:#1A2138;--c-math:#9B8AFF;--c-engl:#F080AB;--c-biol:#3FC98D;--c-chem:#E7B24E;--c-hist:#45BEDC;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.55);--shadow-lg:0 16px 50px -12px rgba(0,0,0,.7);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.45}
@@ -88,6 +89,7 @@
   .cv-msg{font-size:12.5px;margin-top:11px;min-height:1.1em;color:var(--ok);line-height:1.4}
   .cv-msg.err{color:var(--urgent)}
   h1,h2,h3{letter-spacing:-.02em}
+  .brand h1,.pagehead .greet,.sec-head h2{font-family:var(--font-display);letter-spacing:-.03em}
 
   .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh;min-height:100dvh}
 
@@ -95,7 +97,7 @@
   .sidebar{position:sticky;top:0;height:100vh;height:100dvh;background:var(--surface);border-right:1px solid var(--line);
     display:flex;flex-direction:column;padding:20px 14px}
   .brand{display:flex;align-items:center;gap:9px;padding:4px 8px 20px}
-  .brand .logo{width:32px;height:32px;border-radius:9px;background:var(--accent);display:grid;place-items:center;flex-shrink:0}
+  .brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(140deg,var(--accent),#0EA5A5);display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 14px -4px var(--accent-soft)}
   .brand .logo svg{width:19px;height:19px;stroke:#fff;stroke-width:2.1;fill:none}
   .brand h1{font-size:19px;font-weight:700}
   .brand .dot{color:var(--accent)}
