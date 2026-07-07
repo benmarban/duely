@@ -775,13 +775,24 @@
     {label:'Group text',text:"hey can we do the group project meeting next Wednesday at 3pm? need to finish slides before the presentation on July 20."}
   ];
   function renderExamples(){document.getElementById('examples').innerHTML=EXAMPLES.map((e,i)=>`<button class="chip" data-ex="${i}">${e.label}</button>`).join('');}
-  function runDetect(){const text=document.getElementById('emailInput').value.trim();const box=document.getElementById('detected');
+  async function runDetect(){
+    const text=document.getElementById('emailInput').value.trim();const box=document.getElementById('detected');
     if(!text){box.innerHTML='<div class="empty" style="padding:24px"><p>Paste a message, then tap “Find dates.”</p></div>';return;}
-    const found=extract(text);
-    if(!found.length){box.innerHTML='<div class="empty" style="padding:24px"><div class="em">🔍</div><p>No dates found. Try wording like “July 17” or “next Friday at 3pm.”</p></div>';return;}
-    box.innerHTML='<div class="detected-lbl">Found '+found.length+' date'+(found.length>1?'s':'')+'</div>'+found.map((f,i)=>{const d=new Date(f.due);
-      return `<div class="found" data-fi="${i}"><div class="fb"><div class="ft">${esc(f.title)}</div><div class="fd">${DOWL[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()} · ${fmtTime(d)}</div></div><button class="fadd">Add</button></div>`;}).join('');
-    box._found=found;}
+    let found=null,usedAI=false;
+    if(sb){
+      box.innerHTML='<div class="empty" style="padding:24px"><p>Reading it with AI…</p></div>';
+      try{
+        const r=await sb.functions.invoke('email-extract',{body:{text:text,today:now.toString()}});
+        if(!r.error&&r.data&&Array.isArray(r.data.items)){usedAI=true;
+          found=r.data.items.map(function(x){return {title:x.title||'Event',due:x.due,cat:x.category||'school'};}).filter(function(x){return x.due&&!isNaN(new Date(x.due));});}
+      }catch(e){}
+    }
+    if(found===null){found=extract(text).map(function(x){return {title:x.title,due:x.due,cat:'school'};});}
+    if(!found.length){box.innerHTML='<div class="empty" style="padding:24px"><div class="em">🔍</div><p>No important dates found in that message.</p></div>';return;}
+    box.innerHTML='<div class="detected-lbl">Found '+found.length+' date'+(found.length>1?'s':'')+(usedAI?' <span style="color:var(--accent)">✦ AI</span>':'')+'</div>'+found.map(function(f,i){var d=new Date(f.due);
+      return '<div class="found" data-fi="'+i+'"><div class="fb"><div class="ft">'+esc(f.title)+'</div><div class="fd">'+DOWL[d.getDay()]+', '+MON[d.getMonth()]+' '+d.getDate()+' · '+fmtTime(d)+'</div></div><button class="fadd">Add</button></div>';}).join('');
+    box._found=found;
+  }
 
   // ---- nav / interactions ----
   const views=['dashboard','deadlines','calendar','grades','courses'];
@@ -807,7 +818,7 @@
     const ed=e.target.closest('.tl-edit');if(ed){const ev=USEREVENTS.find(x=>x.id===ed.dataset.uid);if(ev)openEditModal(ev);return;}
     const dl=e.target.closest('.tl-del');if(dl){USEREVENTS=USEREVENTS.filter(x=>x.id!==dl.dataset.uid);saveEvents();const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast('Event removed');return;}
     const fadd=e.target.closest('.fadd');if(fadd){const box=document.getElementById('detected');const fi=+fadd.closest('.found').dataset.fi;const f=box._found&&box._found[fi];if(!f)return;
-      items.push({id:'u'+Date.now()+fi,title:f.title,course:'from email',source:'email',due:f.due,done:false});save();updateBadge();
+      items.push({id:'u'+Date.now()+fi,title:f.title,course:'from email',source:'email',due:f.due,done:false,cat:(f.cat||'school')});save();updateBadge();
       fadd.closest('.found').classList.add('added');fadd.textContent='Added ✓';toast('Added to your deadlines');return;}
     if(e.target.closest('[data-add]'))openModal();
   });
