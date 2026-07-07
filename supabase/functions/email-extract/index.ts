@@ -68,7 +68,7 @@ Deno.serve(async (req: Request) => {
     };
 
     const url =
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" +
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" +
       encodeURIComponent(key);
 
     const r = await fetch(url, {
@@ -78,7 +78,7 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!r.ok) {
-      const detail = (await r.text()).slice(0, 300);
+      const detail = (await r.text()).slice(0, 1200);
       return json({ error: `Gemini error ${r.status}`, detail }, 502);
     }
 
