@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Duely dashboard - your deadlines, schedule, grades, and courses in one place.">
+<meta name="description" content="Duely dashboard - your whole day in one place: class, athletics, work, personal, and deadlines.">
 <meta name="theme-color" content="#2563EB">
 </head>
 <body>
@@ -47,6 +47,27 @@
   body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.45}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   ::selection{background:var(--accent-soft)}
+
+  /* Today timeline */
+  .tl-row{display:flex;gap:12px;padding:8px 2px}
+  .tl-row+.tl-row{border-top:1px solid var(--line)}
+  .tl-time{flex-shrink:0;width:64px;text-align:right;font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;color:var(--text-dim);padding-top:11px}
+  .tl-time .tl-end{display:block;font-size:11px;font-weight:500;color:var(--text-faint);margin-top:1px}
+  .tl-rail{flex-shrink:0;width:12px;display:flex;justify-content:center;padding-top:14px}
+  .tl-dot{width:11px;height:11px;border-radius:50%;box-shadow:0 0 0 3px var(--surface)}
+  .tl-card{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-left:3px solid var(--cc,var(--accent));border-radius:11px;padding:10px 13px}
+  .tl-row.ongoing .tl-card{background:var(--accent-soft);border-color:var(--cc);box-shadow:0 0 0 1px var(--cc)}
+  .tl-row.due .tl-card{background:transparent;border-style:dashed}
+  .tl-row.done .tl-title{text-decoration:line-through;color:var(--text-faint)}
+  .tl-top{display:flex;align-items:center;gap:8px}
+  .tl-title{font-size:14px;font-weight:600;line-height:1.3}
+  .tl-duetag{flex-shrink:0;font-size:10px;font-weight:700;color:var(--urgent);background:var(--urgent-soft);padding:1px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.03em}
+  .tl-meta{margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .cat-chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;color:var(--cc,var(--accent));background:color-mix(in srgb,var(--cc,var(--accent)) 15%,transparent);border:1px solid color-mix(in srgb,var(--cc,var(--accent)) 32%,transparent)}
+  .tl-loc{font-size:12px;color:var(--text-dim)}
+  .tl-live{font-size:10px;font-weight:700;color:#fff;background:var(--ok);padding:1px 7px;border-radius:999px}
+  .tl-now{display:flex;align-items:center;gap:9px;margin:6px 0 6px 76px;font-size:10.5px;font-weight:800;color:var(--urgent);letter-spacing:.08em}
+  .tl-now .ln{flex:1;height:2px;border-radius:2px;background:linear-gradient(to right,var(--urgent),transparent)}
   h1,h2,h3{letter-spacing:-.02em}
 
   .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh;min-height:100dvh}
@@ -270,9 +291,9 @@
       <h1>Duely<span class="dot">.</span></h1>
     </div>
     <nav class="nav" id="sidenav">
-      <button class="navitem active" data-view="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</button>
+      <button class="navitem active" data-view="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Today</button>
       <button class="navitem" data-view="deadlines"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Deadlines<span class="nbadge" id="ddBadge"></span></button>
-      <button class="navitem" data-view="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>Calendar</button>
+      <button class="navitem" data-view="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>Week</button>
       <button class="navitem" data-view="grades"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8"/></svg>Grades</button>
       <button class="navitem" data-view="courses"><svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2z"/><path d="M4 17.5A2 2 0 0 1 6 16h13"/></svg>Courses</button>
     </nav>
@@ -306,18 +327,14 @@
         <div class="grid">
           <div class="col">
             <div class="widget">
-              <div class="whead"><h3>Upcoming deadlines</h3><button class="wlink" data-goto="deadlines">See all →</button></div>
-              <div class="wbody" id="wUpcoming"></div>
-            </div>
-            <div class="widget">
-              <div class="whead"><h3>Recent grades</h3><button class="wlink" data-goto="grades">All grades →</button></div>
-              <div class="wbody" id="wGrades"></div>
+              <div class="whead"><h3>Your day</h3><span class="wlink" style="color:var(--text-faint);cursor:default" id="schedDate"></span></div>
+              <div class="wbody" id="wTimeline"></div>
             </div>
           </div>
           <div class="col">
             <div class="widget">
-              <div class="whead"><h3>Today's classes</h3><span class="wlink" style="color:var(--text-faint);cursor:default" id="schedDate"></span></div>
-              <div class="wbody sched" id="wSched"></div>
+              <div class="whead"><h3>Upcoming deadlines</h3><button class="wlink" data-goto="deadlines">See all →</button></div>
+              <div class="wbody" id="wUpcoming"></div>
             </div>
             <div class="widget">
               <div class="whead"><h3>Announcements</h3><span class="wlink" style="color:var(--text-faint);cursor:default">Canvas + Gmail</span></div>
@@ -345,9 +362,9 @@
     </div>
 
     <nav class="bottomnav" id="botnav">
-      <button class="bnav active" data-view="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Home</span></button>
+      <button class="bnav active" data-view="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg><span>Today</span></button>
       <button class="bnav" data-view="deadlines"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><span>Deadlines</span></button>
-      <button class="bnav" data-view="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>Calendar</span></button>
+      <button class="bnav" data-view="calendar"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg><span>Week</span></button>
       <button class="bnav" data-view="grades"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8"/></svg><span>Grades</span></button>
     </nav>
   </div>
@@ -427,6 +444,40 @@
     {src:'MATH 231',emo:'∑',text:'Problem Set 4 solutions posted after the deadline tonight.',time:'1d ago',unread:false}
   ];
 
+  // ---- categories, weekly schedule template & one-off events ----
+  const CATS={
+    school:{label:'Class',color:'var(--accent)'},
+    athletics:{label:'Athletics',color:'var(--c-engl)'},
+    work:{label:'Work',color:'var(--c-math)'},
+    personal:{label:'Personal',color:'var(--c-chem)'},
+    deadline:{label:'Due',color:'var(--urgent)'}
+  };
+  const WEEK={
+    0:[{c:'work',t:'Work shift',sh:12,sm:0,eh:17,em:0,loc:'Campus Store · 12–5pm'},{c:'personal',t:'Study block',sh:19,sm:0,eh:21,em:0,loc:'Library'}],
+    1:[{c:'athletics',t:'Morning lift',sh:7,sm:0,eh:8,em:0,loc:'Team weight room'},{c:'school',t:'MATH 231 · Lecture',sh:9,sm:0,eh:9,em:50,loc:'Warren Hall 210'},{c:'school',t:'BIOL 101 · Lecture',sh:11,sm:0,eh:12,em:15,loc:'Science Center 101'},{c:'athletics',t:'Film session',sh:12,sm:30,eh:13,em:15,loc:'Film room 204'},{c:'athletics',t:'Practice',sh:15,sm:30,eh:17,em:30,loc:'Main field'},{c:'work',t:'Work shift',sh:18,sm:0,eh:21,em:0,loc:'Campus Store · 6–9pm'}],
+    2:[{c:'school',t:'ENGL 210 · Seminar',sh:10,sm:0,eh:11,em:15,loc:'Humanities 305'},{c:'school',t:'CHEM 105 · Lecture',sh:13,sm:0,eh:14,em:15,loc:'Science Center 210'},{c:'athletics',t:'Practice',sh:16,sm:0,eh:18,em:0,loc:'Main field'}],
+    3:[{c:'athletics',t:'Morning lift',sh:7,sm:0,eh:8,em:0,loc:'Team weight room'},{c:'school',t:'MATH 231 · Lecture',sh:9,sm:0,eh:9,em:50,loc:'Warren Hall 210'},{c:'school',t:'BIOL 101 · Lecture',sh:11,sm:0,eh:12,em:15,loc:'Science Center 101'},{c:'athletics',t:'Practice',sh:15,sm:30,eh:17,em:30,loc:'Main field'},{c:'work',t:'Work shift',sh:18,sm:0,eh:21,em:0,loc:'Campus Store · 6–9pm'}],
+    4:[{c:'school',t:'ENGL 210 · Seminar',sh:10,sm:0,eh:11,em:15,loc:'Humanities 305'},{c:'school',t:'CHEM 105 · Lecture',sh:13,sm:0,eh:14,em:15,loc:'Science Center 210'},{c:'athletics',t:'Film session',sh:15,sm:0,eh:16,em:0,loc:'Film room 204'},{c:'athletics',t:'Practice',sh:16,sm:15,eh:18,em:15,loc:'Main field'}],
+    5:[{c:'school',t:'MATH 231 · Lecture',sh:9,sm:0,eh:9,em:50,loc:'Warren Hall 210'},{c:'school',t:'HIST 118 · Lecture',sh:13,sm:0,eh:14,em:15,loc:'Humanities 120'},{c:'athletics',t:'Practice',sh:15,sm:0,eh:17,em:0,loc:'Main field'}],
+    6:[{c:'athletics',t:'Game day',sh:13,sm:0,eh:16,em:0,loc:'Home stadium'},{c:'work',t:'Work shift',sh:18,sm:0,eh:22,em:0,loc:'Campus Store · 6–10pm'}]
+  };
+  const ONEOFFS=[
+    {off:0,c:'personal',t:'Advising appointment',sh:14,sm:0,eh:14,em:30,loc:'Sadler Center 210'},
+    {off:1,c:'personal',t:'Finance Society meeting',sh:19,sm:0,eh:20,em:0,loc:'Blow Hall 201'},
+    {off:2,c:'personal',t:'Dentist',sh:9,sm:0,eh:9,em:45,loc:'Downtown Dental'}
+  ];
+  function expandDay(off){
+    const wd=addDays(today0,off).getDay();
+    const evs=(WEEK[wd]||[]).slice().concat(ONEOFFS.filter(o=>o.off===off));
+    return evs.map(e=>{const s=addDays(today0,off);s.setHours(e.sh,e.sm,0,0);const en=addDays(today0,off);en.setHours(e.eh,e.em,0,0);
+      return {kind:'event',cat:e.c,title:e.t,loc:e.loc,start:s,end:en};});
+  }
+  function dayTimeline(off){
+    const evs=expandDay(off);
+    const dls=items.filter(it=>dayDiff(new Date(it.due))===off).map(it=>({kind:'due',cat:'deadline',title:it.title,loc:it.course,start:new Date(it.due),end:null,done:it.done}));
+    return evs.concat(dls).sort((a,b)=>(a.start-b.start)||(a.kind==='due'?1:-1));
+  }
+
   // ---- helpers ----
   function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
   function fmtTime(d){let h=d.getHours(),m=d.getMinutes();const ap=h<12?'am':'pm';h=h%12||12;return m?`${h}:${String(m).padStart(2,'0')}${ap}`:`${h}${ap}`;}
@@ -452,13 +503,39 @@
     const active=items.filter(i=>!i.done);
     const week=active.filter(i=>{const d=dayDiff(new Date(i.due));return d>=0&&d<7;}).length;
     const overdue=active.filter(i=>dayDiff(new Date(i.due))<0).length;
-    const unread=ANN.filter(a=>a.unread).length;
-    const gpa=3.72;
+    const tl=dayTimeline(0);
+    const upcoming=tl.filter(m=>(m.end||m.start)>=now && !(m.kind==='due'&&m.done));
+    const next=upcoming[0];
+    const nextTime=next?fmtTime(next.start):'✓';
+    const nextSub=next?next.title:'Done for today';
+    const todayCount=tl.filter(m=>!(m.kind==='due'&&m.done)).length;
     document.getElementById('stats').innerHTML=`
-      <div class="stat"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><rect x="3" y="4.5" width="18" height="16" rx="2.5" stroke-width="2"/><path d="M3 9h18" stroke-width="2"/></svg>Due this week</div><div class="sv">${week}</div><div class="sm">across ${new Set(active.map(i=>i.course)).size} sources</div></div>
-      <div class="stat ${overdue?'warn':''}"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="9" stroke-width="2"/><path d="M12 7v5l3 2" stroke-width="2"/></svg>Overdue</div><div class="sv">${overdue}</div><div class="sm">${overdue?'needs attention':'nothing late'}</div></div>
-      <div class="stat good"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8" stroke-width="2"/></svg>Term GPA</div><div class="sv">${gpa.toFixed(2)}</div><div class="sm">5 courses · 15 credits</div></div>
-      <div class="stat"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 5h16v12H8l-4 3z" stroke-width="2"/></svg>Unread</div><div class="sv">${unread}</div><div class="sm">announcements</div></div>`;
+      <div class="stat"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="9" stroke-width="2"/><path d="M12 7v5l3 2" stroke-width="2"/></svg>Up next</div><div class="sv" style="font-size:23px">${nextTime}</div><div class="sm">${esc(nextSub.slice(0,26))}</div></div>
+      <div class="stat"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 6h16M4 12h16M4 18h10" stroke-width="2"/></svg>On your plate today</div><div class="sv">${todayCount}</div><div class="sm">events &amp; deadlines</div></div>
+      <div class="stat ${overdue?'warn':''}"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M9 11l3 3L22 4" stroke-width="2"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke-width="2"/></svg>Due this week</div><div class="sv">${week}</div><div class="sm">${overdue?overdue+' overdue':'assignments'}</div></div>
+      <div class="stat good"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8" stroke-width="2"/></svg>Term GPA</div><div class="sv">3.72</div><div class="sm">5 courses · 15 credits</div></div>`;
+  }
+  const catOf=c=>CATS[c]||CATS.personal;
+  function tlRow(m){
+    const c=catOf(m.cat),isDue=m.kind==='due',ongoing=m.end&&now>=m.start&&now<=m.end;
+    return `<div class="tl-row ${ongoing?'ongoing':''} ${isDue?'due':''} ${m.done?'done':''}" style="--cc:${c.color}">
+      <div class="tl-time">${fmtTime(m.start)}${m.end?`<span class="tl-end">${fmtTime(m.end)}</span>`:''}</div>
+      <div class="tl-rail"><span class="tl-dot" style="background:${c.color}"></span></div>
+      <div class="tl-card">
+        <div class="tl-top"><span class="tl-title">${esc(m.title)}</span>${isDue?'<span class="tl-duetag">Due</span>':''}</div>
+        <div class="tl-meta"><span class="cat-chip">${c.label}</span>${m.loc?`<span class="tl-loc">${esc(m.loc)}</span>`:''}${ongoing?'<span class="tl-live">Now</span>':''}</div>
+      </div></div>`;
+  }
+  function rowsHTML(list,withNow){
+    let html='',placed=false;const nt=now.getTime();
+    list.forEach(m=>{if(withNow&&!placed&&m.start.getTime()>nt){html+='<div class="tl-now"><span class="ln"></span>Now</div>';placed=true;}html+=tlRow(m);});
+    if(withNow&&!placed)html+='<div class="tl-now"><span class="ln"></span>Now</div>';
+    return html;
+  }
+  function renderTimeline(){
+    document.getElementById('schedDate').textContent=`${DOW[now.getDay()]}, ${MON[now.getMonth()]} ${now.getDate()}`;
+    const list=dayTimeline(0);
+    document.getElementById('wTimeline').innerHTML=list.length?rowsHTML(list,true):'<div class="empty"><div class="em">🌤️</div><p>Nothing on your calendar today. Enjoy the breather.</p></div>';
   }
   function renderDashUpcoming(){
     const list=items.filter(i=>!i.done).sort((a,b)=>new Date(a.due)-new Date(b.due)).slice(0,5);
@@ -547,14 +624,15 @@
   let selDay=0;
   function renderCalendar(){
     let strip='';
-    for(let i=0;i<14;i++){const d=addDays(today0,i);const di=items.filter(it=>!it.done&&dayDiff(new Date(it.due))===i);
-      let pips='';for(let p=0;p<Math.min(di.length,3);p++)pips+=`<span class="pip ${i<=1?'u':''}"></span>`;
+    for(let i=0;i<14;i++){const d=addDays(today0,i);
+      const cnt=expandDay(i).length+items.filter(it=>!it.done&&dayDiff(new Date(it.due))===i).length;
+      let pips='';for(let p=0;p<Math.min(cnt,3);p++)pips+=`<span class="pip ${i<=1?'u':''}"></span>`;
       strip+=`<button class="cal-day ${i===selDay?'sel':''} ${i===0?'today':''}" data-day="${i}"><div class="wd">${i===0?'Today':DOW[d.getDay()]}</div><div class="dn">${d.getDate()}</div><div class="pips">${pips}</div></button>`;}
     document.getElementById('calStrip').innerHTML=strip;
     const d=addDays(today0,selDay);
     document.getElementById('calHead').textContent=`${DOWL[d.getDay()]}, ${MONL[d.getMonth()]} ${d.getDate()}`;
-    const list=items.filter(it=>dayDiff(new Date(it.due))===selDay).sort((a,b)=>new Date(a.due)-new Date(b.due));
-    document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:6px 14px 10px">'+list.map(drowHTML).join('')+'</div></div>':'<div class="empty"><div class="em">🌤️</div><p>Nothing scheduled for this day.</p></div>';
+    const list=dayTimeline(selDay);
+    document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:8px 14px 12px">'+rowsHTML(list,selDay===0)+'</div></div>':'<div class="empty"><div class="em">🌤️</div><p>Nothing scheduled for this day.</p></div>';
   }
 
   // ---- email extraction ----
@@ -605,7 +683,7 @@
 
   // ---- nav / interactions ----
   const views=['dashboard','deadlines','calendar','grades','courses'];
-  const renderers={dashboard:()=>{renderStats();renderDashUpcoming();renderSched();renderDashGrades();renderAnn();},deadlines:renderDeadlines,calendar:renderCalendar,grades:renderGradesView,courses:renderCourses};
+  const renderers={dashboard:()=>{renderStats();renderTimeline();renderDashUpcoming();renderAnn();},deadlines:renderDeadlines,calendar:renderCalendar,grades:renderGradesView,courses:renderCourses};
   function switchView(v){
     if(!views.includes(v))return;
     document.querySelectorAll('.view').forEach(s=>s.classList.toggle('active',s.id==='view-'+v));
