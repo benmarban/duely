@@ -3,230 +3,294 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Dayflow pulls your entire day - class, practice, film, work shifts, and deadlines - into one dashboard.">
-<meta name="theme-color" content="#0A1020">
-</head>
-<body>
+<meta name="description" content="Dayflow pulls your entire day - class, practice, film, work shifts, and deadlines - into one timeline, sorted by what's next.">
+<meta name="theme-color" content="#080D1A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&display=swap" rel="stylesheet">
-<title>Dayflow — your whole day, one place</title>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Dayflow — scroll through your whole day</title>
 <style>
-  /* Deliberately single-theme: a dark, editorial marketing page. */
+  /* ============================================================
+     Dayflow — "Scroll through a day"
+     A dark, editorial landing page structured as a literal
+     time axis. The sky shifts from dawn to night as you scroll.
+     Single-theme by design.
+     ============================================================ */
   :root{
-    --bg:#0A1020; --bg-2:#0C1526; --panel:#101B30; --card:#0F1A2E;
-    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.15);
-    --text:#EAF0FA; --text-dim:#93A3BD; --text-faint:#5F6E88;
-    --teal:#2DD4BF; --teal-2:#5EEAD4; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.35);
-    --blue:#2563EB; --blue-2:#4C86F0;
-    --violet:#7C5CFC; --rose:#E0568A; --amber:#E0A11E;
-    --r:16px;
+    /* Constant dark base — keeps text contrast safe at every scroll depth */
+    --bg:#080D1A; --bg-2:#0A1122; --panel:#0F1A30; --card:#0E1728; --card-2:#101d33;
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+    --text:#EDF2FB; --text-dim:#98A7C2; --text-faint:#61708C;
+
+    /* Category system — the language of the timeline */
+    --teal:#2DD4BF; --teal-2:#6BEAD9; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.34);
+    --rose:#F4699A; --rose-soft:rgba(244,105,154,.13); --rose-line:rgba(244,105,154,.4);
+    --violet:#9A7BFF; --violet-soft:rgba(154,123,255,.13); --violet-line:rgba(154,123,255,.4);
+    --amber:#F2B03C; --red:#F86A5B;
+    --blue:#5B92F5;
+
+    /* Sky — the two ambient glow colors, driven by scroll (JS). Dawn defaults. */
+    --sky-1:232,163,23;   /* warm amber */
+    --sky-2:244,105,154;  /* rose */
+    --sky-a1:.16; --sky-a2:.10;
+
+    --r:18px;
     --font:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
     --font-display:"Schibsted Grotesk","Hanken Grotesk",-apple-system,system-ui,sans-serif;
-    --maxw:1120px;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --maxw:1140px;
+    --rail:64px; /* left time-rail width reserved on large screens */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth;background:var(--bg)}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-  body{background:transparent;color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-  ::selection{background:var(--teal);color:#041018}
-  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;line-height:1.04;text-wrap:balance}
-  .logo{font-family:var(--font-display)}
+  img{max-width:100%;display:block}
+  ::selection{background:var(--teal);color:#04141a}
+  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;line-height:1.03;text-wrap:balance}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
-  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal-2)}
+  .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--teal-2)}
+  :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:3px;border-radius:6px}
 
-  /* Background scene (lecture hall) */
-  .bg-scene{position:fixed;inset:0;z-index:-1;pointer-events:none}
-  .bg-scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .bg-scene::after{content:"";position:absolute;inset:0;
-    background:radial-gradient(135% 100% at 50% 16%,transparent 40%,rgba(10,16,32,.55) 78%,var(--bg) 96%),
-               linear-gradient(to bottom,rgba(10,16,32,.5),transparent 22%,transparent 62%,var(--bg))}
+  /* ---- Sky: fixed ambient layer whose hue is set by scroll ---- */
+  .sky{position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background:
+      radial-gradient(120% 78% at 50% -12%, rgba(var(--sky-1),var(--sky-a1)) 0%, transparent 56%),
+      radial-gradient(90% 60% at 82% 8%, rgba(var(--sky-2),var(--sky-a2)) 0%, transparent 60%),
+      linear-gradient(to bottom, var(--bg-2), var(--bg) 40%);
+    transition:background .25s linear}
+  .stars{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  .stars canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 
-  /* Nav */
+  /* ---- Global scroll progress (thin, top) ---- */
+  .prog{position:fixed;top:0;left:0;right:0;height:2px;z-index:60;background:transparent}
+  .prog span{display:block;height:100%;width:var(--p,0%);
+    background:linear-gradient(90deg,var(--teal),var(--teal-2));box-shadow:0 0 12px var(--teal-line)}
+
+  /* ---- Nav ---- */
   .nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:.3s;border-bottom:1px solid transparent}
-  .nav.scrolled{background:rgba(10,16,32,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom-color:var(--line)}
-  .nav-in{max-width:var(--maxw);margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
-  .logo{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:800;letter-spacing:-.02em}
-  .logo .mark{width:30px;height:30px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#0EA5A5);display:grid;place-items:center;box-shadow:0 4px 16px -4px var(--teal-line)}
-  .logo .mark svg{width:17px;height:17px;stroke:#041018;stroke-width:2.6;fill:none}
+  .nav.scrolled{background:rgba(8,13,26,.78);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom-color:var(--line)}
+  .nav-in{max-width:var(--maxw);margin:0 auto;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.02em}
+  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#0E9E8E);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
+  .logo .mark svg{width:17px;height:17px;stroke:#04141a;stroke-width:2.7;fill:none}
   .logo .dot{color:var(--teal)}
   .nav-links{display:flex;align-items:center;gap:30px}
   .nav-links a{font-size:14px;font-weight:500;color:var(--text-dim);transition:.15s}
   .nav-links a:hover{color:var(--text)}
-  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:11px;transition:.16s;white-space:nowrap}
-  .btn-primary{background:var(--teal);color:#04141a;padding:11px 18px;font-size:14.5px;box-shadow:0 6px 22px -8px var(--teal-line)}
-  .btn-primary:hover{background:var(--teal-2);transform:translateY(-1px)}
-  .btn-primary svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.4;fill:none}
-  .btn-ghost{background:transparent;color:var(--text);padding:11px 18px;font-size:14.5px;border:1px solid var(--line-2)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:12px;transition:transform .16s,background .16s,border-color .16s,box-shadow .16s;white-space:nowrap;line-height:1}
+  .btn-primary{background:var(--teal);color:#04141a;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
+  .btn-primary:hover{background:var(--teal-2);transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--teal-line)}
+  .btn-primary svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none}
+  .btn-ghost{background:rgba(255,255,255,.03);color:var(--text);padding:12px 19px;font-size:14.5px;border:1px solid var(--line-2)}
   .btn-ghost:hover{border-color:var(--teal-line);background:var(--teal-soft)}
-  .nav-toggle{display:none;width:42px;height:42px;border-radius:10px;border:1px solid var(--line-2);align-items:center;justify-content:center}
+  .nav-toggle{display:none;width:44px;height:44px;border-radius:11px;border:1px solid var(--line-2);align-items:center;justify-content:center}
   .nav-toggle svg{width:20px;height:20px;stroke:currentColor;stroke-width:2;fill:none}
 
-  /* Hero */
-  .hero{position:relative;padding:150px 0 90px;overflow:hidden}
-  .hero-glow{position:absolute;top:-6%;left:50%;transform:translateX(-50%);width:820px;height:620px;
-    background:radial-gradient(closest-side,var(--teal-soft),transparent 70%);pointer-events:none;filter:blur(10px)}
-  .hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
-  .hero-pill{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--teal-2);
-    background:var(--teal-soft);border:1px solid var(--teal-line);padding:7px 14px;border-radius:999px}
-  .hero-pill .spark{width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 var(--teal);animation:pulse 2.6s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,191,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
-  h1.hero-h{font-size:clamp(42px,6.4vw,72px);font-weight:800;margin:22px 0 0}
-  h1.hero-h .accent{color:var(--teal)}
-  .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text-dim);max-width:36ch;margin:22px 0 0;line-height:1.6}
-  .hero-cta{display:flex;gap:13px;margin-top:32px;flex-wrap:wrap}
-  .hero-meta{margin-top:22px;font-size:13px;color:var(--text-faint);display:flex;align-items:center;gap:8px}
-  .hero-meta svg{width:15px;height:15px;stroke:var(--teal);stroke-width:2;fill:none}
+  /* ============================================================
+     THE TIME RAIL — the spine of the page (desktop)
+     ============================================================ */
+  .rail{position:fixed;top:0;bottom:0;left:max(20px,calc((100vw - var(--maxw))/2 - var(--rail) - 6px));
+    width:var(--rail);z-index:40;display:none;pointer-events:none}
+  @media(min-width:1200px){.rail{display:block}}
+  .rail-line{position:absolute;top:15vh;bottom:14vh;left:50%;width:2px;transform:translateX(-50%);
+    background:linear-gradient(to bottom,transparent,var(--line-2) 8%,var(--line-2) 92%,transparent);border-radius:2px}
+  .rail-fill{position:absolute;top:15vh;left:50%;width:2px;transform:translateX(-50%);height:0;
+    background:linear-gradient(to bottom,var(--teal),var(--teal-2));border-radius:2px;
+    box-shadow:0 0 10px var(--teal-line)}
+  .rail-ticks{position:absolute;top:15vh;bottom:14vh;left:0;right:0}
+  .tick{position:absolute;left:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:0}
+  .tick .d{width:9px;height:9px;border-radius:50%;background:var(--card-2);border:2px solid var(--line-2);transition:.3s}
+  .tick .t{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.04em;color:var(--text-faint);margin-top:6px;white-space:nowrap;transition:.3s;font-variant-numeric:tabular-nums}
+  .tick.on .d{border-color:var(--cc,var(--teal));background:var(--cc,var(--teal));box-shadow:0 0 0 5px color-mix(in srgb,var(--cc,var(--teal)) 22%,transparent),0 0 14px var(--cc,var(--teal));transform:scale(1.15)}
+  .tick.on .t{color:var(--text)}
+  /* The "Now" marker that glides down the rail */
+  .rail-now{position:absolute;left:50%;top:15vh;transform:translate(-50%,-50%);z-index:2;
+    display:flex;align-items:center;gap:0;pointer-events:none}
+  .rail-now .ring{width:15px;height:15px;border-radius:50%;background:var(--bg);border:2px solid var(--teal);
+    box-shadow:0 0 0 4px rgba(45,212,191,.15),0 0 16px var(--teal);position:relative}
+  .rail-now .ring::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--teal)}
 
-  /* Product showcase */
-  .showcase{padding:10px 0 30px;position:relative}
-  .showcase::before{content:"";position:absolute;top:6%;left:50%;transform:translateX(-50%);width:720px;height:340px;max-width:96vw;background:radial-gradient(closest-side,var(--teal-soft),transparent 72%);filter:blur(8px);pointer-events:none}
-  .show-eyebrow{text-align:center;margin-bottom:20px;position:relative}
-  .browser{position:relative;max-width:910px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--line-2);
-    box-shadow:0 44px 100px -34px rgba(0,0,0,.85),0 0 0 1px rgba(45,212,191,.14)}
-  .bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0b1220;border-bottom:1px solid rgba(255,255,255,.08)}
+  /* ============================================================
+     TIME-STAMPED SECTION HEADERS
+     ============================================================ */
+  .moment{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+  .moment .clock{font-family:var(--font-mono);font-size:15px;font-weight:500;letter-spacing:.02em;
+    color:var(--text);background:rgba(255,255,255,.04);border:1px solid var(--line-2);
+    padding:6px 12px;border-radius:9px;font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;gap:9px}
+  .moment .clock .cd{width:8px;height:8px;border-radius:50%;background:var(--cc,var(--teal));box-shadow:0 0 8px var(--cc,var(--teal))}
+  .moment .label{font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim)}
+  .moment .rule{flex:1;height:1px;background:linear-gradient(to right,var(--line-2),transparent)}
+
+  /* ============================================================
+     HERO — 06:30, dawn
+     ============================================================ */
+  .hero{position:relative;padding:150px 0 70px}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);gap:52px;align-items:center}
+  .hero-copy,.today{min-width:0;max-width:100%}
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;font-weight:500;
+    color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:7px 13px;border-radius:999px;letter-spacing:.02em}
+  .kicker .spark{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 var(--teal);animation:pulse 2.6s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,191,.55)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  h1.hero-h{font-size:clamp(38px,5.4vw,66px);font-weight:800;margin:24px 0 0;letter-spacing:-.035em;overflow-wrap:break-word;max-width:15ch}
+  h1.hero-h .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal) 55%,#0FA396);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text-dim);max-width:40ch;margin:24px 0 0;line-height:1.62}
+  .hero-cta{display:flex;gap:13px;margin-top:34px;flex-wrap:wrap;align-items:center}
+  .hero-note{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:8px}
+  .hero-note svg{width:14px;height:14px;stroke:var(--teal);stroke-width:2.2;fill:none}
+
+  /* Hero "today" card — a live mini-timeline that previews the concept */
+  .today{position:relative;background:linear-gradient(165deg,rgba(20,32,54,.9),rgba(11,18,34,.92));
+    border:1px solid var(--line-2);border-radius:22px;padding:20px 20px 22px;
+    box-shadow:0 44px 90px -34px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(8px)}
+  .today::before{content:"";position:absolute;inset:-1px;border-radius:22px;padding:1px;pointer-events:none;
+    background:linear-gradient(150deg,var(--teal-line),transparent 40%);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+  .today-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .today-top .lhs{display:flex;flex-direction:column;gap:2px}
+  .today-top .greet{font-size:12.5px;color:var(--text-dim);font-weight:600}
+  .today-top .date{font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:-.02em}
+  .today-clock{font-family:var(--font-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--text)}
+  .today-clock .ap{font-size:12px;color:var(--text-dim);margin-left:2px}
+  .nextup{display:flex;align-items:center;gap:10px;margin:14px 0 4px;padding:11px 13px;border-radius:13px;
+    background:var(--teal-soft);border:1px solid var(--teal-line)}
+  .nextup .nlbl{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--teal-2)}
+  .nextup .ntxt{font-size:13.5px;font-weight:650;color:var(--text)}
+  .nextup .nwhen{margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--text-dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .tl{margin-top:12px;position:relative;padding-left:6px}
+  .tl-item{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;padding:7px 0;position:relative}
+  .tl-item .tt{font-family:var(--font-mono);font-size:11px;color:var(--text-faint);text-align:right;font-variant-numeric:tabular-nums;padding-top:1px}
+  .tl-item .body{display:flex;align-items:center;gap:9px;min-width:0}
+  .tl-item .cdot{width:8px;height:8px;border-radius:50%;background:var(--cc);flex-shrink:0;box-shadow:0 0 8px var(--cc)}
+  .tl-item .name{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+  .tl-item .tag{margin-left:auto;font-family:var(--font-mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent);padding:2px 8px;border-radius:999px;flex-shrink:0}
+  .tl-item.past .name,.tl-item.past .tt{opacity:.42}
+  .tl-item.now::before{content:"";position:absolute;left:60px;right:-4px;top:50%;height:1px;
+    background:linear-gradient(90deg,var(--red),transparent);z-index:0}
+  .tl-item.now .name{color:#fff}
+
+  /* ============================================================
+     Generic section rhythm
+     ============================================================ */
+  section.blk{padding:82px 0;position:relative}
+  .sec-head{max-width:640px;margin-bottom:44px}
+  .sec-head.center{margin-left:auto;margin-right:auto;text-align:center}
+  .sec-head h2{font-size:clamp(30px,4.4vw,48px);font-weight:800;margin:16px 0 0;letter-spacing:-.03em}
+  .sec-head p{color:var(--text-dim);font-size:17px;margin-top:16px;line-height:1.6;max-width:52ch}
+  .sec-head.center p{margin-left:auto;margin-right:auto}
+
+  /* ---- Problem: the morning scramble (08:00) ---- */
+  .scramble{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
+  @media(max-width:860px){.scramble{grid-template-columns:1fr;gap:32px}}
+  .apps{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .appcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:15px 16px;display:flex;align-items:center;gap:12px;position:relative;transition:.25s}
+  .appcard .ai{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;background:var(--panel);border:1px solid var(--line)}
+  .appcard .ai svg{width:20px;height:20px;stroke-width:1.9;fill:none}
+  .appcard .an{font-size:13.5px;font-weight:650}
+  .appcard .as{font-size:11.5px;color:var(--text-faint);margin-top:1px}
+  .appcard.miss{border-style:dashed;opacity:.85}
+  .appcard.miss .badge{position:absolute;top:-8px;right:10px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--red);background:#1a1017;border:1px solid rgba(248,106,91,.4);padding:2px 8px;border-radius:999px}
+  .scramble-copy h3{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-.03em}
+  .scramble-copy p{color:var(--text-dim);font-size:16px;line-height:1.62;margin-top:16px}
+
+  /* ---- Product showcase browser mock (09:00) ---- */
+  .showcase{position:relative}
+  .browser{position:relative;max-width:920px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--line-2);
+    box-shadow:0 50px 110px -36px rgba(0,0,0,.9),0 0 0 1px rgba(45,212,191,.12)}
+  .bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0a1120;border-bottom:1px solid rgba(255,255,255,.08)}
   .bdot{width:11px;height:11px;border-radius:50%}
   .bdot.r{background:#ff5f57}.bdot.y{background:#febc2e}.bdot.g{background:#28c840}
-  .burl{margin:0 auto;font-size:12px;color:var(--faint);background:#0f1a2e;border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 16px}
-  .bapp{display:grid;grid-template-columns:158px 1fr;background:#F3F6FC;color:#15201C}
-  .msb{background:#fff;border-right:1px solid #E5EAF3;padding:15px 12px}
-  .msb-logo{display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;margin-bottom:16px;font-family:var(--font-display);letter-spacing:-.02em;color:#15201C}
-  .msb-logo .m{width:22px;height:22px;border-radius:6px;background:linear-gradient(140deg,#0D9488,#0EA5A5);display:grid;place-items:center}
-  .msb-logo .m svg{width:12px;height:12px;stroke:#fff;stroke-width:2.6;fill:none}
-  .msb-item{font-size:12.5px;font-weight:600;color:#5A6A72;padding:7px 9px;border-radius:8px}
-  .msb-item.on{background:#D6F2EE;color:#0F766E}
-  .mmain{padding:16px 18px 20px}
-  .mmain h4{font-family:var(--font-display);font-size:17px;font-weight:800;color:#15201C;letter-spacing:-.02em}
-  .mmain .msub{font-size:11.5px;color:#8791A3;margin:2px 0 12px}
-  .mrow{display:flex;gap:10px;padding:6px 0}
+  .burl{margin:0 auto;font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);background:#0f1a2e;border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 18px}
+  .bapp{display:grid;grid-template-columns:168px 1fr;background:#F4F7FC;color:#12201b}
+  .msb{background:#fff;border-right:1px solid #E5EAF3;padding:16px 12px}
+  .msb-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:18px;font-family:var(--font-display);letter-spacing:-.02em;color:#12201b}
+  .msb-logo .m{width:23px;height:23px;border-radius:7px;background:linear-gradient(140deg,#0D9488,#0EA5A5);display:grid;place-items:center}
+  .msb-logo .m svg{width:12px;height:12px;stroke:#fff;stroke-width:2.7;fill:none}
+  .msb-item{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:#5A6A72;padding:8px 10px;border-radius:9px}
+  .msb-item svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.9;fill:none}
+  .msb-item.on{background:#D9F3EF;color:#0F766E}
+  .mmain{padding:18px 20px 22px}
+  .mmain h4{font-family:var(--font-display);font-size:18px;font-weight:800;color:#12201b;letter-spacing:-.02em}
+  .mmain .msub{font-family:var(--font-mono);font-size:11px;color:#8791A3;margin:3px 0 14px;letter-spacing:.02em}
+  .mrow{display:flex;gap:11px;padding:7px 0}
   .mrow+.mrow{border-top:1px solid #EEF1F8}
-  .mtime{width:46px;text-align:right;font-size:11px;font-weight:650;color:#8791A3;font-variant-numeric:tabular-nums;padding-top:9px;flex-shrink:0}
+  .mtime{width:50px;text-align:right;font-family:var(--font-mono);font-size:10.5px;font-weight:500;color:#8791A3;font-variant-numeric:tabular-nums;padding-top:10px;flex-shrink:0}
   .mdot{width:9px;height:9px;border-radius:50%;margin-top:11px;flex-shrink:0;box-shadow:0 0 0 3px #fff}
-  .mcard{flex:1;min-width:0;background:#F1F5FB;border:1px solid #E5EAF3;border-left:3px solid var(--cc);border-radius:9px;padding:7px 11px}
-  .mcard .mt{font-size:12.5px;font-weight:650;color:#15201C}
-  .mcard .mm{font-size:10.5px;color:#5A6A72;margin-top:3px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
-  .mchip{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent)}
-  .mnow{display:flex;align-items:center;gap:7px;margin:5px 0 5px 56px;font-size:9px;font-weight:800;color:#CE4038;letter-spacing:.1em}
+  .mcard{flex:1;min-width:0;background:#F1F5FB;border:1px solid #E5EAF3;border-left:3px solid var(--cc);border-radius:10px;padding:8px 12px}
+  .mcard .mt{font-size:13px;font-weight:650;color:#12201b}
+  .mcard .mm{font-size:11px;color:#5A6A72;margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mchip{font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;color:var(--cc);background:color-mix(in srgb,var(--cc) 13%,transparent)}
+  .mnow{display:flex;align-items:center;gap:8px;margin:6px 0 6px 61px;font-family:var(--font-mono);font-size:9px;font-weight:700;color:#CE4038;letter-spacing:.12em}
   .mnow .l{flex:1;height:2px;border-radius:2px;background:linear-gradient(to right,#CE4038,transparent)}
   @media(max-width:600px){.bapp{grid-template-columns:1fr}.msb{display:none}}
-  .showcase .wrap{position:relative}
-  .phone-mock{position:absolute;right:4px;bottom:-28px;width:160px;z-index:4;border-radius:26px;padding:6px;
-    background:#0a0f1c;border:1px solid rgba(255,255,255,.14);box-shadow:0 36px 64px -22px rgba(0,0,0,.85);display:none}
-  @media(min-width:840px){.phone-mock{display:block}}
-  .pscreen{background:#F3F6FC;border-radius:20px;overflow:hidden}
-  .ptop{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:7px 12px 6px;font-size:9px;font-weight:700;color:#8791A3;border-bottom:1px solid #E5EAF3}
-  .ptop span{font-family:var(--font-display);color:#0F766E;font-size:11px;letter-spacing:-.02em}
-  .pbody{padding:10px 10px 13px}
-  .ph{font-family:var(--font-display);font-size:12px;font-weight:800;color:#15201C;margin-bottom:8px;letter-spacing:-.02em}
-  .prow{background:#F1F5FB;border:1px solid #E5EAF3;border-left:3px solid var(--cc);border-radius:8px;padding:5px 8px;margin-bottom:6px}
-  .prow b{display:block;font-size:10.5px;font-weight:650;color:#15201C}
-  .prow span{font-size:9px;color:#5A6A72}
 
-  /* Problem / solution */
-  .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  @media(max-width:760px){.compare{grid-template-columns:1fr}}
-  .col-prob,.col-sol{border-radius:20px;padding:26px 24px;border:1px solid var(--line)}
-  .col-prob{background:var(--card)}
-  .col-sol{background:linear-gradient(160deg,#0e2a26,#0b1a24);border-color:var(--teal-line)}
-  .ctitle{font-weight:700;font-size:16px;margin-bottom:16px}
-  .compare ul{list-style:none;display:flex;flex-direction:column;gap:12px}
-  .compare li{font-size:14.5px;color:var(--text-dim);padding-left:27px;position:relative;line-height:1.45}
-  .col-prob li::before{content:"\2715";position:absolute;left:0;color:var(--text-faint);font-weight:700}
-  .col-sol li{color:var(--text)}
-  .col-sol li::before{content:"\2713";position:absolute;left:2px;color:var(--teal-2);font-weight:800}
-
-  /* Photos */
-  .photoband{position:relative;min-height:400px;margin:26px 0;overflow:hidden;display:flex;align-items:center}
-  .photoband img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .photoband::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,14,26,.93),rgba(9,14,26,.6) 55%,rgba(9,14,26,.3))}
-  .pb-copy{position:relative;z-index:2;max-width:var(--maxw);width:100%;margin:0 auto;padding:48px 24px}
-  .pb-copy h2{font-size:clamp(26px,4.2vw,46px);max-width:17ch;margin-top:12px}
-  .pb-copy p{color:var(--text-dim);margin-top:14px;max-width:44ch;font-size:16px;line-height:1.6}
-  .photo-split{display:grid;grid-template-columns:1fr 1fr;gap:46px;align-items:center}
-  @media(max-width:820px){.photo-split{grid-template-columns:1fr;gap:26px}}
-  .ps-img{border-radius:20px;overflow:hidden;border:1px solid var(--line-2);box-shadow:0 34px 64px -26px rgba(0,0,0,.8);aspect-ratio:4/5;max-height:540px}
-  .ps-img img{width:100%;height:100%;object-fit:cover;display:block}
-  .ps-copy h2{font-size:clamp(24px,3.4vw,38px);margin:12px 0}
-  .ps-copy p{color:var(--text-dim);font-size:16px;line-height:1.6;margin-bottom:22px}
-
-  /* Orbit */
-  .orbit-wrap{display:grid;place-items:center;min-height:420px}
-  .orbit{position:relative;width:380px;height:380px;max-width:86vw;max-height:86vw}
-  .path{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px dashed var(--line-2)}
-  .path.p1{width:200px;height:200px}
-  .path.p2{width:340px;height:340px}
-  .ring{position:absolute;top:50%;left:50%;width:0;height:0}
-  .ring.r1{animation:spin 30s linear infinite}
-  .ring.r2{animation:spin 48s linear infinite reverse}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .node{position:absolute;top:0;left:0;width:58px;height:58px;margin:-29px;border-radius:16px;
-    background:var(--card);border:1px solid var(--line-2);display:grid;place-items:center;
-    box-shadow:0 10px 30px -12px rgba(0,0,0,.7);transform:rotate(var(--a)) translate(var(--r)) rotate(calc(-1*var(--a)))}
-  .node .ic{font-size:23px;line-height:1}
-  .node .rev{animation:spinrev 30s linear infinite}
-  .ring.r2 .node .rev{animation-duration:48s;animation-direction:normal}
-  @keyframes spinrev{to{transform:rotate(-360deg)}}
-  .node.b-class{border-color:var(--teal-line)}
-  .node.b-work{border-color:rgba(124,92,252,.4)}
-  .node.b-practice{border-color:rgba(224,86,138,.4)}
-  .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:28px;
-    background:linear-gradient(150deg,#12233d,#0c1526);border:1px solid var(--teal-line);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-    box-shadow:0 0 0 6px rgba(45,212,191,.06),0 20px 50px -14px rgba(45,212,191,.3);z-index:5}
-  .hub .hmark{width:40px;height:40px;border-radius:12px;background:linear-gradient(140deg,var(--teal),#0EA5A5);display:grid;place-items:center}
-  .hub .hmark svg{width:23px;height:23px;stroke:#041018;stroke-width:2.6;fill:none}
-  .hub .hname{font-size:13px;font-weight:800;letter-spacing:-.02em}
-  @media (prefers-reduced-motion:reduce){.ring,.node .rev,.hero-pill .spark{animation:none}}
-
-  /* Trust strip */
-  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;margin-top:20px;background:rgba(10,16,32,.4)}
-  .trust-in{display:flex;align-items:center;gap:26px;flex-wrap:wrap;justify-content:center}
-  .trust-lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)}
-  .trust-item{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text-dim)}
-  .trust-item .td{width:8px;height:8px;border-radius:50%;background:var(--teal)}
-
-  /* Sections */
-  section.blk{padding:96px 0;position:relative}
-  .sec-head{max-width:660px;margin:0 auto 56px;text-align:center}
-  .sec-head h2{font-size:clamp(30px,4.4vw,46px);font-weight:800;margin:14px 0 0}
-  .sec-head p{color:var(--text-dim);font-size:17px;margin-top:16px;line-height:1.6}
-
-  /* How it works */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  .step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;position:relative;overflow:hidden;transition:.2s}
+  /* ---- How it works cards (12:30) ---- */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;position:relative;overflow:hidden;transition:transform .25s,border-color .25s}
   .step::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 100% 0,var(--teal-soft),transparent 55%);opacity:0;transition:.3s}
   .step:hover::before{opacity:1}
   .step:hover{border-color:var(--teal-line);transform:translateY(-3px)}
-  .step .num{font-size:14px;font-weight:800;color:var(--teal);letter-spacing:.1em}
-  .step .sic{width:46px;height:46px;border-radius:13px;background:var(--teal-soft);border:1px solid var(--teal-line);display:grid;place-items:center;margin:18px 0 16px}
+  .step .num{font-family:var(--font-mono);font-size:12px;font-weight:500;color:var(--teal);letter-spacing:.1em}
+  .step .sic{width:48px;height:48px;border-radius:14px;background:var(--teal-soft);border:1px solid var(--teal-line);display:grid;place-items:center;margin:16px 0 16px;position:relative}
   .step .sic svg{width:23px;height:23px;stroke:var(--teal-2);stroke-width:1.9;fill:none}
   .step h3{font-size:20px;font-weight:700}
   .step p{color:var(--text-dim);font-size:14.5px;margin-top:9px;line-height:1.6}
 
-  /* Features */
-  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-  .feat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;transition:.2s}
+  /* ---- Athlete photo split (15:30) ---- */
+  .psplit{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+  @media(max-width:860px){.psplit{grid-template-columns:1fr;gap:30px}}
+  .psplit.rev .ps-img{order:-1}
+  @media(max-width:860px){.psplit.rev .ps-img{order:0}}
+  .ps-img{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line-2);
+    box-shadow:0 40px 80px -30px rgba(0,0,0,.85);aspect-ratio:4/5;max-height:560px}
+  .ps-img img{width:100%;height:100%;object-fit:cover}
+  .ps-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,13,26,.5),transparent 45%)}
+  .ps-tag{position:absolute;left:16px;bottom:16px;z-index:2;display:flex;align-items:center;gap:9px;
+    font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:rgba(8,13,26,.6);
+    border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:8px 12px;border-radius:999px}
+  .ps-tag .cd{width:8px;height:8px;border-radius:50%;background:var(--cc,var(--rose));box-shadow:0 0 8px var(--cc,var(--rose))}
+  .ps-copy h3{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:14px 0}
+  .ps-copy p{color:var(--text-dim);font-size:16.5px;line-height:1.62;margin-bottom:24px}
+
+  /* ---- Dusk photo band: campus sunset (18:00) ---- */
+  .band-photo{position:relative;min-height:520px;display:flex;align-items:center;overflow:hidden}
+  .band-photo>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .band-photo::after{content:"";position:absolute;inset:0;z-index:1;
+    background:linear-gradient(105deg,rgba(8,13,26,.94),rgba(8,13,26,.6) 48%,rgba(20,10,4,.25) 78%,transparent),
+               linear-gradient(to top,rgba(8,13,26,.85),transparent 40%)}
+  .band-photo .inner{position:relative;z-index:2;width:100%}
+  .band-photo .moment{margin-bottom:20px}
+  .band-photo h2{font-size:clamp(30px,5vw,56px);font-weight:800;max-width:15ch;letter-spacing:-.035em}
+  .band-photo .accent{color:var(--amber)}
+  .band-photo p{color:#C7D2E4;margin-top:18px;max-width:46ch;font-size:17px;line-height:1.6}
+  .band-photo .credit{position:absolute;right:16px;bottom:14px;z-index:3;font-family:var(--font-mono);font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em}
+
+  /* ---- Features (21:00) ---- */
+  .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;transition:transform .22s,border-color .22s;position:relative}
   .feat:hover{border-color:var(--line-2);transform:translateY(-2px)}
-  .feat .fic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:15px;background:var(--panel);border:1px solid var(--line)}
+  .feat .fic{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px;background:var(--panel);border:1px solid var(--line)}
   .feat .fic svg{width:21px;height:21px;stroke-width:1.9;fill:none}
   .feat h3{font-size:17px;font-weight:700}
   .feat p{color:var(--text-dim);font-size:14px;margin-top:8px;line-height:1.6}
 
-  /* Quote band */
-  .band{padding:90px 0}
-  .band-in{background:linear-gradient(150deg,#0e1c33,#0b1424);border:1px solid var(--line);border-radius:26px;padding:60px 44px;text-align:center;position:relative;overflow:hidden}
-  .band-in::after{content:"";position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(closest-side,var(--teal-soft),transparent 70%);pointer-events:none}
-  .band-in h2{font-size:clamp(26px,3.8vw,40px);font-weight:800;max-width:20ch;margin:0 auto;position:relative}
-  .band-in h2 .accent{color:var(--teal)}
-  .band-in p{color:var(--text-dim);font-size:16px;margin:18px auto 0;max-width:46ch;position:relative}
+  /* ---- Deadline band + FAQ (23:59) ---- */
+  .midnight{text-align:center;position:relative;padding:70px 44px;border-radius:26px;overflow:hidden;
+    background:linear-gradient(160deg,#140c14,#0b1122);border:1px solid var(--line-2)}
+  .midnight::after{content:"";position:absolute;top:-45%;left:50%;transform:translateX(-50%);width:640px;height:420px;max-width:90vw;
+    background:radial-gradient(closest-side,rgba(248,106,91,.16),transparent 70%);pointer-events:none}
+  .midnight h2{font-size:clamp(28px,4.2vw,44px);font-weight:800;max-width:20ch;margin:14px auto 0;position:relative;letter-spacing:-.03em}
+  .midnight h2 .accent{color:var(--teal)}
+  .midnight p{color:var(--text-dim);font-size:16.5px;margin:18px auto 0;max-width:46ch;position:relative}
 
-  /* FAQ */
-  .faq{max-width:760px;margin:0 auto}
-  .qa{border:1px solid var(--line);border-radius:14px;margin-bottom:12px;background:var(--card);overflow:hidden;transition:.2s}
+  .faq{max-width:780px;margin:0 auto}
+  .qa{border:1px solid var(--line);border-radius:15px;margin-bottom:12px;background:var(--card);overflow:hidden;transition:border-color .25s}
   .qa.open{border-color:var(--teal-line)}
-  .qa-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;text-align:left;font-size:16.5px;font-weight:600}
+  .qa-q{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 22px;text-align:left;font-size:16.5px;font-weight:650}
   .qa-q .plus{flex-shrink:0;width:22px;height:22px;position:relative;transition:.25s}
   .qa-q .plus::before,.qa-q .plus::after{content:"";position:absolute;background:var(--teal);border-radius:2px;top:50%;left:50%;transform:translate(-50%,-50%)}
   .qa-q .plus::before{width:14px;height:2px}
@@ -235,46 +299,66 @@
   .qa-a{max-height:0;overflow:hidden;transition:max-height .3s ease}
   .qa-a p{padding:0 22px 22px;color:var(--text-dim);font-size:15px;line-height:1.65}
 
-  /* Final CTA */
-  .final{padding:40px 0 110px}
-  .final-in{text-align:center}
-  .final-in h2{font-size:clamp(30px,4.6vw,50px);font-weight:800}
-  .final-in p{color:var(--text-dim);font-size:17px;margin:16px 0 32px}
-  .final .btn-primary{padding:15px 26px;font-size:16px}
+  /* ---- Final CTA: tomorrow, dawn again (loop) ---- */
+  .final{position:relative;min-height:560px;display:flex;align-items:center;overflow:hidden}
+  .final>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;z-index:0}
+  .final::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,var(--bg),rgba(8,13,26,.72) 45%,rgba(8,13,26,.55))}
+  .final .inner{position:relative;z-index:2;width:100%;text-align:center}
+  .final h2{font-size:clamp(32px,5vw,58px);font-weight:800;letter-spacing:-.035em;max-width:18ch;margin:16px auto 0}
+  .final h2 .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .final p{color:#C7D2E4;font-size:18px;margin:18px auto 34px;max-width:44ch}
+  .final .btn-primary{padding:15px 28px;font-size:16px}
 
-  /* Footer */
-  footer{border-top:1px solid var(--line);padding:44px 0 60px;background:rgba(10,16,32,.5)}
+  /* ---- Footer ---- */
+  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(8,13,26,.6)}
   .foot-in{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .foot-links{display:flex;gap:26px;flex-wrap:wrap}
   .foot-links a{font-size:14px;color:var(--text-dim);transition:.15s}
   .foot-links a:hover{color:var(--text)}
-  .foot-copy{font-size:13px;color:var(--text-faint)}
+  .foot-copy{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);letter-spacing:.02em}
 
-  /* Scroll reveal */
-  .reveal{opacity:0;transform:translateY(26px) scale(.98);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  /* ---- Scroll reveal ---- */
+  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
   .reveal.in{opacity:1;transform:none}
-  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.kicker .spark{animation:none}}
 
-  @media (max-width:860px){
+  /* ---- Responsive ---- */
+  @media (max-width:900px){
     .nav-links{position:fixed;inset:64px 12px auto 12px;flex-direction:column;align-items:stretch;gap:6px;
-      background:var(--panel);border:1px solid var(--line-2);border-radius:16px;padding:12px;display:none;box-shadow:0 20px 50px -12px rgba(0,0,0,.6)}
+      background:var(--panel);border:1px solid var(--line-2);border-radius:16px;padding:12px;display:none;box-shadow:0 24px 60px -14px rgba(0,0,0,.7)}
     .nav-links.show{display:flex}
-    .nav-links a{padding:11px 12px;border-radius:9px;color:var(--text)}
+    .nav-links a{padding:12px;border-radius:10px;color:var(--text)}
     .nav-links a:hover{background:var(--card)}
     .nav-links .btn-primary{justify-content:center;margin-top:4px}
     .nav-toggle{display:flex}
-    .hero-grid{grid-template-columns:1fr;gap:20px}
-    .orbit-wrap{order:-1;min-height:340px}
-    .hero{padding:120px 0 70px}
+    .hero{padding:120px 0 50px}
+    .hero-grid{grid-template-columns:1fr;gap:34px}
+    .today{order:2}
     .steps,.feat-grid{grid-template-columns:1fr}
-    section.blk{padding:70px 0}
-    .band-in{padding:44px 24px}
+    section.blk{padding:64px 0}
+    .midnight{padding:48px 22px}
+  }
+  @media (max-width:520px){
+    .feat-grid,.apps{gap:12px}
+    .apps{grid-template-columns:1fr}
   }
 </style>
+</head>
+<body>
 
-<div class="bg-scene" aria-hidden="true">
-  <canvas id="hall"></canvas>
-  <canvas id="motes"></canvas>
+<!-- Ambient sky (hue set by scroll) + starfield -->
+<div class="sky" id="sky" aria-hidden="true"></div>
+<div class="stars" aria-hidden="true"><canvas id="starCanvas"></canvas></div>
+
+<!-- Global scroll progress -->
+<div class="prog" aria-hidden="true"><span id="prog"></span></div>
+
+<!-- The time rail (desktop spine) -->
+<div class="rail" id="rail" aria-hidden="true">
+  <div class="rail-line"></div>
+  <div class="rail-fill" id="railFill"></div>
+  <div class="rail-ticks" id="railTicks"></div>
+  <div class="rail-now" id="railNow"><span class="ring"></span></div>
 </div>
 
 <nav class="nav" id="nav">
@@ -284,208 +368,229 @@
       <a href="#how">How it works</a>
       <a href="#features">Features</a>
       <a href="#faq">FAQ</a>
-      <a class="btn btn-primary" href="https://benmarban.github.io/duely/login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
+      <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
     </div>
-    <button class="nav-toggle" id="navToggle" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button class="nav-toggle" id="navToggle" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </nav>
 
 <a id="top"></a>
-<header class="hero">
-  <div class="hero-glow"></div>
+
+<!-- ========================= HERO · 06:30 ========================= -->
+<header class="hero" data-time="6.5" data-cc="#2DD4BF">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <span class="hero-pill"><span class="spark"></span> Class · Practice · Work · Life</span>
-      <h1 class="hero-h">Your whole day.<br><span class="accent">One place.</span></h1>
-      <p class="hero-sub">Class, practice, film, your work shift, every deadline — Dayflow pulls your entire schedule into one dashboard, so you always know what's next without checking five different apps.</p>
+      <span class="kicker"><span class="spark"></span> One timeline · class to curfew</span>
+      <h1 class="hero-h">Your whole day, in the order it <span class="grad">actually happens.</span></h1>
+      <p class="hero-sub">Class, practice, film, your work shift, every deadline — Dayflow merges your entire schedule into one living timeline, so you always know what's next without checking five apps.</p>
       <div class="hero-cta">
-        <a class="btn btn-primary" href="https://benmarban.github.io/duely/login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
+        <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
         <a class="btn btn-ghost" href="#how">See how it works</a>
       </div>
-      <div class="hero-meta"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Free to start · Works on your phone</div>
+      <div class="hero-note"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Free to start · works on your phone</div>
     </div>
-    <div class="orbit-wrap">
-      <div class="orbit" aria-hidden="true">
-        <div class="path p1"></div>
-        <div class="path p2"></div>
-        <div class="ring r1">
-          <div class="node b-class" style="--a:0deg;--r:100px"><span class="rev"><span class="ic">🎓</span></span></div>
-          <div class="node b-practice" style="--a:120deg;--r:100px"><span class="rev"><span class="ic">🏈</span></span></div>
-          <div class="node b-work" style="--a:240deg;--r:100px"><span class="rev"><span class="ic">💼</span></span></div>
+
+    <!-- Live "today" card -->
+    <div class="today reveal" id="todayCard">
+      <div class="today-top">
+        <div class="lhs">
+          <span class="greet" id="greet">Good morning</span>
+          <span class="date" id="todayDate">Today</span>
         </div>
-        <div class="ring r2">
-          <div class="node" style="--a:0deg;--r:170px"><span class="rev"><span class="ic">🎬</span></span></div>
-          <div class="node" style="--a:72deg;--r:170px"><span class="rev"><span class="ic">✅</span></span></div>
-          <div class="node" style="--a:144deg;--r:170px"><span class="rev"><span class="ic">🏆</span></span></div>
-          <div class="node" style="--a:216deg;--r:170px"><span class="rev"><span class="ic">🏋️</span></span></div>
-          <div class="node" style="--a:288deg;--r:170px"><span class="rev"><span class="ic">📧</span></span></div>
-        </div>
-        <div class="hub"><span class="hmark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="hname">Dayflow</span></div>
+        <div class="today-clock"><span id="clockTime">7:00</span><span class="ap" id="clockAp">AM</span></div>
       </div>
+      <div class="nextup">
+        <span class="nlbl">Up next</span>
+        <span class="ntxt" id="nextTxt">MATH 231 · Lecture</span>
+        <span class="nwhen" id="nextWhen">9:00 AM</span>
+      </div>
+      <div class="tl" id="todayTl"><!-- built by JS from SCHEDULE --></div>
     </div>
   </div>
 </header>
 
-<section class="showcase">
+<!-- ========================= PROBLEM · 08:00 ========================= -->
+<section class="blk" data-time="8" data-cc="#F86A5B">
   <div class="wrap">
-    <div class="show-eyebrow reveal"><span class="eyebrow">One screen for your whole day</span></div>
-    <div class="browser reveal">
-      <div class="bbar"><span class="bdot r"></span><span class="bdot y"></span><span class="bdot g"></span><span class="burl">dayflow · your day</span></div>
-      <div class="bapp">
-        <div class="msb">
-          <div class="msb-logo"><span class="m"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow</div>
-          <div class="msb-item on">Today</div>
-          <div class="msb-item">Week</div>
-          <div class="msb-item">Deadlines</div>
-          <div class="msb-item">Grades</div>
-          <div class="msb-item">Courses</div>
-        </div>
-        <div class="mmain">
-          <h4>Your day</h4>
-          <div class="msub">Tuesday, July 7</div>
-          <div class="mrow" style="--cc:#0D9488"><div class="mtime">9:00a</div><span class="mdot" style="background:#0D9488"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
-          <div class="mrow" style="--cc:#E0568A"><div class="mtime">12:30p</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Offense film</div><div class="mm"><span class="mchip">Athletics</span>East classroom</div></div></div>
-          <div class="mnow"><span class="l"></span>Now</div>
-          <div class="mrow" style="--cc:#E0568A"><div class="mtime">3:30p</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Practice</div><div class="mm"><span class="mchip">Athletics</span>Main field</div></div></div>
-          <div class="mrow" style="--cc:#7C5CFC"><div class="mtime">6:00p</div><span class="mdot" style="background:#7C5CFC"></span><div class="mcard"><div class="mt">Work shift</div><div class="mm"><span class="mchip">Work</span>Campus Store · 6–9pm</div></div></div>
-          <div class="mrow" style="--cc:#CE4038"><div class="mtime">11:59p</div><span class="mdot" style="background:#CE4038"></span><div class="mcard"><div class="mt">Problem Set 4</div><div class="mm"><span class="mchip">Due</span>MATH 231</div></div></div>
-        </div>
+    <div class="moment reveal" style="--cc:#F86A5B">
+      <span class="clock"><span class="cd"></span>8:00 AM</span>
+      <span class="label">The morning scramble</span>
+      <span class="rule"></span>
+    </div>
+    <div class="scramble">
+      <div class="scramble-copy reveal">
+        <h3>Five apps before you've even had coffee.</h3>
+        <p>Canvas for assignments. Email for the coach who moved film to 6am. A group chat for the practice change. A notes app for your work shifts. You stitch it together in your head every morning — and still get blindsided.</p>
+        <p style="color:var(--text)">Dayflow does the stitching for you.</p>
       </div>
-      <div class="phone-mock" aria-hidden="true">
-        <div class="pscreen">
-          <div class="ptop">9:41<span>Dayflow</span></div>
-          <div class="pbody">
-            <div class="ph">Your day</div>
-            <div class="prow" style="--cc:#0D9488"><b>MATH 231</b><span>9:00a · Warren 210</span></div>
-            <div class="prow" style="--cc:#E0568A"><b>Offense film</b><span>12:30p · East rm</span></div>
-            <div class="prow" style="--cc:#E0568A"><b>Practice</b><span>3:30p · Field</span></div>
-            <div class="prow" style="--cc:#7C5CFC"><b>Work shift</b><span>6:00p</span></div>
-          </div>
-        </div>
+      <div class="apps reveal">
+        <div class="appcard"><span class="ai"><svg stroke="var(--teal-2)" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><div><div class="an">Canvas</div><div class="as">Assignments</div></div></div>
+        <div class="appcard"><span class="ai"><svg stroke="var(--violet)" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg></span><div><div class="an">Email</div><div class="as">Coach &amp; profs</div></div></div>
+        <div class="appcard"><span class="ai"><svg stroke="var(--rose)" viewBox="0 0 24 24"><path d="M8 10h.01M12 10h.01M16 10h.01"/><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1.3-4A8 8 0 1 1 21 12z"/></svg></span><div><div class="an">Group chat</div><div class="as">Practice changes</div></div></div>
+        <div class="appcard miss"><span class="badge">missed</span><span class="ai"><svg stroke="var(--amber)" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 13l2 2 4-4"/></svg></span><div><div class="an">Notes app</div><div class="as">Work shifts</div></div></div>
       </div>
     </div>
   </div>
 </section>
 
-<div class="trust reveal">
-  <div class="wrap trust-in">
-    <span class="trust-lbl">Pulls everything from</span>
-    <span class="trust-item"><span class="td"></span>Canvas</span>
-    <span class="trust-item"><span class="td"></span>Gmail</span>
-    <span class="trust-item"><span class="td"></span>Google Calendar</span>
-    <span class="trust-item"><span class="td"></span>Team schedule</span>
-    <span class="trust-item"><span class="td"></span>Work shifts</span>
-  </div>
-</div>
-
-<div class="photoband reveal">
-  <img src="images/campus.jpg" alt="A university campus at sunset" loading="lazy">
-  <div class="pb-copy">
-    <span class="eyebrow">Made for real student life</span>
-    <h2>The most on-top-of-it person on campus? That's you now.</h2>
-    <p>Class, practice, film, work, and every deadline — Dayflow keeps your whole day in view so nothing slips through.</p>
-  </div>
-</div>
-
-<section class="blk" id="how">
+<!-- ========================= CLASS · 09:00 (product) ========================= -->
+<section class="blk showcase" id="product" data-time="9" data-cc="#2DD4BF">
   <div class="wrap">
+    <div class="moment reveal" style="--cc:#2DD4BF">
+      <span class="clock"><span class="cd"></span>9:00 AM</span>
+      <span class="label">First on the timeline · Class</span>
+      <span class="rule"></span>
+    </div>
+    <div class="sec-head reveal" style="margin-bottom:34px">
+      <h2>One screen for the whole day.</h2>
+      <p>Everything — merged, color-coded by type, and sorted by what's happening next. A live "Now" line shows exactly where you are in the day.</p>
+    </div>
+    <div class="browser reveal">
+      <div class="bbar"><span class="bdot r"></span><span class="bdot y"></span><span class="bdot g"></span><span class="burl">dayflow.app / today</span></div>
+      <div class="bapp">
+        <div class="msb">
+          <div class="msb-logo"><span class="m"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow</div>
+          <div class="msb-item on"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Today</div>
+          <div class="msb-item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2.5"/><path d="M3 9h18M8 13h.01M12 13h.01M16 13h.01"/></svg>Week</div>
+          <div class="msb-item"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Deadlines</div>
+          <div class="msb-item"><svg viewBox="0 0 24 24"><path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1L12 16.6 5.7 21l2.3-7.1-6-4.5h7.6z"/></svg>Grades</div>
+          <div class="msb-item"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Courses</div>
+        </div>
+        <div class="mmain">
+          <h4>Your day</h4>
+          <div class="msub">TUE · JULY 7</div>
+          <div class="mrow" style="--cc:#0D9488"><div class="mtime">9:00 AM</div><span class="mdot" style="background:#0D9488"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
+          <div class="mrow" style="--cc:#E0568A"><div class="mtime">12:30 PM</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Offense film</div><div class="mm"><span class="mchip">Athletics</span>East classroom</div></div></div>
+          <div class="mnow"><span class="l"></span>NOW · 2:14 PM</div>
+          <div class="mrow" style="--cc:#E0568A"><div class="mtime">3:30 PM</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Practice</div><div class="mm"><span class="mchip">Athletics</span>Main field</div></div></div>
+          <div class="mrow" style="--cc:#7C5CFC"><div class="mtime">6:00 PM</div><span class="mdot" style="background:#7C5CFC"></span><div class="mcard"><div class="mt">Work shift</div><div class="mm"><span class="mchip">Work</span>Campus Store · 6–9pm</div></div></div>
+          <div class="mrow" style="--cc:#CE4038"><div class="mtime">11:59 PM</div><span class="mdot" style="background:#CE4038"></span><div class="mcard"><div class="mt">Problem Set 4</div><div class="mm"><span class="mchip">Due</span>MATH 231</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- trust strip -->
+    <div class="reveal" style="margin-top:28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;padding:20px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+      <span style="font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint)">Pulls everything from</span>
+      <span style="display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--text-dim)"><span style="width:7px;height:7px;border-radius:50%;background:var(--teal)"></span>Canvas</span>
+      <span style="display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--text-dim)"><span style="width:7px;height:7px;border-radius:50%;background:var(--violet)"></span>Gmail</span>
+      <span style="display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--text-dim)"><span style="width:7px;height:7px;border-radius:50%;background:var(--blue)"></span>Google Calendar</span>
+      <span style="display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--text-dim)"><span style="width:7px;height:7px;border-radius:50%;background:var(--rose)"></span>Team schedule</span>
+      <span style="display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:600;color:var(--text-dim)"><span style="width:7px;height:7px;border-radius:50%;background:var(--amber)"></span>Work shifts</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========================= HOW · 12:30 ========================= -->
+<section class="blk" id="how" data-time="12.5" data-cc="#F4699A">
+  <div class="wrap">
+    <div class="moment reveal" style="--cc:#F4699A">
+      <span class="clock"><span class="cd"></span>12:30 PM</span>
+      <span class="label">Film session · Athletics built in</span>
+      <span class="rule"></span>
+    </div>
     <div class="sec-head reveal">
-      <span class="eyebrow">How it works</span>
-      <h2>From scattered to sorted in three steps</h2>
-      <p>Class, athletics, work, and life — connected once, then kept current automatically.</p>
+      <h2>From scattered to sorted in three steps.</h2>
+      <p>Connect once — then Dayflow keeps itself current. Practice, film, and game days sit right alongside your classes and deadlines.</p>
     </div>
     <div class="steps">
       <div class="step reveal">
-        <div class="num">01</div>
-        <div class="sic"><svg viewBox="0 0 24 24"><path d="M9 12h6M12 9v6"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg></div>
+        <div class="num">STEP 01</div>
+        <div class="sic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 12h6M12 9v6"/></svg></div>
         <h3>Connect everything</h3>
         <p>Link Canvas, your email, and your team and work calendars. A couple of taps — nothing to configure.</p>
       </div>
       <div class="step reveal" style="transition-delay:.1s">
-        <div class="num">02</div>
+        <div class="num">STEP 02</div>
         <div class="sic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
         <h3>Dayflow gathers your day</h3>
-        <p>It pulls assignments, practice and film times, game days, work shifts, and dates from your email — all into one place.</p>
+        <p>It pulls assignments, practice and film times, game days, work shifts, and dates hiding in your email — all into one place.</p>
       </div>
       <div class="step reveal" style="transition-delay:.2s">
-        <div class="num">03</div>
-        <div class="sic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
-        <h3>See your whole day</h3>
-        <p>Everything you've got going on, on one timeline, sorted by what's happening next.</p>
+        <div class="num">STEP 03</div>
+        <div class="sic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h6"/></svg></div>
+        <h3>See what's next</h3>
+        <p>Everything you've got going on, on one timeline, sorted by what's happening next — with a live "Now" line.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="blk" id="why">
+<!-- ========================= PRACTICE · 15:30 (photo) ========================= -->
+<section class="blk" data-time="15.5" data-cc="#F4699A">
   <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">Why Dayflow</span>
-      <h2>From five apps to one</h2>
-      <p>Everything you're juggling across a dozen tabs — pulled into a single place that keeps itself up to date.</p>
+    <div class="moment reveal" style="--cc:#F4699A">
+      <span class="clock"><span class="cd"></span>3:30 PM</span>
+      <span class="label">Practice · Main field</span>
+      <span class="rule"></span>
     </div>
-    <div class="compare">
-      <div class="col-prob reveal">
-        <div class="ctitle">😵‍💫 Without Dayflow</div>
-        <ul>
-          <li>Canvas for assignments</li>
-          <li>Email for coach &amp; professor updates</li>
-          <li>A group chat for practice changes</li>
-          <li>A notes app for your work shifts</li>
-          <li>…and you still get blindsided</li>
-        </ul>
+    <div class="psplit">
+      <div class="ps-copy reveal">
+        <span class="eyebrow">For every kind of student</span>
+        <h3>Athlete, worker, or just over-committed — Dayflow keeps up.</h3>
+        <p>It doesn't matter how packed your week is. Everything you're balancing lands in one place, sorted by what's next — so you can stop running the schedule in your head and just show up.</p>
+        <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
       </div>
-      <div class="col-sol reveal" style="transition-delay:.1s">
-        <div class="ctitle">✅ With Dayflow</div>
-        <ul>
-          <li>Every class, practice, shift, and deadline on one timeline</li>
-          <li>AI reads your email and files the dates for you</li>
-          <li>Canvas assignments synced automatically</li>
-          <li>Athletics and work sit right alongside your schoolwork</li>
-          <li>You always know exactly what's next</li>
-        </ul>
+      <div class="ps-img reveal">
+        <img src="images/student.jpg" alt="A student smiling on campus at golden hour, headphones in hand" loading="lazy" width="900" height="1600">
+        <span class="ps-tag"><span class="cd"></span>3:30 PM · Practice · on time</span>
       </div>
     </div>
   </div>
 </section>
 
-<section class="blk">
-  <div class="wrap photo-split reveal">
-    <div class="ps-copy">
-      <span class="eyebrow">For every kind of student</span>
-      <h2>Athlete, worker, or just over-committed — Dayflow keeps up.</h2>
-      <p>It doesn't matter how packed your week is. Everything you're balancing lands in one place, sorted by what's next — so you can stop worrying about what you're forgetting.</p>
-      <a class="btn btn-primary" href="https://benmarban.github.io/duely/login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
+<!-- ========================= WORK · 18:00 (campus sunset band) ========================= -->
+<section class="band-photo" data-time="18" data-cc="#9A7BFF">
+  <img src="images/campus.jpg" alt="A university campus building glowing at sunset" loading="lazy" width="1600" height="1200">
+  <div class="wrap inner">
+    <div class="moment reveal" style="--cc:#9A7BFF">
+      <span class="clock" style="background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.2)"><span class="cd"></span>6:00 PM</span>
+      <span class="label" style="color:#C7D2E4">Sun's down · you're on shift</span>
+      <span class="rule" style="background:linear-gradient(to right,rgba(255,255,255,.3),transparent)"></span>
     </div>
-    <div class="ps-img"><img src="images/student.jpg" alt="A student on campus at golden hour" loading="lazy"></div>
+    <h2 class="reveal">The most on-top-of-it person <span class="accent">on campus?</span> That's you now.</h2>
+    <p class="reveal">Class wrapped, practice done, and you're clocking in — with tonight's deadlines already in view. Dayflow keeps the whole day in front of you so nothing slips after dark.</p>
   </div>
+  <span class="credit">golden hour · your campus</span>
 </section>
 
-<section class="blk" id="features">
+<!-- ========================= FEATURES · 21:00 ========================= -->
+<section class="blk" id="features" data-time="21" data-cc="#5B92F5">
   <div class="wrap">
+    <div class="moment reveal" style="--cc:#5B92F5">
+      <span class="clock"><span class="cd"></span>9:00 PM</span>
+      <span class="label">Back at the desk · Homework</span>
+      <span class="rule"></span>
+    </div>
     <div class="sec-head reveal">
-      <span class="eyebrow">Features</span>
-      <h2>Everything you juggle, in one command center</h2>
+      <h2>Everything you juggle, in one command center.</h2>
+      <p>Six things doing the work of five apps — quietly, in the background.</p>
     </div>
     <div class="feat-grid">
       <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div><h3>Your whole day, one timeline</h3><p>Classes, practice, film, work shifts, and deadlines merged into a single schedule, in order.</p></div>
-      <div class="feat reveal" style="transition-delay:.06s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--rose)"><path d="M6 9l6-5 6 5"/><path d="M6 9v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/><path d="M10 22v-6h4v6"/></svg></div><h3>Athletics built in</h3><p>Practice, film sessions, workouts, and game days — with reminders so you're never late.</p></div>
-      <div class="feat reveal" style="transition-delay:.12s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--violet)"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Work shifts</h3><p>Know exactly when you're on the clock. Add shifts or sync them from your scheduling app.</p></div>
-      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg></div><h3>Smart email reading</h3><p>Paste or sync an email and Dayflow pulls the date out — "film moved to 6am" just works.</p></div>
-      <div class="feat reveal" style="transition-delay:.06s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--amber)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Deadlines &amp; grades</h3><p>Canvas assignments and your grades, so school never slips through the cracks.</p></div>
-      <div class="feat reveal" style="transition-delay:.12s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div><h3>Works on your phone</h3><p>Add it to your home screen and it opens fullscreen like a native app.</p></div>
+      <div class="feat reveal" style="transition-delay:.05s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--rose)"><path d="M6 9l6-5 6 5"/><path d="M6 9v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/><path d="M10 22v-6h4v6"/></svg></div><h3>Athletics built in</h3><p>Practice, film sessions, workouts, and game days — with reminders so you're never late.</p></div>
+      <div class="feat reveal" style="transition-delay:.1s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--violet)"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Work shifts</h3><p>Know exactly when you're on the clock. Add shifts or sync them from your scheduling app.</p></div>
+      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--amber)"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg></div><h3>Smart email reading</h3><p>Paste or sync an email and Dayflow pulls the date out — "film moved to 6am" just works.</p></div>
+      <div class="feat reveal" style="transition-delay:.05s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Deadlines &amp; grades</h3><p>Canvas assignments and your grades, so school never slips through the cracks.</p></div>
+      <div class="feat reveal" style="transition-delay:.1s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div><h3>Works on your phone</h3><p>Add it to your home screen and it opens fullscreen, like a native app.</p></div>
     </div>
   </div>
 </section>
 
-<div class="band"><div class="wrap"><div class="band-in reveal">
-  <h2>Class at 9, film at noon, a shift at 5, three assignments due — <span class="accent">all in one day.</span></h2>
-  <p>Dayflow puts every part of your day on one screen, so nothing catches you off guard.</p>
-</div></div></div>
-
-<section class="blk" id="faq">
+<!-- ========================= MIDNIGHT + FAQ · 23:59 ========================= -->
+<section class="blk" id="faq" data-time="23.9" data-cc="#F86A5B">
   <div class="wrap">
-    <div class="sec-head reveal"><span class="eyebrow">FAQ</span><h2>Good questions</h2></div>
+    <div class="moment reveal" style="--cc:#F86A5B">
+      <span class="clock"><span class="cd"></span>11:59 PM</span>
+      <span class="label">The deadline · nothing slips</span>
+      <span class="rule"></span>
+    </div>
+    <div class="midnight reveal" style="margin-bottom:56px">
+      <span class="eyebrow">Class at 9 · film at noon · shift at 6 · three assignments due</span>
+      <h2>A day that used to blindside you, <span class="accent">handled.</span></h2>
+      <p>Every part of your day on one screen, sorted by what's next — so 11:59 PM never sneaks up again.</p>
+    </div>
+    <div class="sec-head center reveal"><span class="eyebrow">FAQ</span><h2>Good questions.</h2></div>
     <div class="faq">
       <div class="qa reveal"><button class="qa-q">Is this just for athletes, or just for school?<span class="plus"></span></button><div class="qa-a"><p>Neither — it's for your whole life. Dayflow started with classes and deadlines, but it handles anything on your schedule: practice, film, games, work shifts, club meetings, appointments. If it's part of your day, it goes in Dayflow.</p></div></div>
       <div class="qa reveal"><button class="qa-q">Which schools does it work with?<span class="plus"></span></button><div class="qa-a"><p>Any school that uses Canvas — which is most of them. Dayflow connects through your personal Canvas calendar feed, so it works no matter which campus you're on.</p></div></div>
@@ -495,131 +600,251 @@
   </div>
 </section>
 
-<section class="blk">
-  <div class="wrap photo-split reveal">
-    <div class="ps-img"><img src="images/walking.jpg" alt="Students walking across campus" loading="lazy"></div>
-    <div class="ps-copy">
-      <span class="eyebrow">Never fall behind</span>
-      <h2>Walk into every week already knowing the plan.</h2>
-      <p>No more scrambling the night before or hearing about a schedule change too late. Dayflow reads it, files it, and keeps it in front of you — automatically.</p>
+<!-- ========================= TOMORROW · dawn again (loop) ========================= -->
+<section class="final" data-time="6.5" data-cc="#2DD4BF">
+  <img src="images/walking.jpg" alt="Students walking across campus with backpacks in the morning" loading="lazy" width="1080" height="1600">
+  <div class="wrap inner">
+    <div class="reveal">
+      <span class="eyebrow" style="color:var(--teal-2)">Tomorrow · 6:30 AM</span>
+      <h2>Walk into every day <span class="grad">already knowing the plan.</span></h2>
+      <p>No more scrambling the night before or hearing about a change too late. Dayflow reads it, files it, and keeps it in front of you — automatically.</p>
+      <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
     </div>
   </div>
 </section>
 
-<div class="final"><div class="wrap"><div class="final-in reveal">
-  <h2>See your whole day at a glance.</h2>
-  <p>Open the dashboard and get everything — class, practice, work, and deadlines — on one screen.</p>
-  <a class="btn btn-primary" href="https://benmarban.github.io/duely/login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
-</div></div></div>
-
 <footer>
   <div class="wrap foot-in">
     <a href="#top" class="logo"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow<span class="dot">.</span></a>
-    <div class="foot-links"><a href="#how">How it works</a><a href="#features">Features</a><a href="#faq">FAQ</a><a href="https://benmarban.github.io/duely/login.html">Open the app</a></div>
-    <div class="foot-copy">© 2026 Dayflow · Made for students &amp; student-athletes</div>
+    <div class="foot-links"><a href="#how">How it works</a><a href="#features">Features</a><a href="#faq">FAQ</a><a href="login.html">Open the app</a></div>
+    <div class="foot-copy">© 2026 Dayflow · made for students &amp; student-athletes</div>
   </div>
 </footer>
 
 <script>
 (function(){
   "use strict";
-  if(!document.querySelector('meta[name="viewport"]')){var mv=document.createElement('meta');mv.name='viewport';mv.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(mv);}
-  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-  // ---- Lecture-hall background scene ----
-  const hall=document.getElementById('hall'),hctx=hall.getContext('2d');
-  const moteCv=document.getElementById('motes'),mctx=moteCv.getContext('2d');
-  let W=0,H=0,DPR=1,motes=[];
-  function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
-  function drawHall(){
-    hctx.clearRect(0,0,W,H);
-    const vpx=W*0.5, vpy=H*0.40;
-    // ambient glow at the screen
-    let g=hctx.createRadialGradient(vpx,vpy,0,vpx,vpy,Math.max(W,H)*0.55);
-    g.addColorStop(0,'rgba(45,212,191,0.15)');g.addColorStop(.5,'rgba(45,212,191,0.045)');g.addColorStop(1,'transparent');
-    hctx.fillStyle=g;hctx.fillRect(0,0,W,H);
-    // lecture screen
-    const sw=Math.min(W*0.24,340),sh=sw*0.44;
-    hctx.save();
-    hctx.strokeStyle='rgba(94,234,212,0.55)';hctx.lineWidth=1.5;
-    hctx.shadowColor='rgba(45,212,191,0.7)';hctx.shadowBlur=34;
-    roundRect(hctx,vpx-sw/2,vpy-sh-H*0.03,sw,sh,7);hctx.stroke();
-    hctx.shadowBlur=0;hctx.fillStyle='rgba(45,212,191,0.05)';hctx.fill();
-    hctx.restore();
-    // converging perspective beams from screen edges toward the floor
-    hctx.strokeStyle='rgba(255,255,255,0.045)';hctx.lineWidth=1;
-    const baseY=H*1.02;
-    [-1,-.5,.5,1].forEach(k=>{hctx.beginPath();hctx.moveTo(vpx+k*sw*0.5,vpy-sh*0.5-H*0.03);hctx.lineTo(vpx+k*(W*0.62),baseY);hctx.stroke();});
-    // tiered rows of students facing the screen
-    const rows=7;
-    for(let r=0;r<rows;r++){
-      const t=r/(rows-1);                    // 0 = far/back, 1 = near/front
-      const y=vpy+(baseY-vpy)*Math.pow(t,1.35)*0.9+H*0.05;
-      const halfW=(W*0.07)+(W*0.46)*Math.pow(t,1.05);
-      const dotR=1.4+3.2*t, alpha=0.09+0.20*t;
-      // desk/row line
-      hctx.strokeStyle='rgba(120,160,205,'+(0.03+0.05*t)+')';hctx.lineWidth=1;
-      hctx.beginPath();hctx.moveTo(vpx-halfW,y+dotR*1.6);hctx.lineTo(vpx+halfW,y+dotR*1.6);hctx.stroke();
-      // student heads
-      const count=Math.round(7+11*t);
-      for(let c=0;c<count;c++){
-        const fx=count>1?(c/(count-1))-0.5:0;
-        const jitter=((c*53+r*17)%7-3)*0.4;   // deterministic wobble, no RNG
-        const x=vpx+fx*halfW*1.94;
-        hctx.fillStyle='rgba(155,185,220,'+alpha+')';
-        hctx.beginPath();hctx.arc(x,y+jitter,dotR,0,Math.PI*2);hctx.fill();
-      }
-    }
-  }
-  function initMotes(){
-    motes=[];const n=Math.round(W/26);
-    for(let i=0;i<n;i++)motes.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+0.4,s:Math.random()*0.28+0.05,a:Math.random()*0.4+0.12,tw:Math.random()*6});
-  }
-  function drawMotes(){
-    mctx.clearRect(0,0,W,H);
-    for(const m of motes){
-      mctx.beginPath();mctx.fillStyle='rgba(180,220,235,'+m.a+')';
-      mctx.arc(m.x,m.y,m.r,0,Math.PI*2);mctx.fill();
-    }
-  }
-  function stepMotes(){
-    for(const m of motes){m.y-=m.s;m.tw+=0.02;m.x+=Math.sin(m.tw)*0.12;if(m.y<-4){m.y=H+4;m.x=Math.random()*W;}}
-    drawMotes();raf=requestAnimationFrame(stepMotes);
-  }
-  let raf=0;
-  function size(){
-    DPR=Math.min(window.devicePixelRatio||1,2);
-    W=window.innerWidth;H=window.innerHeight;
-    [hall,moteCv].forEach(cv=>{cv.width=W*DPR;cv.height=H*DPR;});
-    hctx.setTransform(DPR,0,0,DPR,0,0);mctx.setTransform(DPR,0,0,DPR,0,0);
-    drawHall();initMotes();drawMotes();
-  }
-  size();
-  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(size,180);},{passive:true});
-  if(!reduce){cancelAnimationFrame(raf);raf=requestAnimationFrame(stepMotes);}
+  /* ---------- Nav ---------- */
+  var nav = document.getElementById('nav');
+  function onNav(){ nav.classList.toggle('scrolled', window.scrollY > 16); }
+  onNav();
+  var toggle = document.getElementById('navToggle'), links = document.getElementById('navLinks');
+  toggle.addEventListener('click', function(){
+    var show = links.classList.toggle('show');
+    toggle.setAttribute('aria-expanded', show ? 'true':'false');
+  });
+  links.addEventListener('click', function(e){ if(e.target.tagName==='A'){ links.classList.remove('show'); toggle.setAttribute('aria-expanded','false'); } });
 
-  // ---- Nav ----
-  const nav=document.getElementById('nav');
-  const onScroll=()=>{nav.classList.toggle('scrolled',window.scrollY>16);};
-  onScroll();window.addEventListener('scroll',onScroll,{passive:true});
-  const toggle=document.getElementById('navToggle'),links=document.getElementById('navLinks');
-  toggle.addEventListener('click',()=>links.classList.toggle('show'));
-  links.addEventListener('click',e=>{if(e.target.tagName==='A')links.classList.remove('show');});
+  /* ---------- Scroll reveal ---------- */
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+  }, {threshold:.12, rootMargin:'0px 0px -6% 0px'});
+  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
 
-  // ---- Scroll reveal ----
-  const io=new IntersectionObserver((entries)=>{
-    entries.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});
-  },{threshold:.14,rootMargin:'0px 0px -8% 0px'});
-  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
-
-  // ---- FAQ ----
-  document.querySelectorAll('.qa-q').forEach(q=>{
-    q.addEventListener('click',()=>{
-      const qa=q.parentElement,a=qa.querySelector('.qa-a'),open=qa.classList.contains('open');
-      document.querySelectorAll('.qa.open').forEach(o=>{o.classList.remove('open');o.querySelector('.qa-a').style.maxHeight=null;});
-      if(!open){qa.classList.add('open');a.style.maxHeight=a.scrollHeight+'px';}
+  /* ---------- FAQ ---------- */
+  document.querySelectorAll('.qa-q').forEach(function(q){
+    q.addEventListener('click', function(){
+      var qa=q.parentElement, a=qa.querySelector('.qa-a'), open=qa.classList.contains('open');
+      document.querySelectorAll('.qa.open').forEach(function(o){ o.classList.remove('open'); o.querySelector('.qa-a').style.maxHeight=null; });
+      if(!open){ qa.classList.add('open'); a.style.maxHeight=a.scrollHeight+'px'; }
     });
   });
+
+  /* ============================================================
+     THE SKY — interpolate ambient hue with scroll depth
+     Keyframes: [progress, glow rgb, accent rgb, a1, a2]
+     ============================================================ */
+  var SKY = [
+    [0.00, [232,163,23],  [244,105,154], .17, .11],  // dawn — amber + rose
+    [0.22, [45,212,191],  [91,146,245],  .14, .08],  // morning — teal + blue
+    [0.50, [91,146,245],  [45,212,191],  .13, .08],  // midday — cool
+    [0.68, [240,128,60],  [200,86,138],  .20, .13],  // dusk — orange/magenta (campus sunset)
+    [0.86, [76,58,120],   [45,212,191],  .16, .10],  // twilight — violet
+    [1.00, [30,60,150],   [45,212,191],  .13, .10]   // night — deep blue + teal
+  ];
+  function lerp(a,b,t){ return a+(b-a)*t; }
+  function mix(c1,c2,t){ return [Math.round(lerp(c1[0],c2[0],t)),Math.round(lerp(c1[1],c2[1],t)),Math.round(lerp(c1[2],c2[2],t))]; }
+  function skyAt(p){
+    for(var i=0;i<SKY.length-1;i++){
+      var a=SKY[i], b=SKY[i+1];
+      if(p<=b[0]){
+        var t=(p-a[0])/(b[0]-a[0]||1);
+        return { g:mix(a[1],b[1],t), a2:mix(a[2],b[2],t), a1v:lerp(a[3],b[3],t), a2v:lerp(a[4],b[4],t), night:p };
+      }
+    }
+    var L=SKY[SKY.length-1];
+    return { g:L[1], a2:L[2], a1v:L[3], a2v:L[4], night:1 };
+  }
+  var sky = document.getElementById('sky');
+  function paintSky(p){
+    var s=skyAt(p);
+    sky.style.setProperty('--sky-1', s.g.join(','));
+    sky.style.setProperty('--sky-2', s.a2.join(','));
+    sky.style.setProperty('--sky-a1', s.a1v.toFixed(3));
+    sky.style.setProperty('--sky-a2', s.a2v.toFixed(3));
+    return s.night; // 0..1 day->night for starfield
+  }
+
+  /* ============================================================
+     THE TIME RAIL — build ticks from data-time sections
+     ============================================================ */
+  var rail=document.getElementById('rail'), railTicks=document.getElementById('railTicks'),
+      railFill=document.getElementById('railFill'), railNow=document.getElementById('railNow');
+  var timeSections=[].slice.call(document.querySelectorAll('[data-time]'));
+  // Build a tick per unique labelled moment (skip the final dawn loop dup + hero)
+  var railStops=[
+    {t:'6:30a', cc:'#2DD4BF'}, {t:'8:00a', cc:'#F86A5B'}, {t:'9:00a', cc:'#2DD4BF'},
+    {t:'12:30p', cc:'#F4699A'}, {t:'3:30p', cc:'#F4699A'}, {t:'6:00p', cc:'#9A7BFF'},
+    {t:'9:00p', cc:'#5B92F5'}, {t:'11:59p', cc:'#F86A5B'}
+  ];
+  var tickEls=[];
+  railStops.forEach(function(s,i){
+    var top=(i/(railStops.length-1))*100;
+    var el=document.createElement('div');
+    el.className='tick'; el.style.top=top+'%'; el.style.setProperty('--cc',s.cc);
+    el.innerHTML='<span class="d"></span><span class="t">'+s.t+'</span>';
+    railTicks.appendChild(el); tickEls.push(el);
+  });
+
+  /* ============================================================
+     Master scroll handler (rAF-throttled)
+     ============================================================ */
+  var prog=document.getElementById('prog');
+  var ticking=false, nightLevel=0;
+  function onScroll(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      var doc=document.documentElement;
+      var max=(doc.scrollHeight - window.innerHeight)||1;
+      var p=Math.min(1,Math.max(0, window.scrollY/max));
+      prog.style.setProperty('--p',(p*100).toFixed(2)+'%');
+      nightLevel = paintSky(p);
+      onNav();
+      // rail fill + now marker
+      var railTop=window.innerHeight*0.15, railBot=window.innerHeight*0.14;
+      var span=window.innerHeight - railTop - railBot;
+      railFill.style.height=(span*p)+'px';
+      railNow.style.top=(railTop + span*p)+'px';
+      // active tick highlight = nearest below current progress
+      var idx=Math.round(p*(railStops.length-1));
+      tickEls.forEach(function(el,i){ el.classList.toggle('on', i<=idx && p>0.01); });
+      ticking=false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll, {passive:true});
+
+  /* ============================================================
+     STARFIELD — dust motes by day, stars by night
+     ============================================================ */
+  var canvas=document.getElementById('starCanvas'), ctx=canvas.getContext('2d');
+  var W=0,H=0,DPR=1,parts=[];
+  function seed(){
+    parts=[]; var n=Math.round(Math.min(W,1600)/13);
+    for(var i=0;i<n;i++){
+      parts.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.4+0.4,
+        s:Math.random()*0.22+0.03, tw:Math.random()*6.28, ts:Math.random()*0.03+0.008,
+        base:Math.random()*0.5+0.2});
+    }
+  }
+  function sizeCanvas(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth; H=window.innerHeight;
+    canvas.width=W*DPR; canvas.height=H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0); seed();
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    // night 0..1 -> stars brighten & twinkle; day -> faint warm motes
+    var night=Math.max(0,(nightLevel-0.55)/0.45); // starts appearing after dusk
+    for(var i=0;i<parts.length;i++){
+      var m=parts[i];
+      var tw=(Math.sin(m.tw)+1)/2;
+      var dayA=m.base*0.25;
+      var nightA=m.base*(0.35+tw*0.65);
+      var a=dayA*(1-night)+nightA*night;
+      var col= night>0.5 ? '235,242,255' : '210,225,240';
+      ctx.beginPath(); ctx.fillStyle='rgba('+col+','+a.toFixed(3)+')';
+      ctx.arc(m.x,m.y,m.r*(1+night*0.5),0,6.2832); ctx.fill();
+    }
+  }
+  function step(){
+    for(var i=0;i<parts.length;i++){ var m=parts[i]; m.y-=m.s; m.tw+=m.ts; m.x+=Math.sin(m.tw)*0.08; if(m.y<-4){m.y=H+4;m.x=Math.random()*W;} }
+    draw(); raf=requestAnimationFrame(step);
+  }
+  var raf=0;
+  sizeCanvas();
+  var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(sizeCanvas,180); }, {passive:true});
+  if(reduce){ draw(); } else { raf=requestAnimationFrame(step); }
+
+  /* ============================================================
+     LIVE "TODAY" CARD — real clock + computed "up next"
+     ============================================================ */
+  var SCHEDULE=[
+    {m:9*60,     name:'MATH 231 · Lecture', tag:'Class',     cc:'#2DD4BF'},
+    {m:12*60+30, name:'Offense film',       tag:'Athletics', cc:'#F4699A'},
+    {m:15*60+30, name:'Practice',           tag:'Athletics', cc:'#F4699A'},
+    {m:18*60,    name:'Work shift',         tag:'Work',      cc:'#9A7BFF'},
+    {m:21*60,    name:'Problem Set 4',      tag:'Study',     cc:'#5B92F5'},
+    {m:23*60+59, name:'Problem Set 4 due',  tag:'Due',       cc:'#F86A5B'}
+  ];
+  function fmt(mins){
+    var h=Math.floor(mins/60)%24, mm=mins%60;
+    var ap=h>=12?'PM':'AM'; var hh=h%12; if(hh===0)hh=12;
+    return {h:hh, mm:(mm<10?'0':'')+mm, ap:ap};
+  }
+  function fmtStr(mins){ var f=fmt(mins); return f.h+':'+f.mm+' '+f.ap; }
+  var greetEl=document.getElementById('greet'), dateEl=document.getElementById('todayDate'),
+      ctEl=document.getElementById('clockTime'), apEl=document.getElementById('clockAp'),
+      nextTxt=document.getElementById('nextTxt'), nextWhen=document.getElementById('nextWhen'),
+      tlEl=document.getElementById('todayTl');
+
+  function buildTimeline(nowMin){
+    var html='';
+    for(var i=0;i<SCHEDULE.length;i++){
+      var s=SCHEDULE[i];
+      var cls='tl-item';
+      var isNow = (nowMin>=s.m) && (i===SCHEDULE.length-1 || nowMin < SCHEDULE[i+1].m);
+      if(nowMin>=s.m && !isNow) cls+=' past';
+      if(isNow) cls+=' now';
+      html+='<div class="'+cls+'" style="--cc:'+s.cc+'">'+
+        '<span class="tt">'+fmtStr(s.m).replace(':00','').replace(' ','')+'</span>'+
+        '<span class="body"><span class="cdot"></span><span class="name">'+s.name+'</span>'+
+        '<span class="tag">'+s.tag+'</span></span></div>';
+    }
+    tlEl.innerHTML=html;
+  }
+  var lastMinuteKey='';
+  function tick(){
+    var d=new Date();
+    var h=d.getHours(), m=d.getMinutes();
+    var nowMin=h*60+m;
+    var f=fmt(nowMin);
+    ctEl.textContent=f.h+':'+f.mm; apEl.textContent=f.ap;
+    greetEl.textContent = h<12?'Good morning':(h<17?'Good afternoon':'Good evening');
+    var days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+    var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    dateEl.textContent=days[d.getDay()]+', '+mons[d.getMonth()]+' '+d.getDate();
+    // next up
+    var nxt=null;
+    for(var i=0;i<SCHEDULE.length;i++){ if(SCHEDULE[i].m>nowMin){ nxt=SCHEDULE[i]; break; } }
+    if(nxt){
+      var diff=nxt.m-nowMin;
+      nextTxt.textContent=nxt.name;
+      nextWhen.textContent = diff<=60 ? ('in '+diff+' min') : fmtStr(nxt.m);
+    } else {
+      nextTxt.textContent='MATH 231 · Lecture';
+      nextWhen.textContent='tomorrow 9:00 AM';
+    }
+    var key=nowMin+'';
+    if(key!==lastMinuteKey){ buildTimeline(nowMin); lastMinuteKey=key; }
+  }
+  tick(); setInterval(tick, 15000);
+
+  // initial paint
+  onScroll();
 })();
 </script>
 </body>
