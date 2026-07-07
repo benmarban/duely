@@ -4,43 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Duely — a student command center that unifies Canvas, email, calendar, grades, and courses in one dashboard.">
-<meta name="theme-color" content="#0E7C66">
+<meta name="theme-color" content="#2563EB">
 </head>
 <body><title>Duely â€” your student command center</title>
 <style>
   :root{
-    --bg:#EFF3F0; --surface:#FFFFFF; --surface-2:#F3F6F4; --surface-3:#E7EDE9;
-    --text:#15201C; --text-dim:#5A6A62; --text-faint:#8A988F;
-    --line:#E3E9E4; --line-strong:#D3DBD5;
-    --accent:#0E7C66; --accent-ink:#0A5C4C; --accent-soft:#DAEDE5;
-    --urgent:#CE4038; --urgent-soft:#F8E1DE; --soon:#B57A00; --soon-soft:#FBEFD3;
+    --bg:#F3F6FC; --surface:#FFFFFF; --surface-2:#F1F5FB; --surface-3:#E6EDF8;
+    --text:#152139; --text-dim:#586274; --text-faint:#8791A3;
+    --line:#E5EAF3; --line-strong:#D3DBEA;
+    --accent:#2563EB; --accent-ink:#1E3A8A; --accent-soft:#DEE9FE;
+    --urgent:#D42B2B; --urgent-soft:#FBE1E1; --soon:#B7791F; --soon-soft:#FBEFD3;
     --ok:#2E9A50; --ok-soft:#DEF0E4;
-    --canvas:#B84A3B; --canvas-soft:#F6E3DF; --email:#3767A6; --email-soft:#E0E9F6;
-    --c-math:#5B6BD6; --c-engl:#CE5B7C; --c-biol:#2E9A50; --c-chem:#C0842A; --c-hist:#8A6BD6;
-    --shadow:0 1px 2px rgba(16,32,26,.05), 0 6px 20px -10px rgba(16,32,26,.14);
-    --shadow-lg:0 12px 40px -12px rgba(16,32,26,.28);
+    --canvas:#C2410C; --canvas-soft:#FBE6DA; --email:#5566A8; --email-soft:#E5E9F7;
+    --c-math:#7C5CFC; --c-engl:#E0568A; --c-biol:#17A673; --c-chem:#E08C1E; --c-hist:#0EA5C4;
+    --shadow:0 1px 2px rgba(20,30,55,.05), 0 6px 20px -10px rgba(20,30,55,.16);
+    --shadow-lg:0 12px 40px -12px rgba(20,30,55,.28);
     --r:16px; --r-sm:11px;
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",system-ui,sans-serif;
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#0B100E; --surface:#141C19; --surface-2:#101815; --surface-3:#1E2823;
-      --text:#E9F1ED; --text-dim:#94A69E; --text-faint:#66766D;
-      --line:#242E29; --line-strong:#303B35;
-      --accent:#37B89A; --accent-ink:#63D2B7; --accent-soft:#15302A;
-      --urgent:#F0655F; --urgent-soft:#2E1917; --soon:#E4A93A; --soon-soft:#2C2410;
+      --bg:#0B1220; --surface:#121B2E; --surface-2:#0F1728; --surface-3:#1C2942;
+      --text:#E8EDF7; --text-dim:#98A6C0; --text-faint:#657092;
+      --line:#22304C; --line-strong:#2E3E5E;
+      --accent:#5B8DEF; --accent-ink:#93B4F7; --accent-soft:#17284A;
+      --urgent:#F26D6D; --urgent-soft:#2E1717; --soon:#E4A93A; --soon-soft:#2C2410;
       --ok:#4FBE71; --ok-soft:#16281C;
-      --canvas:#E0796B; --canvas-soft:#2C1B18; --email:#7AA6E0; --email-soft:#141F2E;
-      --c-math:#8592E8; --c-engl:#E683A0; --c-biol:#5CC77E; --c-chem:#DCA84E; --c-hist:#A98FE8;
+      --canvas:#E0876B; --canvas-soft:#2C1E18; --email:#8C9AD6; --email-soft:#1A2138;
+      --c-math:#9B8AFF; --c-engl:#F080AB; --c-biol:#3FC98D; --c-chem:#E7B24E; --c-hist:#45BEDC;
       --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.55);
       --shadow-lg:0 16px 50px -12px rgba(0,0,0,.7);
     }
   }
   :root[data-theme="light"]{
-    --bg:#EFF3F0;--surface:#FFFFFF;--surface-2:#F3F6F4;--surface-3:#E7EDE9;--text:#15201C;--text-dim:#5A6A62;--text-faint:#8A988F;--line:#E3E9E4;--line-strong:#D3DBD5;--accent:#0E7C66;--accent-ink:#0A5C4C;--accent-soft:#DAEDE5;--urgent:#CE4038;--urgent-soft:#F8E1DE;--soon:#B57A00;--soon-soft:#FBEFD3;--ok:#2E9A50;--ok-soft:#DEF0E4;--canvas:#B84A3B;--canvas-soft:#F6E3DF;--email:#3767A6;--email-soft:#E0E9F6;--c-math:#5B6BD6;--c-engl:#CE5B7C;--c-biol:#2E9A50;--c-chem:#C0842A;--c-hist:#8A6BD6;--shadow:0 1px 2px rgba(16,32,26,.05),0 6px 20px -10px rgba(16,32,26,.14);--shadow-lg:0 12px 40px -12px rgba(16,32,26,.28);
+    --bg:#F3F6FC;--surface:#FFFFFF;--surface-2:#F1F5FB;--surface-3:#E6EDF8;--text:#152139;--text-dim:#586274;--text-faint:#8791A3;--line:#E5EAF3;--line-strong:#D3DBEA;--accent:#2563EB;--accent-ink:#1E3A8A;--accent-soft:#DEE9FE;--urgent:#D42B2B;--urgent-soft:#FBE1E1;--soon:#B7791F;--soon-soft:#FBEFD3;--ok:#2E9A50;--ok-soft:#DEF0E4;--canvas:#C2410C;--canvas-soft:#FBE6DA;--email:#5566A8;--email-soft:#E5E9F7;--c-math:#7C5CFC;--c-engl:#E0568A;--c-biol:#17A673;--c-chem:#E08C1E;--c-hist:#0EA5C4;--shadow:0 1px 2px rgba(20,30,55,.05),0 6px 20px -10px rgba(20,30,55,.16);--shadow-lg:0 12px 40px -12px rgba(20,30,55,.28);
   }
   :root[data-theme="dark"]{
-    --bg:#0B100E;--surface:#141C19;--surface-2:#101815;--surface-3:#1E2823;--text:#E9F1ED;--text-dim:#94A69E;--text-faint:#66766D;--line:#242E29;--line-strong:#303B35;--accent:#37B89A;--accent-ink:#63D2B7;--accent-soft:#15302A;--urgent:#F0655F;--urgent-soft:#2E1917;--soon:#E4A93A;--soon-soft:#2C2410;--ok:#4FBE71;--ok-soft:#16281C;--canvas:#E0796B;--canvas-soft:#2C1B18;--email:#7AA6E0;--email-soft:#141F2E;--c-math:#8592E8;--c-engl:#E683A0;--c-biol:#5CC77E;--c-chem:#DCA84E;--c-hist:#A98FE8;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.55);--shadow-lg:0 16px 50px -12px rgba(0,0,0,.7);
+    --bg:#0B1220;--surface:#121B2E;--surface-2:#0F1728;--surface-3:#1C2942;--text:#E8EDF7;--text-dim:#98A6C0;--text-faint:#657092;--line:#22304C;--line-strong:#2E3E5E;--accent:#5B8DEF;--accent-ink:#93B4F7;--accent-soft:#17284A;--urgent:#F26D6D;--urgent-soft:#2E1717;--soon:#E4A93A;--soon-soft:#2C2410;--ok:#4FBE71;--ok-soft:#16281C;--canvas:#E0876B;--canvas-soft:#2C1E18;--email:#8C9AD6;--email-soft:#1A2138;--c-math:#9B8AFF;--c-engl:#F080AB;--c-biol:#3FC98D;--c-chem:#E7B24E;--c-hist:#45BEDC;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px -12px rgba(0,0,0,.55);--shadow-lg:0 16px 50px -12px rgba(0,0,0,.7);
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.45}
