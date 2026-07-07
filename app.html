@@ -1,12 +1,13 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Duely — a student command center that unifies Canvas, email, calendar, grades, and courses in one dashboard.">
+<meta name="description" content="Duely dashboard - your deadlines, schedule, grades, and courses in one place.">
 <meta name="theme-color" content="#2563EB">
 </head>
-<body><title>Duely â€” your student command center</title>
+<body>
+<title>Duely — your student command center</title>
 <style>
   :root{
     --bg:#F3F6FC; --surface:#FFFFFF; --surface-2:#F1F5FB; --surface-3:#E6EDF8;
@@ -305,11 +306,11 @@
         <div class="grid">
           <div class="col">
             <div class="widget">
-              <div class="whead"><h3>Upcoming deadlines</h3><button class="wlink" data-goto="deadlines">See all â†’</button></div>
+              <div class="whead"><h3>Upcoming deadlines</h3><button class="wlink" data-goto="deadlines">See all →</button></div>
               <div class="wbody" id="wUpcoming"></div>
             </div>
             <div class="widget">
-              <div class="whead"><h3>Recent grades</h3><button class="wlink" data-goto="grades">All grades â†’</button></div>
+              <div class="whead"><h3>Recent grades</h3><button class="wlink" data-goto="grades">All grades →</button></div>
               <div class="wbody" id="wGrades"></div>
             </div>
           </div>
@@ -356,10 +357,10 @@
 <div class="modal-bg" id="modalBg">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-h">
-      <div><h2>Add from an email</h2><p>Paste any message â€” a professor's note, a club email, a syllabus line. Duely pulls out the date.</p></div>
-      <button class="mclose" id="mclose" aria-label="Close">Ã—</button>
+      <div><h2>Add from an email</h2><p>Paste any message — a professor's note, a club email, a syllabus line. Duely pulls out the date.</p></div>
+      <button class="mclose" id="mclose" aria-label="Close">×</button>
     </div>
-    <textarea id="emailInput" placeholder="Paste an email or message hereâ€¦&#10;&#10;e.g. â€œReminder: the midterm has been moved to Friday, July 17 at 10am.â€"></textarea>
+    <textarea id="emailInput" placeholder="Paste an email or message here…&#10;&#10;e.g. “Reminder: the midterm has been moved to Friday, July 17 at 10am.”"></textarea>
     <div class="examples" id="examples"></div>
     <button class="btn" id="detectBtn">Find dates</button>
     <div id="detected"></div>
@@ -383,9 +384,9 @@
 
   // ---- data ----
   const COURSES=[
-    {code:'MATH 231',name:'Calculus II',prof:'Dr. Okafor',cc:'var(--c-math)',grade:'Aâˆ’',pct:91},
+    {code:'MATH 231',name:'Calculus II',prof:'Dr. Okafor',cc:'var(--c-math)',grade:'A−',pct:91},
     {code:'ENGL 210',name:'American Literature',prof:'Prof. Reyes',cc:'var(--c-engl)',grade:'B+',pct:88},
-    {code:'BIOL 101',name:'Intro to Biology',prof:'Dr. Hahn',cc:'var(--c-biol)',grade:'Aâˆ’',pct:90},
+    {code:'BIOL 101',name:'Intro to Biology',prof:'Dr. Hahn',cc:'var(--c-biol)',grade:'A−',pct:90},
     {code:'CHEM 105',name:'General Chemistry',prof:'Dr. Whitfield',cc:'var(--c-chem)',grade:'A',pct:95},
     {code:'HIST 118',name:'The Modern World',prof:'Prof. Lindqvist',cc:'var(--c-hist)',grade:'B',pct:84}
   ];
@@ -394,12 +395,12 @@
   const SEED=[
     {id:'s1',title:'Discussion Post: Origins of the Cold War',course:'HIST 118',source:'canvas',due:at(-1,23,59),done:false},
     {id:'s2',title:'Problem Set 4',course:'MATH 231',source:'canvas',due:at(0,23,59),done:false},
-    {id:'s3',title:'Reading Response â€” Ch. 6',course:'ENGL 210',source:'canvas',due:at(1,9,0),done:false},
+    {id:'s3',title:'Reading Response — Ch. 6',course:'ENGL 210',source:'canvas',due:at(1,9,0),done:false},
     {id:'s4',title:'Group project sync w/ Priya & Sam',course:'from email',source:'email',due:at(2,15,0),done:false},
     {id:'s5',title:'Lab Report 3: Titration',course:'CHEM 105',source:'canvas',due:at(3,17,0),done:false},
     {id:'s6',title:'Midterm Exam',course:'BIOL 101',source:'canvas',due:at(5,10,0),done:false},
     {id:'s7',title:'Merit scholarship application',course:'from email',source:'email',due:at(8,17,0),done:false},
-    {id:'s8',title:'Essay Draft â€” final version',course:'ENGL 210',source:'canvas',due:at(12,23,59),done:false}
+    {id:'s8',title:'Essay Draft — final version',course:'ENGL 210',source:'canvas',due:at(12,23,59),done:false}
   ];
   const KEY='duely.items.v2';
   let items;try{items=JSON.parse(localStorage.getItem(KEY))||null;}catch(e){items=null;}
@@ -407,23 +408,23 @@
   function save(){try{localStorage.setItem(KEY,JSON.stringify(items));}catch(e){}}
 
   const SCHEDULE=[
-    {sh:9,sm:0,eh:9,em:50,code:'MATH 231',label:'Lecture Â· Warren Hall 210'},
-    {sh:11,sm:0,eh:12,em:15,code:'BIOL 101',label:'Lecture Â· Science Center 101'},
-    {sh:13,sm:0,eh:14,em:15,code:'ENGL 210',label:'Seminar Â· Humanities 305'},
-    {sh:15,sm:30,eh:16,em:0,code:'Group project sync',label:'From email Â· Priya Nair'}
+    {sh:9,sm:0,eh:9,em:50,code:'MATH 231',label:'Lecture · Warren Hall 210'},
+    {sh:11,sm:0,eh:12,em:15,code:'BIOL 101',label:'Lecture · Science Center 101'},
+    {sh:13,sm:0,eh:14,em:15,code:'ENGL 210',label:'Seminar · Humanities 305'},
+    {sh:15,sm:30,eh:16,em:0,code:'Group project sync',label:'From email · Priya Nair'}
   ];
   const GRADES=[
     {code:'CHEM 105',item:'Problem Set 2',score:39,max:40,letter:'A'},
-    {code:'BIOL 101',item:'Lab 2: Microscopy',score:46,max:50,letter:'Aâˆ’'},
-    {code:'MATH 231',item:'Quiz 3',score:18,max:20,letter:'Aâˆ’'},
+    {code:'BIOL 101',item:'Lab 2: Microscopy',score:46,max:50,letter:'A−'},
+    {code:'MATH 231',item:'Quiz 3',score:18,max:20,letter:'A−'},
     {code:'ENGL 210',item:'Essay 1: Close Reading',score:88,max:100,letter:'B+'},
     {code:'HIST 118',item:'Reading Quiz 4',score:8,max:10,letter:'B'}
   ];
   const ANN=[
-    {src:'BIOL 101',emo:'ðŸ§ª',text:'Midterm review session added â€” Thursday 6pm, Science Center 101.',time:'2h ago',unread:true},
-    {src:'ENGL 210',emo:'ðŸ“„',text:'Essay 1 grades are posted. See feedback in the rubric.',time:'5h ago',unread:true},
-    {src:'Financial Aid',emo:'ðŸ’°',text:'Merit scholarship deadline is approaching â€” submit by July 24.',time:'1d ago',unread:true},
-    {src:'MATH 231',emo:'âˆ‘',text:'Problem Set 4 solutions posted after the deadline tonight.',time:'1d ago',unread:false}
+    {src:'BIOL 101',emo:'🧪',text:'Midterm review session added — Thursday 6pm, Science Center 101.',time:'2h ago',unread:true},
+    {src:'ENGL 210',emo:'📄',text:'Essay 1 grades are posted. See feedback in the rubric.',time:'5h ago',unread:true},
+    {src:'Financial Aid',emo:'💰',text:'Merit scholarship deadline is approaching — submit by July 24.',time:'1d ago',unread:true},
+    {src:'MATH 231',emo:'∑',text:'Problem Set 4 solutions posted after the deadline tonight.',time:'1d ago',unread:false}
   ];
 
   // ---- helpers ----
@@ -433,10 +434,10 @@
   function dayDiff(d){return Math.round((startOfDay(d)-today0)/DAY);}
   function relDue(iso){const d=new Date(iso),diff=dayDiff(d),t=fmtTime(d);
     if(diff<0)return{txt:`${Math.abs(diff)}d overdue`,cls:'urgent'};
-    if(diff===0)return{txt:`Today Â· ${t}`,cls:'urgent'};
-    if(diff===1)return{txt:`Tomorrow Â· ${t}`,cls:'soon'};
-    if(diff<7)return{txt:`${DOW[d.getDay()]} Â· ${t}`,cls:''};
-    return{txt:`${MON[d.getMonth()]} ${d.getDate()} Â· ${t}`,cls:''};}
+    if(diff===0)return{txt:`Today · ${t}`,cls:'urgent'};
+    if(diff===1)return{txt:`Tomorrow · ${t}`,cls:'soon'};
+    if(diff<7)return{txt:`${DOW[d.getDay()]} · ${t}`,cls:''};
+    return{txt:`${MON[d.getMonth()]} ${d.getDate()} · ${t}`,cls:''};}
   const CHECK='<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
   const badge=s=>s==='canvas'?'<span class="badge canvas">Canvas</span>':'<span class="badge email">Email</span>';
   function drowHTML(it){const r=relDue(it.due);
@@ -456,12 +457,12 @@
     document.getElementById('stats').innerHTML=`
       <div class="stat"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><rect x="3" y="4.5" width="18" height="16" rx="2.5" stroke-width="2"/><path d="M3 9h18" stroke-width="2"/></svg>Due this week</div><div class="sv">${week}</div><div class="sm">across ${new Set(active.map(i=>i.course)).size} sources</div></div>
       <div class="stat ${overdue?'warn':''}"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><circle cx="12" cy="12" r="9" stroke-width="2"/><path d="M12 7v5l3 2" stroke-width="2"/></svg>Overdue</div><div class="sv">${overdue}</div><div class="sm">${overdue?'needs attention':'nothing late'}</div></div>
-      <div class="stat good"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8" stroke-width="2"/></svg>Term GPA</div><div class="sv">${gpa.toFixed(2)}</div><div class="sm">5 courses Â· 15 credits</div></div>
+      <div class="stat good"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8" stroke-width="2"/></svg>Term GPA</div><div class="sv">${gpa.toFixed(2)}</div><div class="sm">5 courses · 15 credits</div></div>
       <div class="stat"><div class="sk"><svg class="ico" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path d="M4 5h16v12H8l-4 3z" stroke-width="2"/></svg>Unread</div><div class="sv">${unread}</div><div class="sm">announcements</div></div>`;
   }
   function renderDashUpcoming(){
     const list=items.filter(i=>!i.done).sort((a,b)=>new Date(a.due)-new Date(b.due)).slice(0,5);
-    document.getElementById('wUpcoming').innerHTML=list.length?list.map(drowHTML).join(''):'<div class="empty"><div class="em">ðŸŽ‰</div><p>All caught up.</p></div>';
+    document.getElementById('wUpcoming').innerHTML=list.length?list.map(drowHTML).join(''):'<div class="empty"><div class="em">🎉</div><p>All caught up.</p></div>';
   }
   function renderSched(){
     const nowMin=now.getHours()*60+now.getMinutes();
@@ -504,7 +505,7 @@
     let any=false;
     groups.forEach(g=>{const l=active.filter(g.f);if(!l.length)return;any=true;
       html+=`<div class="group-label ${g.warn?'warn':''}">${g.label}<span class="n">${l.length}</span></div>`+l.map(drowHTML).join('');});
-    if(!any)html+='<div class="empty"><div class="em">ðŸŽ‰</div><p>You\'re all caught up. Nothing due right now.</p></div>';
+    if(!any)html+='<div class="empty"><div class="em">🎉</div><p>You\'re all caught up. Nothing due right now.</p></div>';
     if(done.length)html+=`<div class="group-label">Completed<span class="n">${done.length}</span></div>`+done.map(drowHTML).join('');
     html+='</div></div>';
     document.getElementById('view-deadlines').innerHTML=html;
@@ -518,7 +519,7 @@
       '<div class="stat good"><div class="sk">Avg score</div><div class="sv">'+Math.round(GRADES.reduce((s,g)=>s+g.score/g.max,0)/GRADES.length*100)+'%</div><div class="sm">across items</div></div></div>';
     html+='<div class="widget"><div class="whead"><h3>Course grades</h3></div><div class="wbody">'+
       COURSES.map(c=>`<div class="grow"><span class="cdot" style="background:${c.cc}"></span>
-        <div class="gb"><div class="gt">${c.code} Â· ${esc(c.name)}</div><div class="gc">${esc(c.prof)}</div></div>
+        <div class="gb"><div class="gt">${c.code} · ${esc(c.name)}</div><div class="gc">${esc(c.prof)}</div></div>
         <span class="gscore">${c.pct}%</span><span class="gletter ${gletterClass(c.grade)}">${c.grade}</span></div>`).join('')+'</div></div>';
     html+='<div class="widget" style="margin-top:16px"><div class="whead"><h3>Recently graded</h3><span class="wlink" style="color:var(--text-faint);cursor:default">Canvas</span></div><div class="wbody">'+
       GRADES.map(g=>`<div class="grow"><span class="cdot" style="background:${courseCC(g.code)}"></span>
@@ -537,7 +538,7 @@
         <div class="cname">${esc(c.name)}</div><div class="cprof">${esc(c.prof)}</div></div>
         <div class="ccstats"><div class="ccstat"><div class="cv" style="color:${c.cc}">${c.grade}</div><div class="cl">Grade</div></div>
         <div class="ccstat"><div class="cv">${openCount}</div><div class="cl">Open</div></div>
-        <div class="ccstat"><div class="cv" style="font-size:12px;font-weight:650">${next?relDue(next.due).txt.split(' Â· ')[0]:'â€”'}</div><div class="cl">Next due</div></div></div></div>`;
+        <div class="ccstat"><div class="cv" style="font-size:12px;font-weight:650">${next?relDue(next.due).txt.split(' · ')[0]:'—'}</div><div class="cl">Next due</div></div></div></div>`;
     }).join('')+'</div>';
     document.getElementById('view-courses').innerHTML=html;
   }
@@ -553,7 +554,7 @@
     const d=addDays(today0,selDay);
     document.getElementById('calHead').textContent=`${DOWL[d.getDay()]}, ${MONL[d.getMonth()]} ${d.getDate()}`;
     const list=items.filter(it=>dayDiff(new Date(it.due))===selDay).sort((a,b)=>new Date(a.due)-new Date(b.due));
-    document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:6px 14px 10px">'+list.map(drowHTML).join('')+'</div></div>':'<div class="empty"><div class="em">ðŸŒ¤ï¸</div><p>Nothing scheduled for this day.</p></div>';
+    document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:6px 14px 10px">'+list.map(drowHTML).join('')+'</div></div>':'<div class="empty"><div class="em">🌤️</div><p>Nothing scheduled for this day.</p></div>';
   }
 
   // ---- email extraction ----
@@ -576,7 +577,7 @@
   function cap(s){s=s.trim();return s?s[0].toUpperCase()+s.slice(1):s;}
   function titleFrom(line,phrase,subject){
     let t=line.replace(new RegExp(phrase.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i'),'').trim();
-    t=t.replace(/\b(at|on|by|due|deadline is|is due|due date|reminder:?|please note|note that|has been moved to|moved to|rescheduled to|scheduled for|will be held|takes place)\b/gi,' ').replace(/[-â€“:â€¢*>|]/g,' ').replace(/\s{2,}/g,' ').replace(/^\W+|\W+$/g,'').trim();
+    t=t.replace(/\b(at|on|by|due|deadline is|is due|due date|reminder:?|please note|note that|has been moved to|moved to|rescheduled to|scheduled for|will be held|takes place)\b/gi,' ').replace(/[-–:•*>|]/g,' ').replace(/\s{2,}/g,' ').replace(/^\W+|\W+$/g,'').trim();
     if(t.length>4&&t.length<64)return cap(t);if(subject)return cap(subject);
     const kw=line.match(/\b(exam|midterm|final|quiz|test|essay|paper|assignment|homework|project|meeting|application|deadline|presentation|lab|report|reading|draft|interview|appointment)\b/i);
     return kw?cap(kw[0]):'Deadline';}
@@ -589,17 +590,17 @@
       out.push({title:titleFrom(line,r.phrase,subject),due:r.date.toISOString()});if(out.length>=6)break;}
     return out;}
   const EXAMPLES=[
-    {label:'Prof. email',text:"Subject: Midterm update\n\nHi all â€” quick change: the BIOL 101 midterm has been moved to Friday, July 17 at 10am in room 204. Bring a calculator."},
+    {label:'Prof. email',text:"Subject: Midterm update\n\nHi all — quick change: the BIOL 101 midterm has been moved to Friday, July 17 at 10am in room 204. Bring a calculator."},
     {label:'Scholarship',text:"Subject: Merit scholarship\n\nReminder that the merit scholarship application is due 7/24 by 5pm. Late submissions will not be accepted."},
     {label:'Group text',text:"hey can we do the group project meeting next Wednesday at 3pm? need to finish slides before the presentation on July 20."}
   ];
   function renderExamples(){document.getElementById('examples').innerHTML=EXAMPLES.map((e,i)=>`<button class="chip" data-ex="${i}">${e.label}</button>`).join('');}
   function runDetect(){const text=document.getElementById('emailInput').value.trim();const box=document.getElementById('detected');
-    if(!text){box.innerHTML='<div class="empty" style="padding:24px"><p>Paste a message, then tap â€œFind dates.â€</p></div>';return;}
+    if(!text){box.innerHTML='<div class="empty" style="padding:24px"><p>Paste a message, then tap “Find dates.”</p></div>';return;}
     const found=extract(text);
-    if(!found.length){box.innerHTML='<div class="empty" style="padding:24px"><div class="em">ðŸ”</div><p>No dates found. Try wording like â€œJuly 17â€ or â€œnext Friday at 3pm.â€</p></div>';return;}
+    if(!found.length){box.innerHTML='<div class="empty" style="padding:24px"><div class="em">🔍</div><p>No dates found. Try wording like “July 17” or “next Friday at 3pm.”</p></div>';return;}
     box.innerHTML='<div class="detected-lbl">Found '+found.length+' date'+(found.length>1?'s':'')+'</div>'+found.map((f,i)=>{const d=new Date(f.due);
-      return `<div class="found" data-fi="${i}"><div class="fb"><div class="ft">${esc(f.title)}</div><div class="fd">${DOWL[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()} Â· ${fmtTime(d)}</div></div><button class="fadd">Add</button></div>`;}).join('');
+      return `<div class="found" data-fi="${i}"><div class="fb"><div class="ft">${esc(f.title)}</div><div class="fd">${DOWL[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()} · ${fmtTime(d)}</div></div><button class="fadd">Add</button></div>`;}).join('');
     box._found=found;}
 
   // ---- nav / interactions ----
@@ -618,11 +619,11 @@
     const g=e.target.closest('[data-goto]');if(g){switchView(g.dataset.goto);return;}
     const chk=e.target.closest('.check');if(chk){const id=chk.closest('.drow').dataset.id;const it=items.find(x=>x.id===id);
       if(it){it.done=!it.done;save();updateBadge();
-        const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast(it.done?'Marked done âœ“':'Marked not done');}return;}
+        const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast(it.done?'Marked done ✓':'Marked not done');}return;}
     const cd=e.target.closest('.cal-day');if(cd){selDay=+cd.dataset.day;renderCalendar();return;}
     const fadd=e.target.closest('.fadd');if(fadd){const box=document.getElementById('detected');const fi=+fadd.closest('.found').dataset.fi;const f=box._found&&box._found[fi];if(!f)return;
       items.push({id:'u'+Date.now()+fi,title:f.title,course:'from email',source:'email',due:f.due,done:false});save();updateBadge();
-      fadd.closest('.found').classList.add('added');fadd.textContent='Added âœ“';toast('Added to your deadlines');return;}
+      fadd.closest('.found').classList.add('added');fadd.textContent='Added ✓';toast('Added to your deadlines');return;}
     if(e.target.closest('[data-add]'))openModal();
   });
 
@@ -641,9 +642,9 @@
 
   // init
   const h=now.getHours();const greetWord=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
-  document.getElementById('greet').textContent=greetWord+' ðŸ‘‹';
+  document.getElementById('greet').textContent=greetWord+' 👋';
   const active=items.filter(i=>!i.done);const week=active.filter(i=>{const d=dayDiff(new Date(i.due));return d>=0&&d<7;}).length;
-  document.getElementById('subhead').textContent=`${DOWL[now.getDay()]}, ${MONL[now.getMonth()]} ${now.getDate()} Â· ${week} deadline${week!==1?'s':''} this week`;
+  document.getElementById('subhead').textContent=`${DOWL[now.getDay()]}, ${MONL[now.getMonth()]} ${now.getDate()} · ${week} deadline${week!==1?'s':''} this week`;
   renderExamples();updateBadge();switchView('dashboard');
 })();
 </script>
