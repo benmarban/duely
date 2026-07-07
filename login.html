@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Sign in to Duely.">
+<meta name="description" content="Sign in to Dayflow.">
 <meta name="theme-color" content="#0A1020">
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&display=swap" rel="stylesheet">
-<title>Sign in · Duely</title>
+<title>Sign in · Dayflow</title>
 <style>
   :root{
     --bg:#0A1020; --card:#0F1A2E; --line:rgba(255,255,255,.1); --line-2:rgba(255,255,255,.16);
@@ -73,11 +73,11 @@
 
 <div class="authwrap">
   <div class="glow"></div>
-  <a class="home" href="https://benmarban.github.io/duely/"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Duely<span class="dot">.</span></a>
+  <a class="home" href="https://benmarban.github.io/duely/"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow<span class="dot">.</span></a>
 
   <div class="card">
     <span class="badge">Preview</span>
-    <h1>Welcome to Duely</h1>
+    <h1>Welcome to Dayflow</h1>
     <p class="sub">Sign in to see your whole day — class, practice, work, and deadlines — in one place.</p>
 
     <button class="gbtn" id="google">
@@ -93,7 +93,7 @@
     <input id="password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
     <button class="primary" id="cont"><span id="contLbl">Sign in</span></button>
     <p class="msg" id="msg"></p>
-    <p class="toggle" id="toggle">New to Duely? <a>Create an account</a></p>
+    <p class="toggle" id="toggle">New to Dayflow? <a>Create an account</a></p>
 
     <div class="note">🔒<div><b>Your schedule is private.</b> Signing in saves your day to your own account — only you can see it. We only store what you add.</div></div>
 
@@ -114,7 +114,7 @@
   toggle.addEventListener('click',function(){
     mode=(mode==='signin')?'signup':'signin';
     lbl.textContent=(mode==='signin')?'Sign in':'Create account';
-    toggle.innerHTML=(mode==='signin')?'New to Duely? <a>Create an account</a>':'Already have an account? <a>Sign in</a>';
+    toggle.innerHTML=(mode==='signin')?'New to Dayflow? <a>Create an account</a>':'Already have an account? <a>Sign in</a>';
     setMsg('');
   });
   async function submit(){
