@@ -71,6 +71,12 @@
   .tl-live{font-size:10px;font-weight:700;color:#fff;background:var(--ok);padding:1px 7px;border-radius:999px}
   .tl-now{display:flex;align-items:center;gap:9px;margin:6px 0 6px 76px;font-size:10.5px;font-weight:800;color:var(--urgent);letter-spacing:.08em}
   .tl-now .ln{flex:1;height:2px;border-radius:2px;background:linear-gradient(to right,var(--urgent),transparent)}
+  .tl-actions{margin-left:auto;display:flex;gap:2px;flex-shrink:0}
+  .tl-edit,.tl-del{width:24px;height:24px;border-radius:7px;color:var(--text-faint);font-size:14px;line-height:1;display:grid;place-items:center;transition:.14s}
+  .tl-edit:hover{background:var(--surface-3);color:var(--accent)}
+  .tl-del{font-size:17px}
+  .tl-del:hover{background:var(--urgent-soft);color:var(--urgent)}
+  a.brand{text-decoration:none;color:inherit}
   h1,h2,h3{letter-spacing:-.02em}
 
   .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh;min-height:100dvh}
@@ -311,10 +317,10 @@
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">
+    <a class="brand" href="index.html" title="Back to home">
       <div class="logo"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div>
       <h1>Duely<span class="dot">.</span></h1>
-    </div>
+    </a>
     <nav class="nav" id="sidenav">
       <button class="navitem active" data-view="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Today</button>
       <button class="navitem" data-view="deadlines"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Deadlines<span class="nbadge" id="ddBadge"></span></button>
@@ -333,7 +339,7 @@
 
   <div class="main">
     <div class="topbar">
-      <div class="brand"><div class="logo"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div><h1>Duely<span class="dot">.</span></h1></div>
+      <a class="brand" href="index.html" title="Back to home"><div class="logo"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></div><h1>Duely<span class="dot">.</span></h1></a>
       <button class="addbtn" data-add><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add</button>
     </div>
 
@@ -353,6 +359,7 @@
           <div class="col">
             <div class="widget">
               <div class="whead"><h3>Your day</h3><span class="wlink" style="color:var(--text-faint);cursor:default" id="schedDate"></span></div>
+              <div class="filters" id="tlFilters" style="padding:12px 14px 0;margin:0"></div>
               <div class="wbody" id="wTimeline"></div>
             </div>
           </div>
@@ -523,9 +530,9 @@
   function expandDay(off){
     const day=addDays(today0,off),wd=day.getDay(),key=isoDate(day);
     const tmpl=(WEEK[wd]||[]).slice().concat(ONEOFFS.filter(o=>o.off===off));
-    const usr=USEREVENTS.filter(u=>u.date===key).map(u=>({c:u.cat,t:u.title,loc:u.loc,sh:u.sh,sm:u.sm,eh:u.eh,em:u.em}));
+    const usr=USEREVENTS.filter(u=>u.date===key).map(u=>({c:u.cat,t:u.title,loc:u.loc,sh:u.sh,sm:u.sm,eh:u.eh,em:u.em,uid:u.id}));
     return tmpl.concat(usr).map(e=>{const s=addDays(today0,off);s.setHours(e.sh,e.sm,0,0);const en=addDays(today0,off);en.setHours(e.eh,e.em,0,0);
-      return {kind:'event',cat:e.c,title:e.t,loc:e.loc,start:s,end:en};});
+      return {kind:'event',cat:e.c,title:e.t,loc:e.loc,start:s,end:en,uid:e.uid};});
   }
   function dayTimeline(off){
     const evs=expandDay(off);
@@ -577,7 +584,7 @@
       <div class="tl-time">${fmtTime(m.start)}${m.end?`<span class="tl-end">${fmtTime(m.end)}</span>`:''}</div>
       <div class="tl-rail"><span class="tl-dot" style="background:${c.color}"></span></div>
       <div class="tl-card">
-        <div class="tl-top"><span class="tl-title">${esc(m.title)}</span>${isDue?'<span class="tl-duetag">Due</span>':''}</div>
+        <div class="tl-top"><span class="tl-title">${esc(m.title)}</span>${isDue?'<span class="tl-duetag">Due</span>':''}${m.uid?`<span class="tl-actions"><button class="tl-edit" data-uid="${m.uid}" title="Edit" aria-label="Edit event">✎</button><button class="tl-del" data-uid="${m.uid}" title="Delete" aria-label="Delete event">×</button></span>`:''}</div>
         <div class="tl-meta"><span class="cat-chip">${c.label}</span>${m.loc?`<span class="tl-loc">${esc(m.loc)}</span>`:''}${ongoing?'<span class="tl-live">Now</span>':''}</div>
       </div></div>`;
   }
@@ -589,8 +596,10 @@
   }
   function renderTimeline(){
     document.getElementById('schedDate').textContent=`${DOW[now.getDay()]}, ${MON[now.getMonth()]} ${now.getDate()}`;
-    const list=dayTimeline(0);
-    document.getElementById('wTimeline').innerHTML=list.length?rowsHTML(list,true):'<div class="empty"><div class="em">🌤️</div><p>Nothing on your calendar today. Enjoy the breather.</p></div>';
+    const tf=document.getElementById('tlFilters');if(tf)tf.innerHTML=chipsHTML(todayFilter);
+    const list=dayTimeline(0).filter(m=>matchCat(m,todayFilter));
+    const empty=todayFilter==='all'?'Nothing on your calendar today. Enjoy the breather.':'No '+CATS[todayFilter].label.toLowerCase()+' today.';
+    document.getElementById('wTimeline').innerHTML=list.length?rowsHTML(list,todayFilter==='all'):'<div class="empty"><div class="em">🌤️</div><p>'+empty+'</p></div>';
   }
   function renderDashUpcoming(){
     const list=items.filter(i=>!i.done).sort((a,b)=>new Date(a.due)-new Date(b.due)).slice(0,5);
@@ -676,9 +685,10 @@
   }
 
   // ---- calendar view ----
-  let selDay=0,calFilter='all';
+  let selDay=0,calFilter='all',todayFilter='all';
   const FILTERS=[['all','All'],['school','Class'],['athletics','Athletics'],['work','Work'],['personal','Personal']];
-  function matchFilter(m){if(calFilter==='all')return true;if(calFilter==='school')return m.cat==='school'||m.cat==='deadline';return m.cat===calFilter;}
+  function matchCat(m,f){if(f==='all')return true;if(f==='school')return m.cat==='school'||m.cat==='deadline';return m.cat===f;}
+  function chipsHTML(active){return FILTERS.map(f=>{const on=active===f[0];const cc=f[0]==='all'?'var(--accent)':(CATS[f[0]]||{}).color;return `<button class="fchip ${on?'active':''}" data-filter="${f[0]}" style="--cc:${cc}">${f[1]}</button>`;}).join('');}
   function renderCalendar(){
     let strip='';
     for(let i=0;i<14;i++){const d=addDays(today0,i);
@@ -688,9 +698,8 @@
     document.getElementById('calStrip').innerHTML=strip;
     const d=addDays(today0,selDay);
     document.getElementById('calHead').textContent=`${DOWL[d.getDay()]}, ${MONL[d.getMonth()]} ${d.getDate()}`;
-    document.getElementById('calFilters').innerHTML=FILTERS.map(f=>{const on=calFilter===f[0];const cc=f[0]==='all'?'var(--accent)':(CATS[f[0]]||{}).color;
-      return `<button class="fchip ${on?'active':''}" data-filter="${f[0]}" style="--cc:${cc}">${f[1]}</button>`;}).join('');
-    const list=dayTimeline(selDay).filter(matchFilter);
+    document.getElementById('calFilters').innerHTML=chipsHTML(calFilter);
+    const list=dayTimeline(selDay).filter(m=>matchCat(m,calFilter));
     const emptyMsg=calFilter==='all'?'Nothing scheduled for this day.':'No '+CATS[calFilter].label.toLowerCase()+' scheduled for this day.';
     document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:8px 14px 12px">'+rowsHTML(list,selDay===0)+'</div></div>':'<div class="empty"><div class="em">🌤️</div><p>'+emptyMsg+'</p></div>';
   }
@@ -759,7 +768,9 @@
       if(it){it.done=!it.done;save();updateBadge();
         const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast(it.done?'Marked done ✓':'Marked not done');}return;}
     const cd=e.target.closest('.cal-day');if(cd){selDay=+cd.dataset.day;renderCalendar();return;}
-    const fc=e.target.closest('.fchip');if(fc){calFilter=fc.dataset.filter;renderCalendar();return;}
+    const fc=e.target.closest('.fchip');if(fc){if(fc.closest('#tlFilters')){todayFilter=fc.dataset.filter;renderTimeline();}else{calFilter=fc.dataset.filter;renderCalendar();}return;}
+    const ed=e.target.closest('.tl-edit');if(ed){const ev=USEREVENTS.find(x=>x.id===ed.dataset.uid);if(ev)openEditModal(ev);return;}
+    const dl=e.target.closest('.tl-del');if(dl){USEREVENTS=USEREVENTS.filter(x=>x.id!==dl.dataset.uid);saveEvents();const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast('Event removed');return;}
     const fadd=e.target.closest('.fadd');if(fadd){const box=document.getElementById('detected');const fi=+fadd.closest('.found').dataset.fi;const f=box._found&&box._found[fi];if(!f)return;
       items.push({id:'u'+Date.now()+fi,title:f.title,course:'from email',source:'email',due:f.due,done:false});save();updateBadge();
       fadd.closest('.found').classList.add('added');fadd.textContent='Added ✓';toast('Added to your deadlines');return;}
@@ -768,12 +779,35 @@
 
   // modal
   const modalBg=document.getElementById('modalBg');
-  function openModal(){
-    modalBg.classList.add('show');
-    document.getElementById('detected').innerHTML='';
+  let editingId=null;
+  function showEventTab(){
     document.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='event'));
     document.getElementById('pane-event').hidden=false;document.getElementById('pane-email').hidden=true;
-    const di=document.getElementById('evDate');if(!di.value)di.value=isoDate(now);
+  }
+  function setSeg(cat){document.querySelectorAll('#evCat .seg').forEach(x=>x.classList.toggle('active',x.dataset.cat===cat));}
+  function openModal(){
+    editingId=null;
+    modalBg.classList.add('show');
+    document.getElementById('detected').innerHTML='';
+    showEventTab();
+    document.getElementById('evTitle').value='';document.getElementById('evLoc').value='';
+    document.getElementById('evStart').value='15:30';document.getElementById('evEnd').value='17:00';
+    setSeg('athletics');
+    document.getElementById('evDate').value=isoDate(now);
+    document.getElementById('evAdd').textContent='Add to my schedule';
+  }
+  function openEditModal(ev){
+    editingId=ev.id;
+    modalBg.classList.add('show');
+    showEventTab();
+    const pad=n=>String(n).padStart(2,'0');
+    document.getElementById('evTitle').value=ev.title;
+    document.getElementById('evLoc').value=ev.loc||'';
+    document.getElementById('evDate').value=ev.date;
+    document.getElementById('evStart').value=pad(ev.sh)+':'+pad(ev.sm);
+    document.getElementById('evEnd').value=pad(ev.eh)+':'+pad(ev.em);
+    setSeg(ev.cat);
+    document.getElementById('evAdd').textContent='Save changes';
   }
   function closeModal(){modalBg.classList.remove('show');}
   document.getElementById('mclose').addEventListener('click',closeModal);
@@ -802,9 +836,11 @@
     if(!st){toast('Add a start time');return;}
     const sp=st.split(':').map(Number);let sh=sp[0],sm=sp[1],eh,em;
     if(en){const ep=en.split(':').map(Number);eh=ep[0];em=ep[1];}else{eh=sh;em=sm;}
-    USEREVENTS.push({id:'e'+Date.now(),title:title,cat:cat,date:date,sh:sh,sm:sm,eh:eh,em:em,loc:loc});saveEvents();
-    document.getElementById('evTitle').value='';document.getElementById('evLoc').value='';
-    closeModal();toast('Added to your schedule ✓');
+    if(editingId){const ev=USEREVENTS.find(x=>x.id===editingId);if(ev){ev.title=title;ev.cat=cat;ev.date=date;ev.sh=sh;ev.sm=sm;ev.eh=eh;ev.em=em;ev.loc=loc;}}
+    else{USEREVENTS.push({id:'e'+Date.now(),title:title,cat:cat,date:date,sh:sh,sm:sm,eh:eh,em:em,loc:loc});}
+    saveEvents();
+    const wasEdit=!!editingId;editingId=null;
+    closeModal();toast(wasEdit?'Event updated ✓':'Added to your schedule ✓');
     const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
