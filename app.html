@@ -267,6 +267,28 @@
   .found.added{opacity:.55}.found.added .fadd{background:var(--ok);color:#fff;pointer-events:none}
   .detected-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-faint);margin:16px 2px 2px}
 
+  /* Add-event modal + filters */
+  .mtabs{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:4px;margin:14px 0 6px}
+  .mtab{flex:1;padding:8px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--text-dim);transition:.15s}
+  .mtab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+  .mpane[hidden]{display:none}
+  .field{margin-top:13px;display:flex;flex-direction:column;gap:6px}
+  .field label{font-size:12.5px;font-weight:600;color:var(--text-dim)}
+  .field label .opt{color:var(--text-faint);font-weight:500}
+  .field input{background:var(--surface-2);color:var(--text);border:1px solid var(--line-strong);border-radius:10px;padding:11px 12px;font-family:var(--font);font-size:14px;width:100%}
+  .field input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent)}
+  .field-row{display:flex;gap:12px;margin-top:0}
+  .field-row .field{flex:1}
+  .segs{display:flex;gap:7px;flex-wrap:wrap}
+  .seg{flex:1;min-width:68px;padding:9px 8px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);font-size:13px;font-weight:600;color:var(--text-dim);transition:.15s}
+  .seg:hover{border-color:var(--cc)}
+  .seg.active{color:#fff;background:var(--cc);border-color:var(--cc)}
+  .pane-hint{font-size:13px;color:var(--text-dim);margin:8px 2px 0;line-height:1.5}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;margin:2px 2px 14px}
+  .fchip{font-size:12.5px;font-weight:600;padding:7px 13px;border-radius:999px;border:1px solid var(--line-strong);background:var(--surface);color:var(--text-dim);transition:.15s}
+  .fchip:hover{border-color:var(--cc);color:var(--text)}
+  .fchip.active{color:#fff;background:var(--cc);border-color:var(--cc)}
+
   /* Bottom nav (mobile) */
   .bottomnav{display:none;position:sticky;bottom:0;z-index:30;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
   .bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--text-faint);border-radius:11px}
@@ -321,7 +343,7 @@
           <div class="greet" id="greet"></div>
           <div class="sub" id="subhead"></div>
         </div>
-        <button class="addbtn" data-add id="addBtnDesk"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add from email</button>
+        <button class="addbtn" data-add id="addBtnDesk"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add event</button>
       </div>
 
       <!-- DASHBOARD -->
@@ -354,6 +376,7 @@
       <section class="view" id="view-calendar">
         <div class="cal-strip" id="calStrip"></div>
         <div class="section-h" id="calHead"></div>
+        <div class="filters" id="calFilters"></div>
         <div id="calList"></div>
       </section>
 
@@ -377,13 +400,36 @@
 <div class="modal-bg" id="modalBg">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-h">
-      <div><h2>Add from an email</h2><p>Paste any message — a professor's note, a club email, a syllabus line. Duely pulls out the date.</p></div>
+      <div><h2>Add to your day</h2></div>
       <button class="mclose" id="mclose" aria-label="Close">×</button>
     </div>
-    <textarea id="emailInput" placeholder="Paste an email or message here…&#10;&#10;e.g. “Reminder: the midterm has been moved to Friday, July 17 at 10am.”"></textarea>
-    <div class="examples" id="examples"></div>
-    <button class="btn" id="detectBtn">Find dates</button>
-    <div id="detected"></div>
+    <div class="mtabs">
+      <button class="mtab active" data-tab="event">New event</button>
+      <button class="mtab" data-tab="email">From email</button>
+    </div>
+    <div class="mpane" id="pane-event">
+      <div class="field"><label>What is it?</label><input id="evTitle" type="text" placeholder="e.g. Coaches meeting, work shift, practice"></div>
+      <div class="field"><label>Type</label><div class="segs" id="evCat">
+        <button type="button" class="seg" data-cat="school" style="--cc:var(--accent)">Class</button>
+        <button type="button" class="seg active" data-cat="athletics" style="--cc:var(--c-engl)">Athletics</button>
+        <button type="button" class="seg" data-cat="work" style="--cc:var(--c-math)">Work</button>
+        <button type="button" class="seg" data-cat="personal" style="--cc:var(--c-chem)">Personal</button>
+      </div></div>
+      <div class="field"><label>Day</label><input id="evDate" type="date"></div>
+      <div class="field-row">
+        <div class="field"><label>Start</label><input id="evStart" type="time" value="15:30"></div>
+        <div class="field"><label>End</label><input id="evEnd" type="time" value="17:00"></div>
+      </div>
+      <div class="field"><label>Location <span class="opt">(optional)</span></label><input id="evLoc" type="text" placeholder="e.g. Team weight room"></div>
+      <button class="btn" id="evAdd">Add to my schedule</button>
+    </div>
+    <div class="mpane" id="pane-email" hidden>
+      <p class="pane-hint">Paste any message — a professor's note, a coach's text, a club email. Duely pulls the date out for you.</p>
+      <textarea id="emailInput" placeholder="Paste an email or message here…&#10;&#10;e.g. “Practice moved to Friday at 6am.”"></textarea>
+      <div class="examples" id="examples"></div>
+      <button class="btn" id="detectBtn">Find dates</button>
+      <div id="detected"></div>
+    </div>
   </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -426,6 +472,10 @@
   let items;try{items=JSON.parse(localStorage.getItem(KEY))||null;}catch(e){items=null;}
   if(!items||!Array.isArray(items)||!items.length){items=SEED.slice();save();}
   function save(){try{localStorage.setItem(KEY,JSON.stringify(items));}catch(e){}}
+  const EKEY='duely.events.v1';
+  let USEREVENTS;try{USEREVENTS=JSON.parse(localStorage.getItem(EKEY))||[];}catch(e){USEREVENTS=[];}
+  if(!Array.isArray(USEREVENTS))USEREVENTS=[];
+  function saveEvents(){try{localStorage.setItem(EKEY,JSON.stringify(USEREVENTS));}catch(e){}}
 
   const SCHEDULE=[
     {sh:9,sm:0,eh:9,em:50,code:'MATH 231',label:'Lecture · Warren Hall 210'},
@@ -469,10 +519,12 @@
     {off:1,c:'personal',t:'Finance Society meeting',sh:19,sm:0,eh:20,em:0,loc:'Blow Hall 201'},
     {off:2,c:'personal',t:'Dentist',sh:9,sm:0,eh:9,em:45,loc:'Downtown Dental'}
   ];
+  function isoDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function expandDay(off){
-    const wd=addDays(today0,off).getDay();
-    const evs=(WEEK[wd]||[]).slice().concat(ONEOFFS.filter(o=>o.off===off));
-    return evs.map(e=>{const s=addDays(today0,off);s.setHours(e.sh,e.sm,0,0);const en=addDays(today0,off);en.setHours(e.eh,e.em,0,0);
+    const day=addDays(today0,off),wd=day.getDay(),key=isoDate(day);
+    const tmpl=(WEEK[wd]||[]).slice().concat(ONEOFFS.filter(o=>o.off===off));
+    const usr=USEREVENTS.filter(u=>u.date===key).map(u=>({c:u.cat,t:u.title,loc:u.loc,sh:u.sh,sm:u.sm,eh:u.eh,em:u.em}));
+    return tmpl.concat(usr).map(e=>{const s=addDays(today0,off);s.setHours(e.sh,e.sm,0,0);const en=addDays(today0,off);en.setHours(e.eh,e.em,0,0);
       return {kind:'event',cat:e.c,title:e.t,loc:e.loc,start:s,end:en};});
   }
   function dayTimeline(off){
@@ -624,7 +676,9 @@
   }
 
   // ---- calendar view ----
-  let selDay=0;
+  let selDay=0,calFilter='all';
+  const FILTERS=[['all','All'],['school','Class'],['athletics','Athletics'],['work','Work'],['personal','Personal']];
+  function matchFilter(m){if(calFilter==='all')return true;if(calFilter==='school')return m.cat==='school'||m.cat==='deadline';return m.cat===calFilter;}
   function renderCalendar(){
     let strip='';
     for(let i=0;i<14;i++){const d=addDays(today0,i);
@@ -634,8 +688,11 @@
     document.getElementById('calStrip').innerHTML=strip;
     const d=addDays(today0,selDay);
     document.getElementById('calHead').textContent=`${DOWL[d.getDay()]}, ${MONL[d.getMonth()]} ${d.getDate()}`;
-    const list=dayTimeline(selDay);
-    document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:8px 14px 12px">'+rowsHTML(list,selDay===0)+'</div></div>':'<div class="empty"><div class="em">🌤️</div><p>Nothing scheduled for this day.</p></div>';
+    document.getElementById('calFilters').innerHTML=FILTERS.map(f=>{const on=calFilter===f[0];const cc=f[0]==='all'?'var(--accent)':(CATS[f[0]]||{}).color;
+      return `<button class="fchip ${on?'active':''}" data-filter="${f[0]}" style="--cc:${cc}">${f[1]}</button>`;}).join('');
+    const list=dayTimeline(selDay).filter(matchFilter);
+    const emptyMsg=calFilter==='all'?'Nothing scheduled for this day.':'No '+CATS[calFilter].label.toLowerCase()+' scheduled for this day.';
+    document.getElementById('calList').innerHTML=list.length?'<div class="widget"><div class="wbody" style="padding:8px 14px 12px">'+rowsHTML(list,selDay===0)+'</div></div>':'<div class="empty"><div class="em">🌤️</div><p>'+emptyMsg+'</p></div>';
   }
 
   // ---- email extraction ----
@@ -702,6 +759,7 @@
       if(it){it.done=!it.done;save();updateBadge();
         const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast(it.done?'Marked done ✓':'Marked not done');}return;}
     const cd=e.target.closest('.cal-day');if(cd){selDay=+cd.dataset.day;renderCalendar();return;}
+    const fc=e.target.closest('.fchip');if(fc){calFilter=fc.dataset.filter;renderCalendar();return;}
     const fadd=e.target.closest('.fadd');if(fadd){const box=document.getElementById('detected');const fi=+fadd.closest('.found').dataset.fi;const f=box._found&&box._found[fi];if(!f)return;
       items.push({id:'u'+Date.now()+fi,title:f.title,course:'from email',source:'email',due:f.due,done:false});save();updateBadge();
       fadd.closest('.found').classList.add('added');fadd.textContent='Added ✓';toast('Added to your deadlines');return;}
@@ -710,12 +768,45 @@
 
   // modal
   const modalBg=document.getElementById('modalBg');
-  function openModal(){modalBg.classList.add('show');document.getElementById('detected').innerHTML='';}
+  function openModal(){
+    modalBg.classList.add('show');
+    document.getElementById('detected').innerHTML='';
+    document.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('active',x.dataset.tab==='event'));
+    document.getElementById('pane-event').hidden=false;document.getElementById('pane-email').hidden=true;
+    const di=document.getElementById('evDate');if(!di.value)di.value=isoDate(now);
+  }
   function closeModal(){modalBg.classList.remove('show');}
   document.getElementById('mclose').addEventListener('click',closeModal);
   modalBg.addEventListener('click',e=>{if(e.target===modalBg)closeModal();});
   document.getElementById('detectBtn').addEventListener('click',runDetect);
   document.getElementById('examples').addEventListener('click',e=>{const ex=e.target.closest('[data-ex]');if(ex){document.getElementById('emailInput').value=EXAMPLES[+ex.dataset.ex].text;document.getElementById('detected').innerHTML='';}});
+  // modal tabs
+  document.querySelectorAll('.mtab').forEach(t=>t.addEventListener('click',()=>{
+    const tab=t.dataset.tab;
+    document.querySelectorAll('.mtab').forEach(x=>x.classList.toggle('active',x===t));
+    document.getElementById('pane-event').hidden=tab!=='event';
+    document.getElementById('pane-email').hidden=tab!=='email';
+  }));
+  // event type picker
+  document.getElementById('evCat').addEventListener('click',e=>{const s=e.target.closest('.seg');if(!s)return;
+    document.querySelectorAll('#evCat .seg').forEach(x=>x.classList.toggle('active',x===s));});
+  // add a custom event
+  document.getElementById('evAdd').addEventListener('click',()=>{
+    const title=document.getElementById('evTitle').value.trim();
+    const seg=document.querySelector('#evCat .seg.active');const cat=seg?seg.dataset.cat:'personal';
+    const date=document.getElementById('evDate').value;
+    const st=document.getElementById('evStart').value,en=document.getElementById('evEnd').value;
+    const loc=document.getElementById('evLoc').value.trim();
+    if(!title){toast('Give it a name first');return;}
+    if(!date){toast('Pick a day');return;}
+    if(!st){toast('Add a start time');return;}
+    const sp=st.split(':').map(Number);let sh=sp[0],sm=sp[1],eh,em;
+    if(en){const ep=en.split(':').map(Number);eh=ep[0];em=ep[1];}else{eh=sh;em=sm;}
+    USEREVENTS.push({id:'e'+Date.now(),title:title,cat:cat,date:date,sh:sh,sm:sm,eh:eh,em:em,loc:loc});saveEvents();
+    document.getElementById('evTitle').value='';document.getElementById('evLoc').value='';
+    closeModal();toast('Added to your schedule ✓');
+    const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();
+  });
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 
   let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
