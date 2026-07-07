@@ -82,6 +82,11 @@
   .acct-email{font-size:12px;color:var(--text-dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .acct-out{align-self:flex-start;font-size:12.5px;font-weight:600;color:var(--urgent);padding:6px 11px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);transition:.15s}
   .acct-out:hover{background:var(--urgent-soft);border-color:var(--urgent)}
+  .sys-row[data-canvas]{cursor:pointer;border-radius:8px;margin:0 -3px;padding-left:3px;padding-right:3px}
+  .sys-row[data-canvas]:hover{background:var(--surface-2)}
+  .sys-row[data-canvas]:hover .stag{color:var(--accent)}
+  .cv-msg{font-size:12.5px;margin-top:11px;min-height:1.1em;color:var(--ok);line-height:1.4}
+  .cv-msg.err{color:var(--urgent)}
   h1,h2,h3{letter-spacing:-.02em}
 
   .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh;min-height:100dvh}
@@ -335,7 +340,7 @@
     </nav>
     <div class="sys">
       <div class="sys-lbl">Connected</div>
-      <div class="sys-row"><span class="sdot"></span>Canvas<span class="stag">Synced</span></div>
+      <div class="sys-row" data-canvas><span class="sdot"></span>Canvas<span class="stag" id="canvasStatus">Connect</span></div>
       <div class="sys-row"><span class="sdot"></span>Gmail<span class="stag">Synced</span></div>
       <div class="sys-row"><span class="sdot"></span>Google Calendar<span class="stag">Synced</span></div>
       <div class="sys-row off"><span class="sdot"></span>Outlook<span class="stag">Connect</span></div>
@@ -445,6 +450,18 @@
     </div>
   </div>
 </div>
+<div class="modal-bg" id="canvasBg">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-h">
+      <div><h2>Connect Canvas</h2><p>Paste your Canvas calendar feed link and Dayflow will pull in your assignments and due dates.</p></div>
+      <button class="mclose" id="cvClose" aria-label="Close">×</button>
+    </div>
+    <div class="field"><label>Canvas calendar feed URL</label><input id="cvUrl" type="url" placeholder="https://yourschool.instructure.com/feeds/calendars/user_...ics"></div>
+    <button class="btn" id="cvSync">Sync my assignments</button>
+    <p class="cv-msg" id="cvMsg"></p>
+    <p class="pane-hint" style="margin-top:16px">In Canvas: open <b>Calendar</b> → scroll to the bottom of the right-hand column → click <b>Calendar Feed</b> → copy that link. It's private to you, so don't share it.</p>
+  </div>
+</div>
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -455,11 +472,11 @@
 
   // ---- Supabase (cloud accounts + sync) ----
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null;
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='';
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   function cloudSave(){if(!sb||!userId)return;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:canvasFeed},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
   },600);}
 
   const DAY=864e5,now=new Date();
@@ -781,6 +798,7 @@
   document.addEventListener('click',e=>{
     const so=e.target.closest('#signOut');if(so){if(sb){sb.auth.signOut().then(function(){location.replace('login.html');});}else{location.replace('login.html');}return;}
     const g=e.target.closest('[data-goto]');if(g){switchView(g.dataset.goto);return;}
+    const dc=e.target.closest('[data-canvas]');if(dc){openCanvas();return;}
     const chk=e.target.closest('.check');if(chk){const id=chk.closest('.drow').dataset.id;const it=items.find(x=>x.id===id);
       if(it){it.done=!it.done;save();updateBadge();
         const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast(it.done?'Marked done ✓':'Marked not done');}return;}
@@ -865,6 +883,34 @@
   let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
   function updateBadge(){const n=items.filter(i=>!i.done&&dayDiff(new Date(i.due))<0).length;const b=document.getElementById('ddBadge');if(n){b.textContent=n;b.style.display='';}else b.style.display='none';}
 
+  // ---- Canvas connect ----
+  function setCvMsg(t,err){var el=document.getElementById('cvMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
+  function openCanvas(){document.getElementById('canvasBg').classList.add('show');var u=document.getElementById('cvUrl');if(u&&canvasFeed)u.value=canvasFeed;setCvMsg('');}
+  function closeCanvas(){document.getElementById('canvasBg').classList.remove('show');}
+  async function syncCanvas(url,silent){
+    if(!sb){setCvMsg('Sign in first to sync Canvas.',true);return;}
+    var feed=((url||canvasFeed||'')+'').trim();
+    if(!feed){setCvMsg('Paste your Canvas calendar feed link first.',true);return;}
+    if(!silent)setCvMsg('Syncing your assignments…');
+    try{
+      var r=await sb.functions.invoke('canvas-import',{body:{feedUrl:feed}});
+      if(r.error){setCvMsg('Sync failed: '+r.error.message,true);return;}
+      if(!r.data||r.data.error){setCvMsg((r.data&&r.data.error)||'Sync failed.',true);return;}
+      var evs=r.data.events||[];
+      var doneMap={};items.forEach(function(it){if(it.id&&it.id.indexOf('cv_')===0)doneMap[it.id]=it.done;});
+      items=items.filter(function(it){return !(it.id&&it.id.indexOf('cv_')===0);});
+      evs.forEach(function(ev){var id='cv_'+(ev.uid||ev.title+ev.due);items.push({id:id,title:ev.title,course:'Canvas',source:'canvas',due:ev.due,done:!!doneMap[id],cat:'school'});});
+      canvasFeed=feed;save();updateBadge();
+      var cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||function(){})();
+      var st=document.getElementById('canvasStatus');if(st)st.textContent=evs.length?'Synced':'Connected';
+      setCvMsg('Imported '+evs.length+' assignment'+(evs.length===1?'':'s')+' from Canvas ✓');
+      if(silent)closeCanvas();
+    }catch(e){setCvMsg('Sync failed: '+((e&&e.message)||e),true);}
+  }
+  document.getElementById('cvClose').addEventListener('click',closeCanvas);
+  document.getElementById('canvasBg').addEventListener('click',function(e){if(e.target.id==='canvasBg')closeCanvas();});
+  document.getElementById('cvSync').addEventListener('click',function(){syncCanvas(document.getElementById('cvUrl').value,false);});
+
   // init
   const h=now.getHours();const greetWord=h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   document.getElementById('greet').textContent=greetWord+' 👋';
@@ -881,12 +927,15 @@
         showAccount(userEmail);
         const res=await sb.from('user_state').select('data').eq('user_id',userId).maybeSingle();
         if(res&&res.data&&res.data.data){
-          if(Array.isArray(res.data.data.items))items=res.data.data.items;
-          if(Array.isArray(res.data.data.events))USEREVENTS=res.data.data.events;
+          const d=res.data.data;
+          if(Array.isArray(d.items))items=d.items;
+          if(Array.isArray(d.events))USEREVENTS=d.events;
+          if(d.canvasFeed)canvasFeed=d.canvasFeed;
         }else{cloudSave();}
       }catch(err){console.warn('auth/load failed:',err);}
     }
     renderExamples();updateBadge();switchView('dashboard');
+    if(canvasFeed){const st=document.getElementById('canvasStatus');if(st)st.textContent='Syncing…';syncCanvas(canvasFeed,true);}
   }
   boot();
 })();
