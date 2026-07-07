@@ -784,13 +784,16 @@
       try{
         const r=await sb.functions.invoke('email-extract',{body:{text:text,today:now.toString()}});
         if(!r.error&&r.data&&Array.isArray(r.data.items)){usedAI=true;
-          found=r.data.items.map(function(x){return {title:x.title||'Event',due:x.due,cat:x.category||'school'};}).filter(function(x){return x.due&&!isNaN(new Date(x.due));});}
+          found=r.data.items.map(function(x){return {title:x.title||'Event',start:x.start,end:x.end||null,loc:x.location||'',cat:x.category||'school',kind:x.kind||'deadline'};}).filter(function(x){return x.start&&!isNaN(new Date(x.start));});}
       }catch(e){}
     }
-    if(found===null){found=extract(text).map(function(x){return {title:x.title,due:x.due,cat:'school'};});}
+    if(found===null){found=extract(text).map(function(x){return {title:x.title,start:x.due,end:null,loc:'',cat:'school',kind:'deadline'};});}
     if(!found.length){box.innerHTML='<div class="empty" style="padding:24px"><div class="em">🔍</div><p>No important dates found in that message.</p></div>';return;}
-    box.innerHTML='<div class="detected-lbl">Found '+found.length+' date'+(found.length>1?'s':'')+(usedAI?' <span style="color:var(--accent)">✦ AI</span>':'')+'</div>'+found.map(function(f,i){var d=new Date(f.due);
-      return '<div class="found" data-fi="'+i+'"><div class="fb"><div class="ft">'+esc(f.title)+'</div><div class="fd">'+DOWL[d.getDay()]+', '+MON[d.getMonth()]+' '+d.getDate()+' · '+fmtTime(d)+'</div></div><button class="fadd">Add</button></div>';}).join('');
+    box.innerHTML='<div class="detected-lbl">Found '+found.length+' item'+(found.length>1?'s':'')+(usedAI?' <span style="color:var(--accent)">✦ AI</span>':'')+'</div>'+found.map(function(f,i){
+      var d=new Date(f.start);var t=fmtTime(d);
+      if(f.end){var de=new Date(f.end);if(!isNaN(de)&&de>d)t+='–'+fmtTime(de);}
+      var meta=DOWL[d.getDay()]+', '+MON[d.getMonth()]+' '+d.getDate()+' · '+t+(f.loc?' · '+esc(f.loc):'');
+      return '<div class="found" data-fi="'+i+'"><div class="fb"><div class="ft">'+esc(f.title)+'</div><div class="fd">'+meta+'</div></div><button class="fadd">Add</button></div>';}).join('');
     box._found=found;
   }
 
@@ -818,8 +821,17 @@
     const ed=e.target.closest('.tl-edit');if(ed){const ev=USEREVENTS.find(x=>x.id===ed.dataset.uid);if(ev)openEditModal(ev);return;}
     const dl=e.target.closest('.tl-del');if(dl){USEREVENTS=USEREVENTS.filter(x=>x.id!==dl.dataset.uid);saveEvents();const cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||(()=>{}))();toast('Event removed');return;}
     const fadd=e.target.closest('.fadd');if(fadd){const box=document.getElementById('detected');const fi=+fadd.closest('.found').dataset.fi;const f=box._found&&box._found[fi];if(!f)return;
-      items.push({id:'u'+Date.now()+fi,title:f.title,course:'from email',source:'email',due:f.due,done:false,cat:(f.cat||'school')});save();updateBadge();
-      fadd.closest('.found').classList.add('added');fadd.textContent='Added ✓';toast('Added to your deadlines');return;}
+      var startISO=f.start||f.due;var start=new Date(startISO);
+      if(f.kind==='event'&&!isNaN(start)){
+        var end=(f.end&&!isNaN(new Date(f.end)))?new Date(f.end):null;
+        USEREVENTS.push({id:'e'+Date.now()+fi,title:f.title,cat:(f.cat||'personal'),date:isoDate(start),sh:start.getHours(),sm:start.getMinutes(),eh:end?end.getHours():start.getHours(),em:end?end.getMinutes():start.getMinutes(),loc:(f.loc||'')});
+        saveEvents();toast('Added to your schedule ✓');
+      }else{
+        items.push({id:'u'+Date.now()+fi,title:f.title,course:(f.loc||'from email'),source:'email',due:startISO,done:false,cat:(f.cat||'school')});
+        save();toast('Added to your deadlines');
+      }
+      updateBadge();var cur=document.querySelector('.view.active').id.replace('view-','');(renderers[cur]||function(){})();
+      fadd.closest('.found').classList.add('added');fadd.textContent='Added ✓';return;}
     if(e.target.closest('[data-add]'))openModal();
   });
 

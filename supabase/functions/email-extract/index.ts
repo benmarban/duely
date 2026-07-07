@@ -33,11 +33,15 @@ Deno.serve(async (req: Request) => {
     const now = today || new Date().toString();
     const prompt =
       `You extract important dates, deadlines, and events from a student's email or message. ` +
-      `Today is ${now}. Read the message below and return every genuinely important date/deadline/event ` +
-      `(assignments, exams, meetings, practices, shifts, appointments, application deadlines). ` +
-      `For each: a short clear title, the date/time as an ISO 8601 string (resolve relative dates like ` +
-      `"next Friday" or "tomorrow" using today's date; if only a date is given for a deadline, use 23:59), ` +
-      `and a category (one of: school, athletics, work, personal). ` +
+      `Today is ${now}. Return every genuinely important item (classes, practices, film sessions, meetings, ` +
+      `work shifts, appointments, assignments, exams, application deadlines). For EACH item return: ` +
+      `title = a SHORT name of the event or task ONLY — do NOT put the time, date, or location in the title ` +
+      `(e.g. "Offense film", not "offense film 12:30 PM east classroom"); ` +
+      `start = ISO 8601 date-time (resolve relative dates like "next Friday"/"tomorrow" using today; for a ` +
+      `deadline given only a date, use 23:59); end = ISO 8601 if a time range is given, otherwise omit; ` +
+      `location = the room/place if mentioned, otherwise omit; category = one of school, athletics, work, personal; ` +
+      `kind = "event" for things happening at a set time (class, practice, film, meeting, shift, appointment), or ` +
+      `"deadline" for things that are due (assignment, application, exam to submit). ` +
       `Ignore greetings, signatures, and small talk. If there are no real dates, return an empty array.\n\n` +
       `MESSAGE:\n${text}`;
 
@@ -51,10 +55,13 @@ Deno.serve(async (req: Request) => {
             type: "OBJECT",
             properties: {
               title: { type: "STRING" },
-              due: { type: "STRING" },
+              start: { type: "STRING" },
+              end: { type: "STRING" },
+              location: { type: "STRING" },
               category: { type: "STRING", enum: ["school", "athletics", "work", "personal"] },
+              kind: { type: "STRING", enum: ["event", "deadline"] },
             },
-            required: ["title", "due"],
+            required: ["title", "start"],
           },
         },
       },
