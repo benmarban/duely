@@ -24,13 +24,23 @@ automatically instead of getting lost across a dozen tabs.
 - **Works on your phone** — responsive layout; on mobile the sidebar becomes a
   bottom tab bar. Add it to your home screen to use it like an app.
 
+## Structure
+
+Two self-contained HTML files — no build step, no dependencies:
+
+| File | What it is | Live URL |
+|---|---|---|
+| `index.html` | **Landing page** — dark, animated marketing front door | `https://benmarban.github.io/duely/` |
+| `app.html` | **Dashboard** — the actual app (Canvas + email + calendar) | `https://benmarban.github.io/duely/app.html` |
+
+The landing page's "Open the app" buttons link into `app.html`. A login step
+will eventually sit between the two.
+
 ## Run it
 
-It's a single, self-contained HTML file — no build step, no dependencies.
-
-- **Locally:** open `index.html` in any browser.
-- **Hosted:** enable GitHub Pages on this repo (Settings → Pages → deploy from
-  `main` / root) and it's live at `https://<your-username>.github.io/duely/`.
+- **Locally:** open `index.html` (landing) or `app.html` (dashboard) in any browser.
+- **Hosted:** GitHub Pages serves this repo from `main` / root, so it's live at
+  the URLs above automatically on every push.
 
 ## Roadmap
 
