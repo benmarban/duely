@@ -784,7 +784,7 @@
       try{
         const r=await sb.functions.invoke('email-extract',{body:{text:text,today:now.toString()}});
         if(!r.error&&r.data&&Array.isArray(r.data.items)){usedAI=true;
-          found=r.data.items.map(function(x){return {title:x.title||'Event',start:x.start,end:x.end||null,loc:x.location||'',cat:x.category||'school',kind:x.kind||'deadline'};}).filter(function(x){return x.start&&!isNaN(new Date(x.start));});}
+          found=r.data.items.map(function(x){return {title:x.title||'Event',start:(x.start||x.due),end:x.end||null,loc:x.location||'',cat:x.category||'school',kind:x.kind||'deadline'};}).filter(function(x){return x.start&&!isNaN(new Date(x.start));});}
       }catch(e){}
     }
     if(found===null){found=extract(text).map(function(x){return {title:x.title,start:x.due,end:null,loc:'',cat:'school',kind:'deadline'};});}
