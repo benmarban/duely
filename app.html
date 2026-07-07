@@ -77,6 +77,11 @@
   .tl-del{font-size:17px}
   .tl-del:hover{background:var(--urgent-soft);color:var(--urgent)}
   a.brand{text-decoration:none;color:inherit}
+  .sys-acct{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+  .sys-acct:empty{display:none}
+  .acct-email{font-size:12px;color:var(--text-dim);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .acct-out{align-self:flex-start;font-size:12.5px;font-weight:600;color:var(--urgent);padding:6px 11px;border-radius:9px;border:1px solid var(--line-strong);background:var(--surface);transition:.15s}
+  .acct-out:hover{background:var(--urgent-soft);border-color:var(--urgent)}
   h1,h2,h3{letter-spacing:-.02em}
 
   .app{display:grid;grid-template-columns:250px 1fr;min-height:100vh;min-height:100dvh}
@@ -334,6 +339,7 @@
       <div class="sys-row"><span class="sdot"></span>Gmail<span class="stag">Synced</span></div>
       <div class="sys-row"><span class="sdot"></span>Google Calendar<span class="stag">Synced</span></div>
       <div class="sys-row off"><span class="sdot"></span>Outlook<span class="stag">Connect</span></div>
+      <div class="sys-acct" id="acct"></div>
     </div>
   </aside>
 
@@ -441,10 +447,20 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
   "use strict";
   if(!document.querySelector('meta[name="viewport"]')){var mv=document.createElement('meta');mv.name='viewport';mv.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(mv);}
+
+  // ---- Supabase (cloud accounts + sync) ----
+  const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
+  let sb=null,userId=null,userEmail=null,cloudT=null;
+  try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
+  const hasCloud=!!sb;
+  function cloudSave(){if(!sb||!userId)return;clearTimeout(cloudT);cloudT=setTimeout(function(){
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
+  },600);}
 
   const DAY=864e5,now=new Date();
   const startOfDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
@@ -478,11 +494,11 @@
   const KEY='duely.items.v2';
   let items;try{items=JSON.parse(localStorage.getItem(KEY))||null;}catch(e){items=null;}
   if(!items||!Array.isArray(items)||!items.length){items=SEED.slice();save();}
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(items));}catch(e){}}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(items));}catch(e){}cloudSave();}
   const EKEY='duely.events.v1';
   let USEREVENTS;try{USEREVENTS=JSON.parse(localStorage.getItem(EKEY))||[];}catch(e){USEREVENTS=[];}
   if(!Array.isArray(USEREVENTS))USEREVENTS=[];
-  function saveEvents(){try{localStorage.setItem(EKEY,JSON.stringify(USEREVENTS));}catch(e){}}
+  function saveEvents(){try{localStorage.setItem(EKEY,JSON.stringify(USEREVENTS));}catch(e){}cloudSave();}
 
   const SCHEDULE=[
     {sh:9,sm:0,eh:9,em:50,code:'MATH 231',label:'Lecture · Warren Hall 210'},
@@ -763,6 +779,7 @@
   }
   document.querySelectorAll('#sidenav .navitem,#botnav .bnav').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
   document.addEventListener('click',e=>{
+    const so=e.target.closest('#signOut');if(so){if(sb){sb.auth.signOut().then(function(){location.replace('login.html');});}else{location.replace('login.html');}return;}
     const g=e.target.closest('[data-goto]');if(g){switchView(g.dataset.goto);return;}
     const chk=e.target.closest('.check');if(chk){const id=chk.closest('.drow').dataset.id;const it=items.find(x=>x.id===id);
       if(it){it.done=!it.done;save();updateBadge();
@@ -853,7 +870,25 @@
   document.getElementById('greet').textContent=greetWord+' 👋';
   const active=items.filter(i=>!i.done);const week=active.filter(i=>{const d=dayDiff(new Date(i.due));return d>=0&&d<7;}).length;
   document.getElementById('subhead').textContent=`${DOWL[now.getDay()]}, ${MONL[now.getMonth()]} ${now.getDate()} · ${week} deadline${week!==1?'s':''} this week`;
-  renderExamples();updateBadge();switchView('dashboard');
+  function showAccount(email){const el=document.getElementById('acct');if(el)el.innerHTML='<div class="acct-email" title="'+esc(email)+'">'+esc(email)+'</div><button class="acct-out" id="signOut">Sign out</button>';}
+  async function boot(){
+    if(hasCloud){
+      try{
+        const s=await sb.auth.getSession();
+        const session=s&&s.data&&s.data.session;
+        if(!session){location.replace('login.html');return;}
+        userId=session.user.id;userEmail=session.user.email||'';
+        showAccount(userEmail);
+        const res=await sb.from('user_state').select('data').eq('user_id',userId).maybeSingle();
+        if(res&&res.data&&res.data.data){
+          if(Array.isArray(res.data.data.items))items=res.data.data.items;
+          if(Array.isArray(res.data.data.events))USEREVENTS=res.data.data.events;
+        }else{cloudSave();}
+      }catch(err){console.warn('auth/load failed:',err);}
+    }
+    renderExamples();updateBadge();switchView('dashboard');
+  }
+  boot();
 })();
 </script>
 </body>

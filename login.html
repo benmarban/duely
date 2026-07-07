@@ -61,6 +61,11 @@
   .note{display:flex;gap:9px;margin-top:22px;padding:12px 13px;background:rgba(255,255,255,.03);border:1px solid var(--line);
     border-radius:12px;font-size:12.5px;color:var(--dim);line-height:1.5}
   .note b{color:var(--text);font-weight:650}
+  .msg{font-size:12.5px;margin-top:11px;min-height:1.1em;color:var(--teal-2);line-height:1.4}
+  .msg.err{color:#F26D6D}
+  .toggle{font-size:13px;color:var(--dim);margin-top:16px;text-align:center}
+  .toggle a{color:var(--teal-2);font-weight:600;cursor:pointer}
+  .toggle a:hover{text-decoration:underline}
   .foot{text-align:center;color:var(--faint);font-size:12.5px;margin-top:20px}
   .foot a{color:var(--dim);font-weight:600}
   .foot a:hover{color:var(--text)}
@@ -84,20 +89,52 @@
 
     <label class="lbl" for="email">School email</label>
     <input id="email" type="email" placeholder="you@school.edu" autocomplete="email">
-    <button class="primary" id="cont"><span>Continue</span></button>
+    <label class="lbl" for="password" style="margin-top:14px">Password</label>
+    <input id="password" type="password" placeholder="At least 6 characters" autocomplete="current-password">
+    <button class="primary" id="cont"><span id="contLbl">Sign in</span></button>
+    <p class="msg" id="msg"></p>
+    <p class="toggle" id="toggle">New to Duely? <a>Create an account</a></p>
 
-    <div class="note">🔒<div><b>Sign-in is a preview.</b> Accounts aren't live yet, so any button here takes you straight into the demo dashboard. Real Google &amp; email login is the next thing we're building.</div></div>
+    <div class="note">🔒<div><b>Your schedule is private.</b> Signing in saves your day to your own account — only you can see it. We only store what you add.</div></div>
 
-    <p class="foot">New to Duely? <a href="https://benmarban.github.io/duely/">See what it does</a></p>
+    <p class="foot"><a href="https://benmarban.github.io/duely/">← Back to home</a></p>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   if(!document.querySelector('meta[name="viewport"]')){var m=document.createElement('meta');m.name='viewport';m.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(m);}
-  function go(){window.location.href='https://benmarban.github.io/duely/app.html';}
-  document.getElementById('google').addEventListener('click',go);
-  document.getElementById('cont').addEventListener('click',go);
-  document.getElementById('email').addEventListener('keydown',function(e){if(e.key==='Enter')go();});
+  var SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
+  var sb=null;try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+  var mode='signin';
+  var email=document.getElementById('email'),pw=document.getElementById('password'),btn=document.getElementById('cont'),lbl=document.getElementById('contLbl'),msg=document.getElementById('msg'),toggle=document.getElementById('toggle');
+  function setMsg(t,err){msg.textContent=t||'';msg.className='msg'+(err?' err':'');}
+  // already signed in? go straight to the app
+  if(sb){sb.auth.getSession().then(function(r){if(r&&r.data&&r.data.session)window.location.replace('app.html');});}
+  toggle.addEventListener('click',function(){
+    mode=(mode==='signin')?'signup':'signin';
+    lbl.textContent=(mode==='signin')?'Sign in':'Create account';
+    toggle.innerHTML=(mode==='signin')?'New to Duely? <a>Create an account</a>':'Already have an account? <a>Sign in</a>';
+    setMsg('');
+  });
+  async function submit(){
+    var e=(email.value||'').trim(),p=pw.value||'';
+    if(!sb){window.location.href='app.html';return;}
+    if(!e||!p){setMsg('Enter your email and a password.',true);return;}
+    if(p.length<6){setMsg('Password must be at least 6 characters.',true);return;}
+    btn.disabled=true;setMsg(mode==='signup'?'Creating your account…':'Signing you in…');
+    var res;
+    try{res=(mode==='signup')?await sb.auth.signUp({email:e,password:p}):await sb.auth.signInWithPassword({email:e,password:p});}
+    catch(err){setMsg('Something went wrong — try again.',true);btn.disabled=false;return;}
+    btn.disabled=false;
+    if(res.error){setMsg(res.error.message,true);return;}
+    if(res.data&&res.data.session){window.location.href='app.html';}
+    else{setMsg('Account created! Confirm via the email we sent, then sign in.');mode='signin';lbl.textContent='Sign in';}
+  }
+  btn.addEventListener('click',submit);
+  pw.addEventListener('keydown',function(ev){if(ev.key==='Enter')submit();});
+  email.addEventListener('keydown',function(ev){if(ev.key==='Enter')pw.focus();});
+  document.getElementById('google').addEventListener('click',function(){setMsg('Google sign-in is coming soon — use email for now.');});
 </script>
 </body>
 </html>
