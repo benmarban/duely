@@ -111,6 +111,31 @@
   .mnow{display:flex;align-items:center;gap:7px;margin:5px 0 5px 56px;font-size:9px;font-weight:800;color:#CE4038;letter-spacing:.1em}
   .mnow .l{flex:1;height:2px;border-radius:2px;background:linear-gradient(to right,#CE4038,transparent)}
   @media(max-width:600px){.bapp{grid-template-columns:1fr}.msb{display:none}}
+  .showcase .wrap{position:relative}
+  .phone-mock{position:absolute;right:4px;bottom:-28px;width:160px;z-index:4;border-radius:26px;padding:6px;
+    background:#0a0f1c;border:1px solid rgba(255,255,255,.14);box-shadow:0 36px 64px -22px rgba(0,0,0,.85);display:none}
+  @media(min-width:840px){.phone-mock{display:block}}
+  .pscreen{background:#F3F6FC;border-radius:20px;overflow:hidden}
+  .ptop{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:7px 12px 6px;font-size:9px;font-weight:700;color:#8791A3;border-bottom:1px solid #E5EAF3}
+  .ptop span{font-family:var(--font-display);color:#0F766E;font-size:11px;letter-spacing:-.02em}
+  .pbody{padding:10px 10px 13px}
+  .ph{font-family:var(--font-display);font-size:12px;font-weight:800;color:#15201C;margin-bottom:8px;letter-spacing:-.02em}
+  .prow{background:#F1F5FB;border:1px solid #E5EAF3;border-left:3px solid var(--cc);border-radius:8px;padding:5px 8px;margin-bottom:6px}
+  .prow b{display:block;font-size:10.5px;font-weight:650;color:#15201C}
+  .prow span{font-size:9px;color:#5A6A72}
+
+  /* Problem / solution */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:760px){.compare{grid-template-columns:1fr}}
+  .col-prob,.col-sol{border-radius:20px;padding:26px 24px;border:1px solid var(--line)}
+  .col-prob{background:var(--card)}
+  .col-sol{background:linear-gradient(160deg,#0e2a26,#0b1a24);border-color:var(--teal-line)}
+  .ctitle{font-weight:700;font-size:16px;margin-bottom:16px}
+  .compare ul{list-style:none;display:flex;flex-direction:column;gap:12px}
+  .compare li{font-size:14.5px;color:var(--text-dim);padding-left:27px;position:relative;line-height:1.45}
+  .col-prob li::before{content:"\2715";position:absolute;left:0;color:var(--text-faint);font-weight:700}
+  .col-sol li{color:var(--text)}
+  .col-sol li::before{content:"\2713";position:absolute;left:2px;color:var(--teal-2);font-weight:800}
 
   /* Orbit */
   .orbit-wrap{display:grid;place-items:center;min-height:420px}
@@ -312,6 +337,18 @@
           <div class="mrow" style="--cc:#CE4038"><div class="mtime">11:59p</div><span class="mdot" style="background:#CE4038"></span><div class="mcard"><div class="mt">Problem Set 4</div><div class="mm"><span class="mchip">Due</span>MATH 231</div></div></div>
         </div>
       </div>
+      <div class="phone-mock" aria-hidden="true">
+        <div class="pscreen">
+          <div class="ptop">9:41<span>Dayflow</span></div>
+          <div class="pbody">
+            <div class="ph">Your day</div>
+            <div class="prow" style="--cc:#0D9488"><b>MATH 231</b><span>9:00a · Warren 210</span></div>
+            <div class="prow" style="--cc:#E0568A"><b>Offense film</b><span>12:30p · East rm</span></div>
+            <div class="prow" style="--cc:#E0568A"><b>Practice</b><span>3:30p · Field</span></div>
+            <div class="prow" style="--cc:#7C5CFC"><b>Work shift</b><span>6:00p</span></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -352,6 +389,38 @@
         <div class="sic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
         <h3>See your whole day</h3>
         <p>Everything you've got going on, on one timeline, sorted by what's happening next.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="blk" id="why">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Why Dayflow</span>
+      <h2>From five apps to one</h2>
+      <p>Everything you're juggling across a dozen tabs — pulled into a single place that keeps itself up to date.</p>
+    </div>
+    <div class="compare">
+      <div class="col-prob reveal">
+        <div class="ctitle">😵‍💫 Without Dayflow</div>
+        <ul>
+          <li>Canvas for assignments</li>
+          <li>Email for coach &amp; professor updates</li>
+          <li>A group chat for practice changes</li>
+          <li>A notes app for your work shifts</li>
+          <li>…and you still get blindsided</li>
+        </ul>
+      </div>
+      <div class="col-sol reveal" style="transition-delay:.1s">
+        <div class="ctitle">✅ With Dayflow</div>
+        <ul>
+          <li>Every class, practice, shift, and deadline on one timeline</li>
+          <li>AI reads your email and files the dates for you</li>
+          <li>Canvas assignments synced automatically</li>
+          <li>Athletics and work sit right alongside your schoolwork</li>
+          <li>You always know exactly what's next</li>
+        </ul>
       </div>
     </div>
   </div>
