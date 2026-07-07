@@ -80,6 +80,38 @@
   .hero-meta{margin-top:22px;font-size:13px;color:var(--text-faint);display:flex;align-items:center;gap:8px}
   .hero-meta svg{width:15px;height:15px;stroke:var(--teal);stroke-width:2;fill:none}
 
+  /* Product showcase */
+  .showcase{padding:10px 0 30px;position:relative}
+  .showcase::before{content:"";position:absolute;top:6%;left:50%;transform:translateX(-50%);width:720px;height:340px;max-width:96vw;background:radial-gradient(closest-side,var(--teal-soft),transparent 72%);filter:blur(8px);pointer-events:none}
+  .show-eyebrow{text-align:center;margin-bottom:20px;position:relative}
+  .browser{position:relative;max-width:910px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--line-2);
+    box-shadow:0 44px 100px -34px rgba(0,0,0,.85),0 0 0 1px rgba(45,212,191,.14)}
+  .bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0b1220;border-bottom:1px solid rgba(255,255,255,.08)}
+  .bdot{width:11px;height:11px;border-radius:50%}
+  .bdot.r{background:#ff5f57}.bdot.y{background:#febc2e}.bdot.g{background:#28c840}
+  .burl{margin:0 auto;font-size:12px;color:var(--faint);background:#0f1a2e;border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 16px}
+  .bapp{display:grid;grid-template-columns:158px 1fr;background:#F3F6FC;color:#15201C}
+  .msb{background:#fff;border-right:1px solid #E5EAF3;padding:15px 12px}
+  .msb-logo{display:flex;align-items:center;gap:7px;font-weight:800;font-size:14px;margin-bottom:16px;font-family:var(--font-display);letter-spacing:-.02em;color:#15201C}
+  .msb-logo .m{width:22px;height:22px;border-radius:6px;background:linear-gradient(140deg,#0D9488,#0EA5A5);display:grid;place-items:center}
+  .msb-logo .m svg{width:12px;height:12px;stroke:#fff;stroke-width:2.6;fill:none}
+  .msb-item{font-size:12.5px;font-weight:600;color:#5A6A72;padding:7px 9px;border-radius:8px}
+  .msb-item.on{background:#D6F2EE;color:#0F766E}
+  .mmain{padding:16px 18px 20px}
+  .mmain h4{font-family:var(--font-display);font-size:17px;font-weight:800;color:#15201C;letter-spacing:-.02em}
+  .mmain .msub{font-size:11.5px;color:#8791A3;margin:2px 0 12px}
+  .mrow{display:flex;gap:10px;padding:6px 0}
+  .mrow+.mrow{border-top:1px solid #EEF1F8}
+  .mtime{width:46px;text-align:right;font-size:11px;font-weight:650;color:#8791A3;font-variant-numeric:tabular-nums;padding-top:9px;flex-shrink:0}
+  .mdot{width:9px;height:9px;border-radius:50%;margin-top:11px;flex-shrink:0;box-shadow:0 0 0 3px #fff}
+  .mcard{flex:1;min-width:0;background:#F1F5FB;border:1px solid #E5EAF3;border-left:3px solid var(--cc);border-radius:9px;padding:7px 11px}
+  .mcard .mt{font-size:12.5px;font-weight:650;color:#15201C}
+  .mcard .mm{font-size:10.5px;color:#5A6A72;margin-top:3px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .mchip{font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent)}
+  .mnow{display:flex;align-items:center;gap:7px;margin:5px 0 5px 56px;font-size:9px;font-weight:800;color:#CE4038;letter-spacing:.1em}
+  .mnow .l{flex:1;height:2px;border-radius:2px;background:linear-gradient(to right,#CE4038,transparent)}
+  @media(max-width:600px){.bapp{grid-template-columns:1fr}.msb{display:none}}
+
   /* Orbit */
   .orbit-wrap{display:grid;place-items:center;min-height:420px}
   .orbit{position:relative;width:380px;height:380px;max-width:86vw;max-height:86vw}
@@ -254,6 +286,35 @@
     </div>
   </div>
 </header>
+
+<section class="showcase">
+  <div class="wrap">
+    <div class="show-eyebrow reveal"><span class="eyebrow">One screen for your whole day</span></div>
+    <div class="browser reveal">
+      <div class="bbar"><span class="bdot r"></span><span class="bdot y"></span><span class="bdot g"></span><span class="burl">dayflow · your day</span></div>
+      <div class="bapp">
+        <div class="msb">
+          <div class="msb-logo"><span class="m"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow</div>
+          <div class="msb-item on">Today</div>
+          <div class="msb-item">Week</div>
+          <div class="msb-item">Deadlines</div>
+          <div class="msb-item">Grades</div>
+          <div class="msb-item">Courses</div>
+        </div>
+        <div class="mmain">
+          <h4>Your day</h4>
+          <div class="msub">Tuesday, July 7</div>
+          <div class="mrow" style="--cc:#0D9488"><div class="mtime">9:00a</div><span class="mdot" style="background:#0D9488"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
+          <div class="mrow" style="--cc:#E0568A"><div class="mtime">12:30p</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Offense film</div><div class="mm"><span class="mchip">Athletics</span>East classroom</div></div></div>
+          <div class="mnow"><span class="l"></span>Now</div>
+          <div class="mrow" style="--cc:#E0568A"><div class="mtime">3:30p</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Practice</div><div class="mm"><span class="mchip">Athletics</span>Main field</div></div></div>
+          <div class="mrow" style="--cc:#7C5CFC"><div class="mtime">6:00p</div><span class="mdot" style="background:#7C5CFC"></span><div class="mcard"><div class="mt">Work shift</div><div class="mm"><span class="mchip">Work</span>Campus Store · 6–9pm</div></div></div>
+          <div class="mrow" style="--cc:#CE4038"><div class="mtime">11:59p</div><span class="mdot" style="background:#CE4038"></span><div class="mcard"><div class="mt">Problem Set 4</div><div class="mm"><span class="mchip">Due</span>MATH 231</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <div class="trust reveal">
   <div class="wrap trust-in">
