@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="description" content="Duely automatically pulls due dates from Canvas and your email into one dashboard, so you always know what is next.">
+<meta name="description" content="Duely pulls your entire day - class, practice, film, work shifts, and deadlines - into one dashboard.">
 <meta name="theme-color" content="#0A1020">
 </head>
-<body><title>Duely â€” every deadline, one place</title>
+<body><title>Duely â€” your whole day, one place</title>
 <style>
   /* Deliberately single-theme: a dark, editorial marketing page. */
   :root{
@@ -21,15 +21,22 @@
     --maxw:1120px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
+  html{scroll-behavior:smooth;background:var(--bg)}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-  body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
+  body{background:transparent;color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   ::selection{background:var(--teal);color:#041018}
   h1,h2,h3{letter-spacing:-.03em;line-height:1.05;text-wrap:balance}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
   .eyebrow{font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--teal-2)}
+
+  /* Background scene (lecture hall) */
+  .bg-scene{position:fixed;inset:0;z-index:-1;pointer-events:none}
+  .bg-scene canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .bg-scene::after{content:"";position:absolute;inset:0;
+    background:radial-gradient(135% 100% at 50% 16%,transparent 40%,rgba(10,16,32,.55) 78%,var(--bg) 96%),
+               linear-gradient(to bottom,rgba(10,16,32,.5),transparent 22%,transparent 62%,var(--bg))}
 
   /* Nav */
   .nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:.3s;border-bottom:1px solid transparent}
@@ -53,7 +60,7 @@
 
   /* Hero */
   .hero{position:relative;padding:150px 0 90px;overflow:hidden}
-  .hero-glow{position:absolute;top:-10%;left:50%;transform:translateX(-50%);width:900px;height:700px;
+  .hero-glow{position:absolute;top:-6%;left:50%;transform:translateX(-50%);width:820px;height:620px;
     background:radial-gradient(closest-side,var(--teal-soft),transparent 70%);pointer-events:none;filter:blur(10px)}
   .hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center}
   .hero-pill{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--teal-2);
@@ -62,7 +69,7 @@
   @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,191,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
   h1.hero-h{font-size:clamp(42px,6.4vw,72px);font-weight:800;margin:22px 0 0}
   h1.hero-h .accent{color:var(--teal)}
-  .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text-dim);max-width:33ch;margin:22px 0 0;line-height:1.6}
+  .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text-dim);max-width:36ch;margin:22px 0 0;line-height:1.6}
   .hero-cta{display:flex;gap:13px;margin-top:32px;flex-wrap:wrap}
   .hero-meta{margin-top:22px;font-size:13px;color:var(--text-faint);display:flex;align-items:center;gap:8px}
   .hero-meta svg{width:15px;height:15px;stroke:var(--teal);stroke-width:2;fill:none}
@@ -84,9 +91,9 @@
   .node .rev{animation:spinrev 30s linear infinite}
   .ring.r2 .node .rev{animation-duration:48s;animation-direction:normal}
   @keyframes spinrev{to{transform:rotate(-360deg)}}
-  .node.b-canvas{box-shadow:0 10px 30px -12px rgba(194,65,12,.4);border-color:rgba(224,135,107,.4)}
-  .node.b-mail{border-color:rgba(140,154,214,.4)}
-  .node.b-cal{border-color:var(--teal-line)}
+  .node.b-class{border-color:var(--teal-line)}
+  .node.b-work{border-color:rgba(124,92,252,.4)}
+  .node.b-practice{border-color:rgba(224,86,138,.4)}
   .hub{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:28px;
     background:linear-gradient(150deg,#12233d,#0c1526);border:1px solid var(--teal-line);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
@@ -97,25 +104,24 @@
   @media (prefers-reduced-motion:reduce){.ring,.node .rev,.hero-pill .spark{animation:none}}
 
   /* Trust strip */
-  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;margin-top:20px}
-  .trust-in{display:flex;align-items:center;gap:28px;flex-wrap:wrap;justify-content:center}
+  .trust{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:26px 0;margin-top:20px;background:rgba(10,16,32,.4)}
+  .trust-in{display:flex;align-items:center;gap:26px;flex-wrap:wrap;justify-content:center}
   .trust-lbl{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint)}
   .trust-item{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--text-dim)}
   .trust-item .td{width:8px;height:8px;border-radius:50%;background:var(--teal)}
 
   /* Sections */
-  section.blk{padding:96px 0}
-  .sec-head{max-width:640px;margin:0 auto 56px;text-align:center}
+  section.blk{padding:96px 0;position:relative}
+  .sec-head{max-width:660px;margin:0 auto 56px;text-align:center}
   .sec-head h2{font-size:clamp(30px,4.4vw,46px);font-weight:800;margin:14px 0 0}
   .sec-head p{color:var(--text-dim);font-size:17px;margin-top:16px;line-height:1.6}
 
   /* How it works */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  .step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;position:relative;overflow:hidden}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;position:relative;overflow:hidden;transition:.2s}
   .step::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 100% 0,var(--teal-soft),transparent 55%);opacity:0;transition:.3s}
   .step:hover::before{opacity:1}
   .step:hover{border-color:var(--teal-line);transform:translateY(-3px)}
-  .step{transition:.2s}
   .step .num{font-size:14px;font-weight:800;color:var(--teal);letter-spacing:.1em}
   .step .sic{width:46px;height:46px;border-radius:13px;background:var(--teal-soft);border:1px solid var(--teal-line);display:grid;place-items:center;margin:18px 0 16px}
   .step .sic svg{width:23px;height:23px;stroke:var(--teal-2);stroke-width:1.9;fill:none}
@@ -135,9 +141,9 @@
   .band{padding:90px 0}
   .band-in{background:linear-gradient(150deg,#0e1c33,#0b1424);border:1px solid var(--line);border-radius:26px;padding:60px 44px;text-align:center;position:relative;overflow:hidden}
   .band-in::after{content:"";position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(closest-side,var(--teal-soft),transparent 70%);pointer-events:none}
-  .band-in h2{font-size:clamp(26px,3.8vw,40px);font-weight:800;max-width:18ch;margin:0 auto;position:relative}
+  .band-in h2{font-size:clamp(26px,3.8vw,40px);font-weight:800;max-width:20ch;margin:0 auto;position:relative}
   .band-in h2 .accent{color:var(--teal)}
-  .band-in p{color:var(--text-dim);font-size:16px;margin:18px auto 0;max-width:44ch;position:relative}
+  .band-in p{color:var(--text-dim);font-size:16px;margin:18px auto 0;max-width:46ch;position:relative}
 
   /* FAQ */
   .faq{max-width:760px;margin:0 auto}
@@ -160,7 +166,7 @@
   .final .btn-primary{padding:15px 26px;font-size:16px}
 
   /* Footer */
-  footer{border-top:1px solid var(--line);padding:44px 0 60px}
+  footer{border-top:1px solid var(--line);padding:44px 0 60px;background:rgba(10,16,32,.5)}
   .foot-in{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .foot-links{display:flex;gap:26px;flex-wrap:wrap}
   .foot-links a{font-size:14px;color:var(--text-dim);transition:.15s}
@@ -189,6 +195,11 @@
   }
 </style>
 
+<div class="bg-scene" aria-hidden="true">
+  <canvas id="hall"></canvas>
+  <canvas id="motes"></canvas>
+</div>
+
 <nav class="nav" id="nav">
   <div class="nav-in">
     <a href="#top" class="logo"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Duely<span class="dot">.</span></a>
@@ -207,9 +218,9 @@
   <div class="hero-glow"></div>
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <span class="hero-pill"><span class="spark"></span> Syncs Canvas Â· Gmail Â· Calendar</span>
-      <h1 class="hero-h">Every deadline.<br><span class="accent">One place.</span></h1>
-      <p class="hero-sub">Duely automatically pulls due dates from Canvas and your email into a single dashboard â€” so you always know what's next, without digging through a dozen tabs.</p>
+      <span class="hero-pill"><span class="spark"></span> Class Â· Practice Â· Work Â· Life</span>
+      <h1 class="hero-h">Your whole day.<br><span class="accent">One place.</span></h1>
+      <p class="hero-sub">Class, practice, film, your work shift, every deadline â€” Duely pulls your entire schedule into one dashboard, so you always know what's next without checking five different apps.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="https://benmarban.github.io/duely/app.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
         <a class="btn btn-ghost" href="#how">See how it works</a>
@@ -221,16 +232,16 @@
         <div class="path p1"></div>
         <div class="path p2"></div>
         <div class="ring r1">
-          <div class="node b-canvas" style="--a:0deg;--r:100px"><span class="rev"><span class="ic">ðŸŽ“</span></span></div>
-          <div class="node b-mail" style="--a:120deg;--r:100px"><span class="rev"><span class="ic">âœ‰ï¸</span></span></div>
-          <div class="node b-cal" style="--a:240deg;--r:100px"><span class="rev"><span class="ic">ðŸ—“ï¸</span></span></div>
+          <div class="node b-class" style="--a:0deg;--r:100px"><span class="rev"><span class="ic">ðŸŽ“</span></span></div>
+          <div class="node b-practice" style="--a:120deg;--r:100px"><span class="rev"><span class="ic">ðŸˆ</span></span></div>
+          <div class="node b-work" style="--a:240deg;--r:100px"><span class="rev"><span class="ic">ðŸ’¼</span></span></div>
         </div>
         <div class="ring r2">
-          <div class="node" style="--a:0deg;--r:170px"><span class="rev"><span class="ic">ðŸ“Š</span></span></div>
-          <div class="node" style="--a:72deg;--r:170px"><span class="rev"><span class="ic">ðŸ“¢</span></span></div>
-          <div class="node" style="--a:144deg;--r:170px"><span class="rev"><span class="ic">â°</span></span></div>
-          <div class="node" style="--a:216deg;--r:170px"><span class="rev"><span class="ic">ðŸ“§</span></span></div>
-          <div class="node" style="--a:288deg;--r:170px"><span class="rev"><span class="ic">âœ…</span></span></div>
+          <div class="node" style="--a:0deg;--r:170px"><span class="rev"><span class="ic">ðŸŽ¬</span></span></div>
+          <div class="node" style="--a:72deg;--r:170px"><span class="rev"><span class="ic">âœ…</span></span></div>
+          <div class="node" style="--a:144deg;--r:170px"><span class="rev"><span class="ic">ðŸ†</span></span></div>
+          <div class="node" style="--a:216deg;--r:170px"><span class="rev"><span class="ic">ðŸ‹ï¸</span></span></div>
+          <div class="node" style="--a:288deg;--r:170px"><span class="rev"><span class="ic">ðŸ“§</span></span></div>
         </div>
         <div class="hub"><span class="hmark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span><span class="hname">Duely</span></div>
       </div>
@@ -244,7 +255,8 @@
     <span class="trust-item"><span class="td"></span>Canvas</span>
     <span class="trust-item"><span class="td"></span>Gmail</span>
     <span class="trust-item"><span class="td"></span>Google Calendar</span>
-    <span class="trust-item"><span class="td"></span>Outlook</span>
+    <span class="trust-item"><span class="td"></span>Team schedule</span>
+    <span class="trust-item"><span class="td"></span>Work shifts</span>
   </div>
 </div>
 
@@ -253,26 +265,26 @@
     <div class="sec-head reveal">
       <span class="eyebrow">How it works</span>
       <h2>From scattered to sorted in three steps</h2>
-      <p>No manual entry, no spreadsheet. Connect once and Duely keeps your deadlines current on its own.</p>
+      <p>Class, athletics, work, and life â€” connected once, then kept current automatically.</p>
     </div>
     <div class="steps">
       <div class="step reveal">
         <div class="num">01</div>
         <div class="sic"><svg viewBox="0 0 24 24"><path d="M9 12h6M12 9v6"/><rect x="3" y="4" width="18" height="16" rx="3"/></svg></div>
-        <h3>Connect your accounts</h3>
-        <p>Link Canvas and your email in a couple of taps. Nothing to configure â€” Duely handles the rest.</p>
+        <h3>Connect everything</h3>
+        <p>Link Canvas, your email, and your team and work calendars. A couple of taps â€” nothing to configure.</p>
       </div>
       <div class="step reveal" style="transition-delay:.1s">
         <div class="num">02</div>
         <div class="sic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
-        <h3>Duely finds the dates</h3>
-        <p>It reads your assignments and scans emails for real due dates â€” even the ones buried in a professor's message.</p>
+        <h3>Duely gathers your day</h3>
+        <p>It pulls assignments, practice and film times, game days, work shifts, and dates from your email â€” all into one place.</p>
       </div>
       <div class="step reveal" style="transition-delay:.2s">
         <div class="num">03</div>
         <div class="sic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg></div>
-        <h3>See it all in one view</h3>
-        <p>Deadlines, class schedule, and grades land on one dashboard â€” sorted by what's due next.</p>
+        <h3>See your whole day</h3>
+        <p>Everything you've got going on, on one timeline, sorted by what's happening next.</p>
       </div>
     </div>
   </div>
@@ -285,36 +297,36 @@
       <h2>Everything you juggle, in one command center</h2>
     </div>
     <div class="feat-grid">
-      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Unified deadlines</h3><p>Canvas assignments and email dates merged into one list, grouped by urgency.</p></div>
-      <div class="feat reveal" style="transition-delay:.06s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--violet)"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg></div><h3>Smart email reading</h3><p>Paste or sync an email and Duely pulls out the date â€” "moved to Friday at 10am" just works.</p></div>
-      <div class="feat reveal" style="transition-delay:.12s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg></div><h3>Class schedule</h3><p>Today's classes with a live "now" marker, so you always know where to be.</p></div>
-      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--rose)"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8"/></svg></div><h3>Grades at a glance</h3><p>Recent scores and your term GPA, color-coded by course â€” no more logging into Canvas to check.</p></div>
-      <div class="feat reveal" style="transition-delay:.06s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--amber)"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div><h3>Reminders</h3><p>A nudge before things are due â€” never get blindsided by a midnight deadline again.</p></div>
+      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div><h3>Your whole day, one timeline</h3><p>Classes, practice, film, work shifts, and deadlines merged into a single schedule, in order.</p></div>
+      <div class="feat reveal" style="transition-delay:.06s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--rose)"><path d="M6 9l6-5 6 5"/><path d="M6 9v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/><path d="M10 22v-6h4v6"/></svg></div><h3>Athletics built in</h3><p>Practice, film sessions, workouts, and game days â€” with reminders so you're never late.</p></div>
+      <div class="feat reveal" style="transition-delay:.12s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--violet)"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Work shifts</h3><p>Know exactly when you're on the clock. Add shifts or sync them from your scheduling app.</p></div>
+      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg></div><h3>Smart email reading</h3><p>Paste or sync an email and Duely pulls the date out â€” "film moved to 6am" just works.</p></div>
+      <div class="feat reveal" style="transition-delay:.06s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--amber)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Deadlines &amp; grades</h3><p>Canvas assignments and your grades, so school never slips through the cracks.</p></div>
       <div class="feat reveal" style="transition-delay:.12s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div><h3>Works on your phone</h3><p>Add it to your home screen and it opens fullscreen like a native app.</p></div>
     </div>
   </div>
 </section>
 
 <div class="band"><div class="wrap"><div class="band-in reveal">
-  <h2>The average student checks <span class="accent">five apps</span> to answer one question: what's due?</h2>
-  <p>Duely answers it in one â€” and keeps answering it, automatically, all semester long.</p>
+  <h2>Class at 9, film at noon, a shift at 5, three assignments due â€” <span class="accent">all in one day.</span></h2>
+  <p>Duely puts every part of your day on one screen, so nothing catches you off guard.</p>
 </div></div></div>
 
 <section class="blk" id="faq">
   <div class="wrap">
     <div class="sec-head reveal"><span class="eyebrow">FAQ</span><h2>Good questions</h2></div>
     <div class="faq">
-      <div class="qa reveal"><button class="qa-q">Is my data private?<span class="plus"></span></button><div class="qa-a"><p>Yes. Duely only reads what it needs to find your due dates, and your information stays tied to your own account â€” it's never sold or shared. You can disconnect any account at any time.</p></div></div>
+      <div class="qa reveal"><button class="qa-q">Is this just for athletes, or just for school?<span class="plus"></span></button><div class="qa-a"><p>Neither â€” it's for your whole life. Duely started with classes and deadlines, but it handles anything on your schedule: practice, film, games, work shifts, club meetings, appointments. If it's part of your day, it goes in Duely.</p></div></div>
       <div class="qa reveal"><button class="qa-q">Which schools does it work with?<span class="plus"></span></button><div class="qa-a"><p>Any school that uses Canvas â€” which is most of them. Duely connects through your personal Canvas calendar feed, so it works no matter which campus you're on.</p></div></div>
-      <div class="qa reveal"><button class="qa-q">Do I have to type in my assignments?<span class="plus"></span></button><div class="qa-a"><p>No â€” that's the whole point. Duely pulls assignments and due dates automatically from Canvas and your email. The only thing you might add by hand is a one-off date from a text or flyer.</p></div></div>
+      <div class="qa reveal"><button class="qa-q">Do I have to enter everything by hand?<span class="plus"></span></button><div class="qa-a"><p>No. Duely pulls classes and deadlines from Canvas and dates from your email automatically. You can add one-off things â€” a practice change, a shift, an appointment â€” in a couple of taps.</p></div></div>
       <div class="qa reveal"><button class="qa-q">Is it free?<span class="plus"></span></button><div class="qa-a"><p>Yes, it's free to start. Duely is an early-stage product built by students, for students â€” you can use the core dashboard at no cost.</p></div></div>
     </div>
   </div>
 </section>
 
 <div class="final"><div class="wrap"><div class="final-in reveal">
-  <h2>Stop missing deadlines.</h2>
-  <p>Open the dashboard and see everything you've got due â€” in one place.</p>
+  <h2>See your whole day at a glance.</h2>
+  <p>Open the dashboard and get everything â€” class, practice, work, and deadlines â€” on one screen.</p>
   <a class="btn btn-primary" href="https://benmarban.github.io/duely/app.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
 </div></div></div>
 
@@ -322,7 +334,7 @@
   <div class="wrap foot-in">
     <a href="#top" class="logo"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Duely<span class="dot">.</span></a>
     <div class="foot-links"><a href="#how">How it works</a><a href="#features">Features</a><a href="#faq">FAQ</a><a href="https://benmarban.github.io/duely/app.html">Open the app</a></div>
-    <div class="foot-copy">Â© 2026 Duely Â· Made for students</div>
+    <div class="foot-copy">Â© 2026 Duely Â· Made for students &amp; student-athletes</div>
   </div>
 </footer>
 
@@ -330,24 +342,95 @@
 (function(){
   "use strict";
   if(!document.querySelector('meta[name="viewport"]')){var mv=document.createElement('meta');mv.name='viewport';mv.content='width=device-width,initial-scale=1,viewport-fit=cover';document.head.appendChild(mv);}
+  const reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
 
-  // Nav background on scroll
+  // ---- Lecture-hall background scene ----
+  const hall=document.getElementById('hall'),hctx=hall.getContext('2d');
+  const moteCv=document.getElementById('motes'),mctx=moteCv.getContext('2d');
+  let W=0,H=0,DPR=1,motes=[];
+  function roundRect(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+  function drawHall(){
+    hctx.clearRect(0,0,W,H);
+    const vpx=W*0.5, vpy=H*0.40;
+    // ambient glow at the screen
+    let g=hctx.createRadialGradient(vpx,vpy,0,vpx,vpy,Math.max(W,H)*0.55);
+    g.addColorStop(0,'rgba(45,212,191,0.15)');g.addColorStop(.5,'rgba(45,212,191,0.045)');g.addColorStop(1,'transparent');
+    hctx.fillStyle=g;hctx.fillRect(0,0,W,H);
+    // lecture screen
+    const sw=Math.min(W*0.24,340),sh=sw*0.44;
+    hctx.save();
+    hctx.strokeStyle='rgba(94,234,212,0.55)';hctx.lineWidth=1.5;
+    hctx.shadowColor='rgba(45,212,191,0.7)';hctx.shadowBlur=34;
+    roundRect(hctx,vpx-sw/2,vpy-sh-H*0.03,sw,sh,7);hctx.stroke();
+    hctx.shadowBlur=0;hctx.fillStyle='rgba(45,212,191,0.05)';hctx.fill();
+    hctx.restore();
+    // converging perspective beams from screen edges toward the floor
+    hctx.strokeStyle='rgba(255,255,255,0.045)';hctx.lineWidth=1;
+    const baseY=H*1.02;
+    [-1,-.5,.5,1].forEach(k=>{hctx.beginPath();hctx.moveTo(vpx+k*sw*0.5,vpy-sh*0.5-H*0.03);hctx.lineTo(vpx+k*(W*0.62),baseY);hctx.stroke();});
+    // tiered rows of students facing the screen
+    const rows=7;
+    for(let r=0;r<rows;r++){
+      const t=r/(rows-1);                    // 0 = far/back, 1 = near/front
+      const y=vpy+(baseY-vpy)*Math.pow(t,1.35)*0.9+H*0.05;
+      const halfW=(W*0.07)+(W*0.46)*Math.pow(t,1.05);
+      const dotR=1.4+3.2*t, alpha=0.09+0.20*t;
+      // desk/row line
+      hctx.strokeStyle='rgba(120,160,205,'+(0.03+0.05*t)+')';hctx.lineWidth=1;
+      hctx.beginPath();hctx.moveTo(vpx-halfW,y+dotR*1.6);hctx.lineTo(vpx+halfW,y+dotR*1.6);hctx.stroke();
+      // student heads
+      const count=Math.round(7+11*t);
+      for(let c=0;c<count;c++){
+        const fx=count>1?(c/(count-1))-0.5:0;
+        const jitter=((c*53+r*17)%7-3)*0.4;   // deterministic wobble, no RNG
+        const x=vpx+fx*halfW*1.94;
+        hctx.fillStyle='rgba(155,185,220,'+alpha+')';
+        hctx.beginPath();hctx.arc(x,y+jitter,dotR,0,Math.PI*2);hctx.fill();
+      }
+    }
+  }
+  function initMotes(){
+    motes=[];const n=Math.round(W/26);
+    for(let i=0;i<n;i++)motes.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+0.4,s:Math.random()*0.28+0.05,a:Math.random()*0.4+0.12,tw:Math.random()*6});
+  }
+  function drawMotes(){
+    mctx.clearRect(0,0,W,H);
+    for(const m of motes){
+      mctx.beginPath();mctx.fillStyle='rgba(180,220,235,'+m.a+')';
+      mctx.arc(m.x,m.y,m.r,0,Math.PI*2);mctx.fill();
+    }
+  }
+  function stepMotes(){
+    for(const m of motes){m.y-=m.s;m.tw+=0.02;m.x+=Math.sin(m.tw)*0.12;if(m.y<-4){m.y=H+4;m.x=Math.random()*W;}}
+    drawMotes();raf=requestAnimationFrame(stepMotes);
+  }
+  let raf=0;
+  function size(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    W=window.innerWidth;H=window.innerHeight;
+    [hall,moteCv].forEach(cv=>{cv.width=W*DPR;cv.height=H*DPR;});
+    hctx.setTransform(DPR,0,0,DPR,0,0);mctx.setTransform(DPR,0,0,DPR,0,0);
+    drawHall();initMotes();drawMotes();
+  }
+  size();
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(size,180);},{passive:true});
+  if(!reduce){cancelAnimationFrame(raf);raf=requestAnimationFrame(stepMotes);}
+
+  // ---- Nav ----
   const nav=document.getElementById('nav');
   const onScroll=()=>{nav.classList.toggle('scrolled',window.scrollY>16);};
   onScroll();window.addEventListener('scroll',onScroll,{passive:true});
-
-  // Mobile menu
   const toggle=document.getElementById('navToggle'),links=document.getElementById('navLinks');
   toggle.addEventListener('click',()=>links.classList.toggle('show'));
   links.addEventListener('click',e=>{if(e.target.tagName==='A')links.classList.remove('show');});
 
-  // Scroll reveal
+  // ---- Scroll reveal ----
   const io=new IntersectionObserver((entries)=>{
     entries.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});
   },{threshold:.14,rootMargin:'0px 0px -8% 0px'});
   document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
 
-  // FAQ accordion
+  // ---- FAQ ----
   document.querySelectorAll('.qa-q').forEach(q=>{
     q.addEventListener('click',()=>{
       const qa=q.parentElement,a=qa.querySelector('.qa-a'),open=qa.classList.contains('open');
