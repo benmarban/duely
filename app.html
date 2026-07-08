@@ -378,6 +378,31 @@
   .scrim{position:fixed;inset:0;background:rgba(4,8,16,.5);backdrop-filter:blur(2px);z-index:79;opacity:0;pointer-events:none;transition:.3s}
   .scrim.show{opacity:1;pointer-events:auto}
 
+  /* ---- Dayflow Pro ---- */
+  .pro-upsell{display:flex;align-items:center;gap:11px;margin:10px 2px 0;padding:11px 12px;border-radius:12px;width:calc(100% - 4px);text-align:left;
+    background:linear-gradient(135deg,rgba(45,212,191,.14),rgba(154,123,255,.16));border:1px solid var(--teal-line);transition:.16s}
+  .pro-upsell:hover{border-color:var(--teal);transform:translateY(-1px);box-shadow:0 10px 26px -14px var(--teal-line)}
+  .pro-upsell .pu-ic{width:28px;height:28px;border-radius:8px;background:linear-gradient(140deg,var(--teal),var(--violet));display:grid;place-items:center;color:#04141a;font-weight:800;font-size:15px;flex-shrink:0}
+  .pro-upsell .pu-t{display:flex;flex-direction:column;min-width:0}
+  .pro-upsell .pu-t b{font-size:13.5px;font-weight:700}
+  .pro-upsell .pu-t span{font-size:11.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pro-badge{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:3px 8px;border-radius:999px}
+  .pro-modal .modal-h h2{display:flex;align-items:center;gap:8px}
+  .pro-modal .modal-h h2 .spk{background:linear-gradient(140deg,var(--teal),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .feat-list{margin:16px 0 4px;display:flex;flex-direction:column;gap:0}
+  .fli{display:flex;align-items:flex-start;gap:10px;padding:9px 0;font-size:13.5px;color:var(--text)}
+  .fli+.fli{border-top:1px solid var(--line)}
+  .fli svg{width:18px;height:18px;stroke:var(--teal-2);stroke-width:2.4;fill:none;flex-shrink:0;margin-top:1px}
+  .fli.soon{color:var(--text-dim)}
+  .fli .soontag{margin-left:auto;font-family:var(--font-mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);border:1px solid var(--line-2);padding:2px 7px;border-radius:999px;align-self:center}
+  .plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0 4px}
+  .plan{position:relative;text-align:left;padding:14px;border:1.5px solid var(--line-2);border-radius:14px;background:var(--card);transition:.15s}
+  .plan:hover{border-color:var(--teal-line)}
+  .plan.sel{border-color:var(--teal);background:var(--teal-soft)}
+  .plan .pname{font-size:12.5px;font-weight:650;color:var(--text-dim)}
+  .plan .pprice{font-family:var(--font-mono);font-size:22px;font-weight:700;margin-top:5px;letter-spacing:-.02em}
+  .plan .pper{font-size:12px;color:var(--text-faint);font-weight:500;margin-top:2px}
+  .plan .psave{position:absolute;top:-9px;right:10px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#04141a;background:var(--teal);padding:2px 8px;border-radius:999px}
   .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:13.5px;font-weight:650;padding:11px 18px;border-radius:999px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:90;white-space:nowrap}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -412,6 +437,7 @@
       <button class="navitem" data-view="courses"><svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h12a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2z"/><path d="M4 17.5A2 2 0 0 1 6 16h13"/></svg>Courses</button>
       <button class="navitem" data-view="grades"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-8"/></svg>Grades</button>
       <button class="ask-btn" id="askOpen"><span class="spark"><svg viewBox="0 0 24 24"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/></svg></span>Ask Dayflow</button>
+      <button class="pro-upsell" id="proUpsell"><span class="pu-ic">✦</span><span class="pu-t"><b id="proUpsellTitle">Dayflow Pro</b><span id="proUpsellSub">Unlock unlimited connections</span></span></button>
     </nav>
     <div class="sys">
       <div class="sys-lbl">Connected<button id="manageConn">Manage</button></div>
@@ -598,6 +624,27 @@
   </div>
 </div>
 
+<!-- Dayflow Pro -->
+<div class="modal-bg" id="proBg">
+  <div class="modal pro-modal" role="dialog" aria-modal="true">
+    <div class="modal-h"><div><h2>Dayflow <span class="spk">Pro ✦</span></h2><p id="proReason">Everything you're juggling, with no limits.</p></div><button class="mclose" id="proClose" aria-label="Close">×</button></div>
+    <div class="feat-list">
+      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Connect <b>unlimited</b>&nbsp;school systems — Canvas, Blackboard, Moodle &amp; more</div>
+      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Connect <b>unlimited</b>&nbsp;work apps for your shifts</div>
+      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Link <b>unlimited</b>&nbsp;email inboxes for auto-intake</div>
+      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Priority sync &amp; early access to new features</div>
+      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Reminders &amp; notifications<span class="soontag">soon</span></div>
+      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Grade tracking &amp; GPA<span class="soontag">soon</span></div>
+    </div>
+    <div class="plans" id="proPlans">
+      <button class="plan sel" data-plan="yearly"><span class="psave">Save 44%</span><span class="pname">Yearly</span><span class="pprice" id="priceYear">$19.99</span><span class="pper">per year · $1.67/mo</span></button>
+      <button class="plan" data-plan="monthly"><span class="pname">Monthly</span><span class="pprice" id="priceMonth">$2.99</span><span class="pper">per month</span></button>
+    </div>
+    <button class="btn" id="proUpgrade">Get Pro — <span id="proCtaPrice">$19.99/year</span></button>
+    <p class="pane-hint" style="text-align:center">Cancel anytime · built by a student, for students.</p>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -607,11 +654,11 @@
 
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false;
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly';
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   function cloudSave(){if(!sb||!userId)return;savePending=true;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,pro:proState},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
   },600);}
 
   /* ================= date helpers ================= */
@@ -981,7 +1028,7 @@
     else{USEREVENTS.push({id:'e'+Date.now(),title:title,cat:cat,date:date,sh:sh,sm:sm,eh:eh,em:em,loc:loc});}
     saveEvents();const wasEdit=!!editingId;editingId=null;closeModal();toast(wasEdit?'Event updated ✓':'Added to your schedule ✓');rerender();
   });
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeConn();closeAsst();}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeConn();closeAsst();closePro();}});
 
   let toastT;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),1900);}
   function updateBadge(){const n=items.filter(i=>!i.done&&dayDiff(new Date(i.due))<0).length;const b=document.getElementById('ddBadge');if(n){b.textContent=n;b.style.display='';}else b.style.display='none';}
@@ -1026,6 +1073,7 @@
   function addEmail(){
     var inp=document.getElementById('emailAdd');var v=(inp.value||'').trim().toLowerCase();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){setEmailMsg('Enter a valid email address.',true);return;}
+    if(!isPro()&&emails.length>=FREE.emails){showPro('Free links one inbox. Go Pro to add more email addresses for auto-intake.');return;}
     if(emails.some(function(e){return e.address===v;})){setEmailMsg('That address is already linked.',true);return;}
     emails.push({address:v,addedAt:Date.now()});cloudSave();renderEmails();inp.value='';setEmailMsg('Linked '+v+' ✓');toast('Email linked ✓');
   }
@@ -1068,6 +1116,7 @@
   }
   document.getElementById('lmsList').addEventListener('click',function(e){
     var b=e.target.closest('[data-lms]');if(!b)return;
+    if(!isPro()&&!schoolFeeds[b.dataset.lms]&&schoolCount()>=FREE.school){showPro('Free connects one school system. Go Pro to link all of them at once.');return;}
     curLMS=LMS.find(function(p){return p.id===b.dataset.lms;});
     document.getElementById('lmsConnect').hidden=false;
     document.getElementById('lmsList').hidden=true;
@@ -1126,6 +1175,7 @@
   }
   document.getElementById('providerList').addEventListener('click',function(e){
     var b=e.target.closest('[data-prov]');if(!b)return;
+    if(!isPro()&&!workConns[b.dataset.prov]&&workCount()>=FREE.work){showPro('Free connects one work app. Go Pro to add more shift sources.');return;}
     curProvider=PROVIDERS.find(function(p){return p.id===b.dataset.prov;});
     document.getElementById('workConnect').hidden=false;
     document.getElementById('providerList').hidden=true;
@@ -1171,8 +1221,40 @@
   }
   document.getElementById('workSync').addEventListener('click',function(){if(curProvider)importWork(curProvider,document.getElementById('workUrl').value,false);});
 
+  /* ================= Dayflow Pro (freemium) ================= */
+  const PRICE={monthly:'$2.99',yearly:'$19.99'};
+  const FREE={school:1,work:1,emails:1};
+  const proBg=document.getElementById('proBg');
+  function isPro(){return !!(proState&&proState.active&&(!proState.until||Date.now()<proState.until));}
+  function schoolCount(){return Object.keys(schoolFeeds).filter(function(k){return schoolFeeds[k];}).length;}
+  function workCount(){return Object.keys(workConns).length;}
+  function selectPlan(plan){proPlan=plan;document.querySelectorAll('#proPlans .plan').forEach(function(p){p.classList.toggle('sel',p.dataset.plan===plan);});document.getElementById('proCtaPrice').textContent=(plan==='yearly'?PRICE.yearly+'/year':PRICE.monthly+'/month');}
+  function showPro(reason){document.getElementById('proReason').textContent=reason||'Everything you\'re juggling, with no limits.';selectPlan(proPlan);proBg.classList.add('show');}
+  function closePro(){proBg.classList.remove('show');}
+  function renderProStatus(){
+    var sub=document.getElementById('proUpsellSub'),ic=document.querySelector('#proUpsell .pu-ic');
+    if(isPro()){if(sub)sub.textContent='Active — thank you ✦';if(ic)ic.textContent='✦';}
+    else{if(sub)sub.textContent='Unlock unlimited connections';}
+  }
+  document.getElementById('proUpsell').addEventListener('click',function(){showPro(isPro()?'You\'re on Pro — thanks for the support ✦':'Go unlimited — connect every class, job, and inbox.');});
+  document.getElementById('proClose').addEventListener('click',closePro);
+  proBg.addEventListener('click',function(e){if(e.target===proBg)closePro();});
+  document.getElementById('proPlans').addEventListener('click',function(e){var p=e.target.closest('[data-plan]');if(p)selectPlan(p.dataset.plan);});
+  document.getElementById('proUpgrade').addEventListener('click',function(){startCheckout(proPlan);});
+  document.getElementById('priceMonth').textContent=PRICE.monthly;document.getElementById('priceYear').textContent=PRICE.yearly;
+  async function startCheckout(plan){
+    if(isPro()){toast('You\'re already on Pro ✦');return;}
+    if(!sb||!userId){toast('Sign in first to upgrade');return;}
+    toast('Opening secure checkout…');
+    try{
+      var r=await sb.functions.invoke('create-checkout',{body:{plan:plan,userId:userId,email:userEmail,returnUrl:location.origin+location.pathname}});
+      if(!r.error&&r.data&&r.data.url){location.href=r.data.url;return;}
+      toast('Checkout isn\'t live yet — coming soon.');
+    }catch(e){toast('Checkout isn\'t live yet — coming soon.');}
+  }
+
   /* ================= live auto-update (realtime + polling + feed re-pull) ================= */
-  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails]);}
+  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,proState]);}
   function applyCloud(d){
     if(!d)return false;
     var nextItems=Array.isArray(d.items)?d.items.filter(function(it){return it&&!FAKE_IDS.has(it.id);}):items;
@@ -1180,11 +1262,14 @@
     var nextSchool=(d.schoolFeeds&&typeof d.schoolFeeds==='object')?d.schoolFeeds:schoolFeeds;
     var nextWork=(d.workConns&&typeof d.workConns==='object')?d.workConns:workConns;
     var nextEmails=Array.isArray(d.emails)?d.emails:emails;
-    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails]);
+    var nextPro=('pro' in d)?d.pro:proState;
+    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextPro]);
     if(incoming===snapshotState())return false; // unchanged (also swallows echoes of our own saves)
+    var wasPro=isPro();
     var before=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
-    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;
-    updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();rerender();
+    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;proState=nextPro;
+    updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();renderProStatus();rerender();
+    if(!wasPro&&isPro())toast('Dayflow Pro is active — thank you ✦');
     var after=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
     if(after>before)toast((after-before)+' new item'+(after-before>1?'s':'')+' synced ✓');
     return true;
@@ -1422,12 +1507,14 @@
           if(d.canvasFeed&&!schoolFeeds.canvas)schoolFeeds.canvas=d.canvasFeed; // migrate legacy single Canvas feed
           if(d.workConns&&typeof d.workConns==='object')workConns=d.workConns;
           if(Array.isArray(d.emails))emails=d.emails;
+          if(d.pro&&typeof d.pro==='object')proState=d.pro;
           // If we purged legacy seed items, persist the clean state.
           if(Array.isArray(d.items)&&d.items.length!==items.length)cloudSave();
         }else{cloudSave();}
       }catch(err){console.warn('auth/load failed:',err);}
     }
-    renderExamples();renderSugg();renderProviders();renderEmails();renderLMS();updateBadge();refreshSub();
+    renderExamples();renderSugg();renderProviders();renderEmails();renderLMS();renderProStatus();updateBadge();refreshSub();
+    if(/[?&]upgraded=1/.test(location.search)){toast('Welcome to Dayflow Pro ✦');try{history.replaceState(null,'',location.pathname);}catch(e){}setTimeout(function(){refetchState();},1500);}
     const feedIds=Object.keys(schoolFeeds).filter(function(k){return schoolFeeds[k];});
     if(feedIds.length){const st=document.getElementById('schoolStatus');if(st)st.textContent='Syncing…';}
     switchView('dashboard');
