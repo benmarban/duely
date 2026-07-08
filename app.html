@@ -319,6 +319,15 @@
   .pd{display:block;font-size:12px;color:var(--text-dim);margin-top:2px}
   .pstat{flex-shrink:0;font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--teal);padding:6px 12px;border-radius:999px;border:1px solid var(--teal-line)}
   .provider.on .pstat{color:var(--ok);border-color:var(--ok)}
+  .emrow{display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid var(--line-2);border-radius:12px;background:var(--card);margin-top:10px}
+  .emrow .eic{width:36px;height:36px;border-radius:10px;background:var(--card-2);border:1px solid var(--line);display:grid;place-items:center;flex-shrink:0}
+  .emrow .eic svg{width:18px;height:18px;stroke:var(--teal-2);stroke-width:1.9;fill:none}
+  .emrow .eb{flex:1;min-width:0}
+  .emrow .ea{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .emrow .es{font-size:11.5px;color:var(--text-dim);margin-top:2px}
+  .emrow .ebadge{flex-shrink:0;font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:4px 9px;border-radius:999px}
+  .emrow .erem{flex-shrink:0;width:28px;height:28px;border-radius:8px;font-size:18px;color:var(--text-faint);display:grid;place-items:center;transition:.14s}
+  .emrow .erem:hover{background:var(--red-soft);color:var(--red)}
 
   /* ---- AI assistant panel ---- */
   .fab{position:fixed;right:22px;bottom:22px;z-index:45;width:56px;height:56px;border-radius:17px;
@@ -406,7 +415,7 @@
       <div class="sys-lbl">Connected<button id="manageConn">Manage</button></div>
       <div class="sys-row click" data-canvas><span class="sdot"></span>Canvas<span class="stag" id="canvasStatus">Connect</span></div>
       <div class="sys-row click off" data-work><span class="sdot"></span>Work shifts<span class="stag" id="workStatus">Connect</span></div>
-      <div class="sys-row"><span class="sdot"></span>Gmail<span class="stag">Synced</span></div>
+      <div class="sys-row click" data-emails><span class="sdot"></span>Emails<span class="stag" id="emailStatus">1 linked</span></div>
       <div class="sys-acct" id="acct"></div>
     </div>
   </aside>
@@ -549,6 +558,7 @@
     <div class="mtabs">
       <button class="mtab active" data-conn="canvas">Canvas</button>
       <button class="mtab" data-conn="work">Work shifts</button>
+      <button class="mtab" data-conn="emails">Emails</button>
     </div>
 
     <div class="mpane" id="conn-canvas">
@@ -569,6 +579,15 @@
         <p class="pane-hint" id="workHint"></p>
       </div>
     </div>
+
+    <div class="mpane" id="conn-emails" hidden>
+      <p class="pane-hint" style="margin-top:14px">Link your other inboxes — personal, team, work. When a message is forwarded or synced from any of these, Dayflow files its dates to <b>this</b> account.</p>
+      <div id="emailList"></div>
+      <div class="field"><label>Add an email address</label><input id="emailAdd" type="email" placeholder="you@gmail.com" autocomplete="email"></div>
+      <button class="btn" id="emailAddBtn">Link this email</button>
+      <p class="cv-msg" id="emailMsg"></p>
+      <p class="pane-hint">Sign-in still uses your primary address. Linked inboxes are just extra places we'll accept your schedule from.</p>
+    </div>
   </div>
 </div>
 
@@ -581,11 +600,11 @@
 
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={};
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[];
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   function cloudSave(){if(!sb||!userId)return;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:canvasFeed,workConns:workConns},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:canvasFeed,workConns:workConns,emails:emails},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
   },600);}
 
   /* ================= date helpers ================= */
@@ -894,6 +913,7 @@
     const g=e.target.closest('[data-goto]');if(g){switchView(g.dataset.goto);return;}
     if(e.target.closest('[data-canvas]')){openConn('canvas');return;}
     if(e.target.closest('[data-work]')){openConn('work');return;}
+    if(e.target.closest('[data-emails]')){openConn('emails');return;}
     if(e.target.closest('#manageConn')){openConn('canvas');return;}
     const ask=e.target.closest('[data-ask]');if(ask){openAsst();askSend(ask.dataset.ask);return;}
     const chk=e.target.closest('.check');if(chk){const id=chk.closest('.drow').dataset.id;const it=items.find(x=>x.id===id);
@@ -960,13 +980,49 @@
 
   /* ================= Connections (Canvas + Work) ================= */
   const connBg=document.getElementById('connBg');
-  function openConn(which){connBg.classList.add('show');setConnTab(which||'canvas');var u=document.getElementById('cvUrl');if(u&&canvasFeed)u.value=canvasFeed;setCvMsg('');renderProviders();}
+  function openConn(which){connBg.classList.add('show');setConnTab(which||'canvas');var u=document.getElementById('cvUrl');if(u&&canvasFeed)u.value=canvasFeed;setCvMsg('');renderProviders();renderEmails();}
   function closeConn(){connBg.classList.remove('show');}
   function setConnTab(which){
     document.querySelectorAll('#connBg .mtab').forEach(x=>x.classList.toggle('active',x.dataset.conn===which));
     document.getElementById('conn-canvas').hidden=which!=='canvas';
     document.getElementById('conn-work').hidden=which!=='work';
+    document.getElementById('conn-emails').hidden=which!=='emails';
+    if(which==='emails')renderEmails();
   }
+
+  /* ---- Linked email inboxes (multiple emails per account) ---- */
+  const ENV_SVG='<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg>';
+  function normalizeEmails(){
+    if(!Array.isArray(emails))emails=[];
+    // de-dupe by lowercased address
+    var seen={},out=[];emails.forEach(function(e){if(!e||!e.address)return;var k=e.address.toLowerCase();if(seen[k])return;seen[k]=1;out.push({address:e.address,addedAt:e.addedAt||Date.now()});});emails=out;
+    // ensure the sign-in address is present and first
+    if(userEmail){var lc=userEmail.toLowerCase();var has=emails.some(function(e){return e.address.toLowerCase()===lc;});if(!has)emails.unshift({address:userEmail,addedAt:0});
+      emails.sort(function(a,b){return (a.address.toLowerCase()===lc?-1:0)-(b.address.toLowerCase()===lc?-1:0);});}
+    emails.forEach(function(e){e.primary=(userEmail&&e.address.toLowerCase()===userEmail.toLowerCase());});
+  }
+  function setEmailMsg(t,err){var el=document.getElementById('emailMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
+  function renderEmails(){
+    normalizeEmails();
+    var st=document.getElementById('emailStatus');if(st)st.textContent=emails.length+' linked';
+    var box=document.getElementById('emailList');if(!box)return;
+    box.innerHTML=emails.map(function(e){
+      return '<div class="emrow"><span class="eic">'+ENV_SVG+'</span><div class="eb"><div class="ea">'+esc(e.address)+'</div><div class="es">'+(e.primary?'Sign-in address':'Forwarded &amp; synced mail files here')+'</div></div>'+
+        (e.primary?'<span class="ebadge">Primary</span>':'<button class="erem" data-em="'+esc(e.address)+'" title="Unlink" aria-label="Unlink email">×</button>')+'</div>';
+    }).join('');
+  }
+  function addEmail(){
+    var inp=document.getElementById('emailAdd');var v=(inp.value||'').trim();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){setEmailMsg('Enter a valid email address.',true);return;}
+    if(emails.some(function(e){return e.address.toLowerCase()===v.toLowerCase();})){setEmailMsg('That address is already linked.',true);return;}
+    emails.push({address:v,addedAt:Date.now()});cloudSave();renderEmails();inp.value='';setEmailMsg('Linked '+v+' ✓');toast('Email linked ✓');
+  }
+  document.getElementById('emailAddBtn').addEventListener('click',addEmail);
+  document.getElementById('emailAdd').addEventListener('keydown',function(e){if(e.key==='Enter')addEmail();});
+  document.getElementById('emailList').addEventListener('click',function(e){
+    var b=e.target.closest('.erem');if(!b)return;
+    var addr=b.dataset.em;emails=emails.filter(function(x){return x.address!==addr;});cloudSave();renderEmails();setEmailMsg('Unlinked '+addr);toast('Email unlinked');
+  });
   document.querySelectorAll('#connBg .mtab').forEach(t=>t.addEventListener('click',()=>setConnTab(t.dataset.conn)));
   document.getElementById('connClose').addEventListener('click',closeConn);
   connBg.addEventListener('click',e=>{if(e.target===connBg)closeConn();});
@@ -1252,12 +1308,13 @@
           if(Array.isArray(d.events))USEREVENTS=d.events;
           if(d.canvasFeed)canvasFeed=d.canvasFeed;
           if(d.workConns&&typeof d.workConns==='object')workConns=d.workConns;
+          if(Array.isArray(d.emails))emails=d.emails;
           // If we purged legacy seed items, persist the clean state.
           if(Array.isArray(d.items)&&d.items.length!==items.length)cloudSave();
         }else{cloudSave();}
       }catch(err){console.warn('auth/load failed:',err);}
     }
-    renderExamples();renderSugg();renderProviders();updateBadge();refreshSub();
+    renderExamples();renderSugg();renderProviders();renderEmails();updateBadge();refreshSub();
     if(canvasFeed){const st=document.getElementById('canvasStatus');if(st)st.textContent='Syncing…';}
     switchView('dashboard');
     if(canvasFeed)syncCanvas(canvasFeed,true);
