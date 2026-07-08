@@ -607,11 +607,11 @@
 
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null;
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false;
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
-  function cloudSave(){if(!sb||!userId)return;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
+  function cloudSave(){if(!sb||!userId)return;savePending=true;clearTimeout(cloudT);cloudT=setTimeout(function(){
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
   },600);}
 
   /* ================= date helpers ================= */
@@ -1136,13 +1136,13 @@
   });
   document.getElementById('workBack').addEventListener('click',function(){document.getElementById('workConnect').hidden=true;document.getElementById('providerList').hidden=false;curProvider=null;});
   function setWorkMsg(t,err){var el=document.getElementById('workMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
-  async function syncWork(){
-    if(!curProvider)return;
-    var pname=curProvider.other?'your shift app':curProvider.name;
-    var locName=curProvider.other?'Work':curProvider.name;
-    var feed=(document.getElementById('workUrl').value||'').trim();
-    if(!feed){setWorkMsg('Paste '+(curProvider.other?'a shift calendar feed link':'your '+curProvider.name+' feed link')+' first.',true);return;}
-    setWorkMsg('Importing your shifts…');
+  async function importWork(p,feed,silent){
+    if(!p)return;
+    var pname=p.other?'your shift app':p.name;
+    var locName=p.other?'Work':p.name;
+    feed=((feed||'')+'').trim();
+    if(!feed){if(!silent)setWorkMsg('Paste '+(p.other?'a shift calendar feed link':'your '+p.name+' feed link')+' first.',true);return;}
+    if(!silent)setWorkMsg('Importing your shifts…');
     var normalized=feed.replace(/^webcal:/i,'https:');
     var imported=0,ok=false;
     if(sb){
@@ -1150,8 +1150,7 @@
         var r=await sb.functions.invoke('canvas-import',{body:{feedUrl:normalized}});
         if(!r.error&&r.data&&Array.isArray(r.data.events)){
           ok=true;
-          // remove previous shifts from this provider, then add fresh
-          var tag='work_'+curProvider.id+'_';
+          var tag='work_'+p.id+'_';
           USEREVENTS=USEREVENTS.filter(function(u){return !(u.id&&u.id.indexOf(tag)===0);});
           r.data.events.forEach(function(ev){
             var s=new Date(ev.start||ev.due),en=ev.end?new Date(ev.end):new Date(s.getTime()+3*3600e3);
@@ -1163,12 +1162,65 @@
         }
       }catch(e){}
     }
-    workConns[curProvider.id]={feed:feed,at:Date.now(),count:imported};cloudSave();
+    workConns[p.id]={feed:feed,at:Date.now(),count:imported};cloudSave();
     renderProviders();rerender();
-    if(ok&&imported){setWorkMsg('Imported '+imported+' shift'+(imported===1?'':'s')+' from '+pname+' ✓');toast('Shifts imported ✓');}
-    else{setWorkMsg((curProvider.other?'Connected':curProvider.name+' connected')+'. We\'ll pull shifts onto your timeline as they publish.');toast((curProvider.other?'Connected':curProvider.name+' connected')+' ✓');}
+    if(!silent){
+      if(ok&&imported){setWorkMsg('Imported '+imported+' shift'+(imported===1?'':'s')+' from '+pname+' ✓');toast('Shifts imported ✓');}
+      else{setWorkMsg((p.other?'Connected':p.name+' connected')+'. We\'ll pull shifts onto your timeline as they publish.');toast((p.other?'Connected':p.name+' connected')+' ✓');}
+    }
   }
-  document.getElementById('workSync').addEventListener('click',syncWork);
+  document.getElementById('workSync').addEventListener('click',function(){if(curProvider)importWork(curProvider,document.getElementById('workUrl').value,false);});
+
+  /* ================= live auto-update (realtime + polling + feed re-pull) ================= */
+  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails]);}
+  function applyCloud(d){
+    if(!d)return false;
+    var nextItems=Array.isArray(d.items)?d.items.filter(function(it){return it&&!FAKE_IDS.has(it.id);}):items;
+    var nextEvents=Array.isArray(d.events)?d.events:USEREVENTS;
+    var nextSchool=(d.schoolFeeds&&typeof d.schoolFeeds==='object')?d.schoolFeeds:schoolFeeds;
+    var nextWork=(d.workConns&&typeof d.workConns==='object')?d.workConns:workConns;
+    var nextEmails=Array.isArray(d.emails)?d.emails:emails;
+    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails]);
+    if(incoming===snapshotState())return false; // unchanged (also swallows echoes of our own saves)
+    var before=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
+    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;
+    updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();rerender();
+    var after=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
+    if(after>before)toast((after-before)+' new item'+(after-before>1?'s':'')+' synced ✓');
+    return true;
+  }
+  async function refetchState(){
+    if(!sb||!userId||savePending)return; // a local save is in flight → our copy is the newer one
+    try{var res=await sb.from('user_state').select('data').eq('user_id',userId).maybeSingle();if(res&&res.data&&res.data.data)applyCloud(res.data.data);}catch(e){}
+  }
+  var lastResync=0,resyncing=false;
+  async function resyncFeeds(force){
+    if(!sb||!userId||resyncing)return;
+    var t=Date.now();if(!force&&t-lastResync<5*60*1000)return; // throttle to at most every 5 min
+    lastResync=t;resyncing=true;
+    try{
+      var sk=Object.keys(schoolFeeds);for(var a=0;a<sk.length;a++){if(schoolFeeds[sk[a]])await syncLMS(sk[a],schoolFeeds[sk[a]],true);}
+      var wk=Object.keys(workConns);for(var b=0;b<wk.length;b++){var c=workConns[wk[b]];if(c&&c.feed){var p=PROVIDERS.find(function(x){return x.id===wk[b];});if(p)await importWork(p,c.feed,true);}}
+    }catch(e){}
+    resyncing=false;
+  }
+  function setupLiveUpdates(){
+    if(!sb||!userId)return;
+    lastResync=Date.now(); // boot already synced feeds; don't immediately re-pull
+    // 1) Realtime — instant when this account's row changes (email intake, another device)
+    try{
+      sb.channel('user_state_'+userId)
+        .on('postgres_changes',{event:'*',schema:'public',table:'user_state',filter:'user_id=eq.'+userId},function(payload){
+          if(savePending)return; // ignore our own in-flight write
+          if(payload&&payload.new&&payload.new.data)applyCloud(payload.new.data);
+        }).subscribe();
+    }catch(e){}
+    setInterval(refetchState,90000);                 // 2) poll fallback (works even w/o Realtime enabled)
+    setInterval(function(){resyncFeeds(false);},20*60*1000); // 3) re-pull feeds for new assignments/shifts
+    function onWake(){if(!document.hidden){refetchState();resyncFeeds(false);}} // 4) refresh on tab focus
+    document.addEventListener('visibilitychange',onWake);
+    window.addEventListener('focus',onWake);
+  }
 
   /* ================= AI assistant ================= */
   const asst=document.getElementById('assistant'),asstScrim=document.getElementById('asstScrim'),asstMsgs=document.getElementById('asstMsgs');
@@ -1380,6 +1432,7 @@
     if(feedIds.length){const st=document.getElementById('schoolStatus');if(st)st.textContent='Syncing…';}
     switchView('dashboard');
     feedIds.forEach(function(pid){syncLMS(pid,schoolFeeds[pid],true);});
+    setupLiveUpdates();
   }
   boot();
 })();
