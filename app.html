@@ -993,13 +993,16 @@
   /* ---- Linked email inboxes (multiple emails per account) ---- */
   const ENV_SVG='<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg>';
   function normalizeEmails(){
+    var before=JSON.stringify(Array.isArray(emails)?emails:[]);
     if(!Array.isArray(emails))emails=[];
-    // de-dupe by lowercased address
-    var seen={},out=[];emails.forEach(function(e){if(!e||!e.address)return;var k=e.address.toLowerCase();if(seen[k])return;seen[k]=1;out.push({address:e.address,addedAt:e.addedAt||Date.now()});});emails=out;
+    // canonicalize to lowercase + de-dupe (so server-side sender lookup is reliable)
+    var seen={},out=[];emails.forEach(function(e){if(!e||!e.address)return;var a=String(e.address).trim().toLowerCase();if(!a||seen[a])return;seen[a]=1;out.push({address:a,addedAt:e.addedAt||Date.now()});});emails=out;
     // ensure the sign-in address is present and first
-    if(userEmail){var lc=userEmail.toLowerCase();var has=emails.some(function(e){return e.address.toLowerCase()===lc;});if(!has)emails.unshift({address:userEmail,addedAt:0});
-      emails.sort(function(a,b){return (a.address.toLowerCase()===lc?-1:0)-(b.address.toLowerCase()===lc?-1:0);});}
-    emails.forEach(function(e){e.primary=(userEmail&&e.address.toLowerCase()===userEmail.toLowerCase());});
+    if(userEmail){var lc=userEmail.toLowerCase();if(!emails.some(function(e){return e.address===lc;}))emails.unshift({address:lc,addedAt:0});
+      emails.sort(function(a,b){return (a.address===lc?-1:0)-(b.address===lc?-1:0);});}
+    emails.forEach(function(e){e.primary=(userEmail&&e.address===userEmail.toLowerCase());});
+    // persist if normalization changed anything (e.g. injected the primary address)
+    if(userId&&JSON.stringify(emails)!==before)cloudSave();
   }
   function setEmailMsg(t,err){var el=document.getElementById('emailMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
   function renderEmails(){
@@ -1012,9 +1015,9 @@
     }).join('');
   }
   function addEmail(){
-    var inp=document.getElementById('emailAdd');var v=(inp.value||'').trim();
+    var inp=document.getElementById('emailAdd');var v=(inp.value||'').trim().toLowerCase();
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)){setEmailMsg('Enter a valid email address.',true);return;}
-    if(emails.some(function(e){return e.address.toLowerCase()===v.toLowerCase();})){setEmailMsg('That address is already linked.',true);return;}
+    if(emails.some(function(e){return e.address===v;})){setEmailMsg('That address is already linked.',true);return;}
     emails.push({address:v,addedAt:Date.now()});cloudSave();renderEmails();inp.value='';setEmailMsg('Linked '+v+' ✓');toast('Email linked ✓');
   }
   document.getElementById('emailAddBtn').addEventListener('click',addEmail);

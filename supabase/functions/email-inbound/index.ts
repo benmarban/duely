@@ -1,12 +1,22 @@
-// Dayflow — inbound email → AI extract → save to the user's account
+// Dayflow — inbound email → AI extract → save to the RIGHT user's account
 //
-// A forwarding service (e.g. a Val.town email address) POSTs the forwarded
-// email here as { text, secret }. We verify the shared secret, run Gemini to
-// pull out dates/events, and write them into the target user's saved schedule
-// using the service role (bypassing RLS, since there's no logged-in browser).
+// A forwarding service (Cloudflare Email Routing / Postmark / SendGrid Inbound
+// Parse / a Val.town address, etc.) POSTs the forwarded email here as
+//   { text, secret, from }
+// where `from` is the address the mail was forwarded FROM (the user's inbox).
+//
+// We verify the shared secret, resolve `from` to a Dayflow account by matching
+// it against that account's linked inboxes (user_state.data.emails — the list
+// managed in the app's Connections → Emails tab, incl. their sign-in address),
+// run Gemini to pull out dates/events, and write them into THAT user's saved
+// schedule using the service role (bypassing RLS, since there's no browser).
+//
+// Multi-user: routing is by sender, so every user who has forwarded/linked an
+// inbox gets their own items — no per-user server config.
 //
 // Deploy as Edge Function "email-inbound" with --no-verify-jwt.
-// Secrets needed: GEMINI_API_KEY, INBOUND_SECRET, TARGET_USER_ID.
+// Secrets: GEMINI_API_KEY, INBOUND_SECRET. Optional: TARGET_USER_ID (legacy
+// single-account fallback used only when `from` matches no linked inbox).
 // (SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected automatically.)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -55,19 +65,42 @@ async function geminiExtract(text: string): Promise<any[]> {
   try { const p = JSON.parse(out); return Array.isArray(p) ? p : []; } catch { return []; }
 }
 
+// Pull a bare address out of "Name <a@b.com>" or a raw header value.
+function cleanAddress(from: string): string {
+  const s = String(from || "").toLowerCase();
+  const m = s.match(/[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+/);
+  return m ? m[0] : "";
+}
+
+// Resolve a sender address to the account that linked it (Connections → Emails).
+// Matches via jsonb containment: data @> { emails: [ { address } ] }.
+async function findUserByEmail(supa: any, from: string): Promise<string | null> {
+  const addr = cleanAddress(from);
+  if (!addr) return null;
+  const { data, error } = await supa
+    .from("user_state")
+    .select("user_id")
+    .contains("data", { emails: [{ address: addr }] })
+    .limit(1);
+  if (error) { console.warn("sender lookup failed:", error.message); return null; }
+  return data && data.length ? data[0].user_id : null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { text, secret } = await req.json().catch(() => ({}));
+    const { text, secret, from } = await req.json().catch(() => ({}));
     if (secret !== Deno.env.get("INBOUND_SECRET")) return json({ error: "Unauthorized" }, 401);
     if (!text || typeof text !== "string") return json({ error: "No email text" }, 400);
 
-    const userId = Deno.env.get("TARGET_USER_ID");
-    if (!userId) return json({ error: "Server not configured (TARGET_USER_ID)" }, 500);
+    const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+    // Route by sender; fall back to the legacy single-account env if unmatched.
+    const userId = (await findUserByEmail(supa, from)) || Deno.env.get("TARGET_USER_ID") || "";
+    if (!userId) return json({ ignored: true, reason: "sender not linked to any account", from: cleanAddress(from) }, 200);
 
     const extracted = await geminiExtract(text);
 
-    const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
     const { data: row } = await supa.from("user_state").select("data").eq("user_id", userId).maybeSingle();
     const state: any = (row && (row as any).data) || {};
     const items: any[] = Array.isArray(state.items) ? state.items : [];
