@@ -664,9 +664,38 @@
   let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly';
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
+  // NB: `pro` is deliberately absent from this payload. Entitlement lives in the
+  // user_pro table, which the browser may read and never write — see refetchPro().
+  // Putting it back here would hand every customer a free subscription.
   function cloudSave(){if(!sb||!userId)return;savePending=true;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,pro:proState,dismissed:dismissed},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
   },600);}
+
+  /* ---- Pro entitlement (read-only to this client) ---- */
+  // The server speaks timestamptz; isPro() compares against Date.now(), so parse on
+  // the way in and keep the rest of the app in epoch ms.
+  function normPro(row){
+    if(!row)return null;
+    return {active:!!row.active,plan:row.plan||'',
+            since:row.since?Date.parse(row.since):0,
+            until:row.until?Date.parse(row.until):0,
+            customer:row.customer||'',subscription:row.subscription||''};
+  }
+  // `silent` on the paths that would otherwise congratulate a Pro user for being Pro
+  // on every page load, or double up on the "Welcome to Pro" toast after checkout.
+  async function refetchPro(silent){
+    if(!sb||!userId)return false;
+    try{
+      var res=await sb.from('user_pro').select('active,plan,since,until,customer,subscription').eq('user_id',userId).maybeSingle();
+      if(!res||res.error)return false;
+      var next=normPro(res.data);
+      if(JSON.stringify(next)===JSON.stringify(proState))return false;
+      var wasPro=isPro();
+      proState=next;renderProStatus();rerender();
+      if(!silent&&!wasPro&&isPro())toast('Dayflow Pro is active — thank you ✦');
+      return true;
+    }catch(e){return false;}
+  }
 
   /* ================= date helpers ================= */
   const DAY=864e5,now=new Date();
@@ -1350,7 +1379,8 @@
     if(!sb||!userId){toast('Sign in first to upgrade');return;}
     var btn=document.getElementById('proUpgrade');busyBtn(btn,'Opening secure checkout…');
     try{
-      var r=await sb.functions.invoke('create-checkout',{body:{plan:plan,userId:userId,email:userEmail,returnUrl:location.origin+location.pathname}});
+      // No userId in the body — the function reads it from our JWT, which invoke() attaches.
+      var r=await sb.functions.invoke('create-checkout',{body:{plan:plan,email:userEmail,returnUrl:location.origin+location.pathname}});
       if(!r.error&&r.data&&r.data.url){location.href=r.data.url;return;}
       // Don't swallow the reason. supabase-js puts the function's JSON body on
       // error.context (a Response), not on error.message — without this, a real
@@ -1371,7 +1401,8 @@
   }
 
   /* ================= live auto-update (realtime + polling + feed re-pull) ================= */
-  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,proState,dismissed]);}
+  // Pro is not part of this snapshot: it comes from user_pro, not user_state.data.
+  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,dismissed]);}
   function applyCloud(d){
     if(!d)return false;
     var nextItems=Array.isArray(d.items)?d.items.filter(function(it){return it&&!FAKE_IDS.has(it.id);}):items;
@@ -1379,19 +1410,16 @@
     var nextSchool=(d.schoolFeeds&&typeof d.schoolFeeds==='object')?d.schoolFeeds:schoolFeeds;
     var nextWork=(d.workConns&&typeof d.workConns==='object')?d.workConns:workConns;
     var nextEmails=Array.isArray(d.emails)?d.emails:emails;
-    var nextPro=('pro' in d)?d.pro:proState;
     var nextDismissed=Array.isArray(d.dismissed)?d.dismissed:dismissed;
     // Another device may have deleted a row we still hold. Honour its tombstones
     // before we compare, or this device re-renders the row and syncs it back.
     nextItems=nextItems.filter(function(it){return nextDismissed.indexOf(it.id)<0;});
     nextEvents=nextEvents.filter(function(u){return nextDismissed.indexOf(u.id)<0;});
-    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextPro,nextDismissed]);
+    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextDismissed]);
     if(incoming===snapshotState())return false; // unchanged (also swallows echoes of our own saves)
-    var wasPro=isPro();
     var before=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
-    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;proState=nextPro;dismissed=nextDismissed;
-    updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();renderProStatus();rerender();
-    if(!wasPro&&isPro())toast('Dayflow Pro is active — thank you ✦');
+    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;dismissed=nextDismissed;
+    updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();rerender();
     var after=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
     if(after>before)toast((after-before)+' new item'+(after-before>1?'s':'')+' synced ✓');
     return true;
@@ -1421,10 +1449,16 @@
           if(savePending)return; // ignore our own in-flight write
           if(payload&&payload.new&&payload.new.data)applyCloud(payload.new.data);
         }).subscribe();
+      // Pro lands in its own table, so it needs its own subscription — this is what
+      // turns a Stripe webhook into an instant unlock (or lock) in an open tab.
+      sb.channel('user_pro_'+userId)
+        .on('postgres_changes',{event:'*',schema:'public',table:'user_pro',filter:'user_id=eq.'+userId},function(){
+          refetchPro();
+        }).subscribe();
     }catch(e){}
-    setInterval(refetchState,90000);                 // 2) poll fallback (works even w/o Realtime enabled)
+    setInterval(function(){refetchState();refetchPro();},90000); // 2) poll fallback (works even w/o Realtime enabled)
     setInterval(function(){resyncFeeds(false);},20*60*1000); // 3) re-pull feeds for new assignments/shifts
-    function onWake(){if(!document.hidden){refetchState();resyncFeeds(false);}} // 4) refresh on tab focus
+    function onWake(){if(!document.hidden){refetchState();refetchPro();resyncFeeds(false);}} // 4) refresh on tab focus
     document.addEventListener('visibilitychange',onWake);
     window.addEventListener('focus',onWake);
   }
@@ -1629,7 +1663,6 @@
           if(d.canvasFeed&&!schoolFeeds.canvas)schoolFeeds.canvas=d.canvasFeed; // migrate legacy single Canvas feed
           if(d.workConns&&typeof d.workConns==='object')workConns=d.workConns;
           if(Array.isArray(d.emails))emails=d.emails;
-          if(d.pro&&typeof d.pro==='object')proState=d.pro;
           if(Array.isArray(d.dismissed))dismissed=d.dismissed;
           // A feed sync on another device can re-add a row this device deleted.
           items=items.filter(function(it){return !isDismissed(it.id);});
@@ -1637,10 +1670,17 @@
           // If we purged legacy seed items, persist the clean state.
           if(Array.isArray(d.items)&&d.items.length!==items.length)cloudSave();
         }else{cloudSave();}
+        await refetchPro(true); // separate table, separate read
       }catch(err){console.warn('auth/load failed:',err);}
     }
     renderExamples();renderSugg();renderProviders();renderEmails();renderLMS();renderProStatus();updateBadge();refreshSub();
-    if(/[?&]upgraded=1/.test(location.search)){toast('Welcome to Dayflow Pro ✦');try{history.replaceState(null,'',location.pathname);}catch(e){}setTimeout(function(){refetchState();},1500);}
+    // Stripe bounces the user back here the moment checkout completes, which can beat
+    // the webhook. Poll a few times before falling back to the 90s refresh.
+    if(/[?&]upgraded=1/.test(location.search)){
+      toast('Welcome to Dayflow Pro ✦');
+      try{history.replaceState(null,'',location.pathname);}catch(e){}
+      [1500,4000,9000,20000].forEach(function(ms){setTimeout(function(){if(!isPro())refetchPro(true);},ms);});
+    }
     const feedIds=Object.keys(schoolFeeds).filter(function(k){return schoolFeeds[k];});
     if(feedIds.length){const st=document.getElementById('schoolStatus');if(st)st.textContent='Syncing…';}
     switchView('dashboard');

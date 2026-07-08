@@ -1,5 +1,6 @@
-// Dayflow Pro — Stripe webhook. Flips each user's data.pro when their
-// subscription starts, renews, or ends. This is the source of truth for Pro.
+// Dayflow Pro — Stripe webhook. Flips each user's row in `user_pro` when their
+// subscription starts, renews, or ends. This is the source of truth for Pro, and
+// (service role aside) the only thing that can write that table.
 //
 // Deploy with signature verification OFF for the platform JWT (Stripe signs its
 // own way):  supabase functions deploy stripe-webhook --no-verify-jwt
@@ -26,31 +27,26 @@ const cryptoProvider = Stripe.createSubtleCryptoProvider();
 const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
 // Stripe hands us `string | {id} | null` depending on whether a field was expanded.
-// customer-portal reads data.pro.customer expecting a plain id, so flatten it here.
+// customer-portal reads user_pro.customer expecting a plain id, so flatten it here.
 const id = (x: unknown): string | null =>
   typeof x === "string" ? x : (x && typeof x === "object" && "id" in x) ? String((x as any).id) : null;
 
-// Merges `patch` into data.pro, leaving the rest of the user's state alone.
+// Writes the entitlement to `user_pro` (see supabase/migrations/*_user_pro.sql).
 //
-// `user_state.data` is the whole app blob (schedule, connections, inboxes) with
-// `pro` as one key, so every write here is read-modify-write over live user data.
-// Two things that must not happen:
-//   - a failed read silently becoming `{}`, which would upsert away everything
-//     the user has. Throw instead: the 500 makes Stripe redeliver.
-//   - a failed write returning 200, which would make Stripe drop the event.
-// A `null` row is different from a failed read — a user can pay before their
-// first sync ever writes a row — so only `error` is fatal.
+// That table is readable by its owner and writable by nobody but the service role,
+// which is what this function holds. It used to live in `user_state.data.pro` — a
+// blob the browser upserts — so customers could grant themselves Pro, and the
+// browser's debounced save raced this write and could reset it to null. A row of
+// its own removes both problems, and the read-modify-write with it: one upsert,
+// no snapshot of anyone else's data to preserve.
+//
+// A failed write must not return 200, or Stripe drops the event. Throw so the
+// handler 500s and Stripe redelivers.
 async function setPro(userId: string, patch: Record<string, unknown>) {
-  const { data, error } = await supa.from("user_state").select("data").eq("user_id", userId).maybeSingle();
-  if (error) throw new Error(`read user_state: ${error.message}`);
-
-  const state: any = (data as any)?.data ?? {};
-  state.pro = { ...(state.pro || {}), ...patch };
-
-  const { error: writeError } = await supa
-    .from("user_state")
-    .upsert({ user_id: userId, data: state, updated_at: new Date().toISOString() });
-  if (writeError) throw new Error(`write user_state: ${writeError.message}`);
+  const { error } = await supa
+    .from("user_pro")
+    .upsert({ user_id: userId, ...patch, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) throw new Error(`write user_pro: ${error.message}`);
 }
 
 Deno.serve(async (req) => {
@@ -73,7 +69,7 @@ Deno.serve(async (req) => {
         await setPro(userId, {
           active: true,
           plan: (s.metadata as any)?.plan || "",
-          since: Date.now(),
+          since: new Date().toISOString(), // `since` is a timestamptz column now, not epoch ms
           customer: id(s.customer),
           subscription: id(s.subscription),
         });
@@ -101,7 +97,7 @@ Deno.serve(async (req) => {
       const patch: Record<string, unknown> = { active, customer: id(sub.customer), subscription: sub.id };
 
       // checkout.session.completed writes "monthly"/"yearly" from our own metadata;
-      // Stripe's interval is "month"/"year". Normalise so data.pro.plan is one vocabulary.
+      // Stripe's interval is "month"/"year". Normalise so user_pro.plan is one vocabulary.
       const interval = sub.items?.data?.[0]?.price?.recurring?.interval;
       const plan = interval === "month" ? "monthly" : interval === "year" ? "yearly" : "";
       if (plan) patch.plan = plan; // don't blank a good value when Stripe omits the price

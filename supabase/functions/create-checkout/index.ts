@@ -3,7 +3,7 @@
 // Called from the app (sb.functions.invoke('create-checkout', { body })) when a
 // signed-in user taps "Get Pro". Returns { url }; the app redirects there.
 // On success Stripe sends the user back to app.html?upgraded=1, and the
-// stripe-webhook function flips data.pro.active = true for their account.
+// stripe-webhook function flips user_pro.active = true for their account.
 //
 // Deploy:  supabase functions deploy create-checkout
 // Secrets: supabase secrets set STRIPE_SECRET_KEY=sk_...  \
@@ -29,18 +29,20 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { plan, userId: bodyUserId, email, returnUrl } = await req.json().catch(() => ({}));
+    const { plan, email, returnUrl } = await req.json().catch(() => ({}));
 
-    // Trust the signed-in user's JWT for the account id (fall back to body).
-    let userId = bodyUserId;
+    // The account id comes from the caller's JWT and nowhere else. This used to fall
+    // back to a `userId` in the request body, which is not a fallback but a hole: the
+    // anon key is public and counts as a valid project JWT, so `getUser()` returns
+    // nothing for it and the body would win. Anyone could then open a checkout
+    // session against a stranger's account.
     const auth = req.headers.get("Authorization");
-    if (auth) {
-      const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
-        global: { headers: { Authorization: auth } },
-      });
-      const { data } = await supa.auth.getUser();
-      if (data?.user?.id) userId = data.user.id;
-    }
+    if (!auth) return json({ error: "Not signed in" }, 401);
+    const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+      global: { headers: { Authorization: auth } },
+    });
+    const { data } = await supa.auth.getUser();
+    const userId = data?.user?.id;
     if (!userId) return json({ error: "Not signed in" }, 401);
 
     const price = plan === "monthly"

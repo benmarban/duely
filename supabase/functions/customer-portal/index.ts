@@ -36,8 +36,10 @@ Deno.serve(async (req) => {
     const userId = u?.user?.id;
     if (!userId) return json({ error: "Not signed in" }, 401);
 
-    const { data: row } = await supa.from("user_state").select("data").eq("user_id", userId).maybeSingle();
-    const customer = (row as any)?.data?.pro?.customer;
+    // Reads through the caller's JWT — the "user reads own pro" policy scopes this
+    // to their own row, so a forged user_id in the query would return nothing.
+    const { data: row } = await supa.from("user_pro").select("customer").eq("user_id", userId).maybeSingle();
+    const customer = (row as any)?.customer;
     if (!customer) return json({ error: "No subscription found" }, 404);
 
     const session = await stripe.billingPortal.sessions.create({
