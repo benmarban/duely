@@ -382,6 +382,17 @@
   .scrim{position:fixed;inset:0;background:rgba(4,8,16,.5);backdrop-filter:blur(2px);z-index:79;opacity:0;pointer-events:none;transition:.3s}
   .scrim.show{opacity:1;pointer-events:auto}
 
+  /* ---- Connect Gmail ---- */
+  .gmail-card{display:flex;align-items:center;gap:11px;margin:10px 0 4px;padding:13px;border:1px solid var(--line-2);border-radius:13px;background:var(--card)}
+  .gmail-card.on{border-color:var(--ok);background:var(--ok-soft)}
+  .gmail-card .gc-ic{width:30px;height:30px;border-radius:8px;background:#fff;display:grid;place-items:center;font-weight:800;color:#EA4335;flex-shrink:0;border:1px solid var(--line-2)}
+  .gmail-card .gc-t{flex:1;min-width:0}
+  .gmail-card .gc-t b{font-size:13.5px}
+  .gmail-card .gc-t span{display:block;font-size:11.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .email-manual{margin-top:16px}
+  .email-manual summary{font-size:12.5px;color:var(--text-dim);cursor:pointer;user-select:none;padding:4px 0}
+  .email-manual summary:hover{color:var(--text)}
+
   /* ---- Dayflow Pro ---- */
   .pro-upsell{display:flex;align-items:center;gap:11px;margin:10px 2px 0;padding:11px 12px;border-radius:12px;width:calc(100% - 4px);text-align:left;
     background:linear-gradient(135deg,rgba(45,212,191,.14),rgba(154,123,255,.16));border:1px solid var(--teal-line);transition:.16s}
@@ -621,12 +632,15 @@
     </div>
 
     <div class="mpane" id="conn-emails" hidden>
-      <p class="pane-hint" style="margin-top:14px">Link your other inboxes — personal, team, work. When a message is forwarded or synced from any of these, Dayflow files its dates to <b>this</b> account.</p>
-      <div id="emailList"></div>
-      <div class="field"><label>Add an email address</label><input id="emailAdd" type="email" placeholder="you@gmail.com" autocomplete="email"></div>
-      <button class="btn" id="emailAddBtn">Link this email</button>
-      <p class="cv-msg" id="emailMsg"></p>
-      <p class="pane-hint">Sign-in still uses your primary address. Linked inboxes are just extra places we'll accept your schedule from.</p>
+      <p class="pane-hint" style="margin-top:14px">Connect Gmail once and Dayflow reads your important dates automatically — no forwarding, no setup, forever.</p>
+      <div id="gmailConnect"></div>
+      <details class="email-manual"><summary>Or link an inbox manually (forwarding)</summary>
+        <p class="pane-hint" style="margin-top:10px">Prefer to forward? Add the addresses you'll forward from — Dayflow files dates from any of them to <b>this</b> account.</p>
+        <div id="emailList"></div>
+        <div class="field"><label>Add an email address</label><input id="emailAdd" type="email" placeholder="you@gmail.com" autocomplete="email"></div>
+        <button class="btn" id="emailAddBtn">Link this email</button>
+        <p class="cv-msg" id="emailMsg"></p>
+      </details>
     </div>
   </div>
 </div>
@@ -661,14 +675,14 @@
 
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly';
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly',gmailState=null;
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   // NB: `pro` is deliberately absent from this payload. Entitlement lives in the
   // user_pro table, which the browser may read and never write — see refetchPro().
   // Putting it back here would hand every customer a free subscription.
   function cloudSave(){if(!sb||!userId)return;savePending=true;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed,gmail:gmailState},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
   },600);}
 
   /* ---- Pro entitlement (read-only to this client) ---- */
@@ -1160,8 +1174,29 @@
     if(userId&&JSON.stringify(emails)!==before)cloudSave();
   }
   function setEmailMsg(t,err){var el=document.getElementById('emailMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
+  function renderGmail(){
+    var box=document.getElementById('gmailConnect');if(!box)return;
+    var on=gmailState&&gmailState.connected;
+    box.innerHTML='<div class="gmail-card'+(on?' on':'')+'">'+
+      '<span class="gc-ic">M</span>'+
+      '<div class="gc-t"><b>'+(on?'Gmail connected ✓':'Connect Gmail')+'</b>'+
+        '<span>'+(on?esc(gmailState.email||'Reading your dates automatically'):'One tap — we read your dates for you, forever')+'</span></div>'+
+      (on?'':'<button class="btn" id="gmailBtn" style="width:auto;padding:8px 15px;margin:0;flex-shrink:0">Connect</button>')+
+    '</div>';
+  }
+  async function connectGmail(){
+    if(!sb||!userId){toast('Sign in first');return;}
+    var btn=document.getElementById('gmailBtn');if(btn){btn.disabled=true;btn.textContent='Opening…';}
+    try{
+      var r=await sb.functions.invoke('gmail-oauth-start',{body:{}});
+      if(r&&r.data&&r.data.url){location.href=r.data.url;return;} // off to Google's approve screen
+      toast((r&&r.data&&r.data.error)||'Could not start');
+    }catch(e){toast('Could not start');}
+    if(btn){btn.disabled=false;btn.textContent='Connect';}
+  }
+  (function(){var g=document.getElementById('gmailConnect');if(g)g.addEventListener('click',function(e){if(e.target.closest('#gmailBtn'))connectGmail();});})();
   function renderEmails(){
-    normalizeEmails();
+    normalizeEmails();renderGmail();
     var st=document.getElementById('emailStatus');if(st)st.textContent=emails.length+' linked';
     var box=document.getElementById('emailList');if(!box)return;
     box.innerHTML=emails.map(function(e){
@@ -1402,7 +1437,7 @@
 
   /* ================= live auto-update (realtime + polling + feed re-pull) ================= */
   // Pro is not part of this snapshot: it comes from user_pro, not user_state.data.
-  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,dismissed]);}
+  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,dismissed,gmailState]);}
   function applyCloud(d){
     if(!d)return false;
     var nextItems=Array.isArray(d.items)?d.items.filter(function(it){return it&&!FAKE_IDS.has(it.id);}):items;
@@ -1411,15 +1446,18 @@
     var nextWork=(d.workConns&&typeof d.workConns==='object')?d.workConns:workConns;
     var nextEmails=Array.isArray(d.emails)?d.emails:emails;
     var nextDismissed=Array.isArray(d.dismissed)?d.dismissed:dismissed;
+    var nextGmail=('gmail' in d)?d.gmail:gmailState; // the callback writes this server-side
     // Another device may have deleted a row we still hold. Honour its tombstones
     // before we compare, or this device re-renders the row and syncs it back.
     nextItems=nextItems.filter(function(it){return nextDismissed.indexOf(it.id)<0;});
     nextEvents=nextEvents.filter(function(u){return nextDismissed.indexOf(u.id)<0;});
-    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextDismissed]);
+    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextDismissed,nextGmail]);
     if(incoming===snapshotState())return false; // unchanged (also swallows echoes of our own saves)
+    var wasGmail=gmailState&&gmailState.connected;
     var before=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
-    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;dismissed=nextDismissed;
+    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;dismissed=nextDismissed;gmailState=nextGmail;
     updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();rerender();
+    if(!wasGmail&&gmailState&&gmailState.connected)toast('Gmail connected ✓');
     var after=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
     if(after>before)toast((after-before)+' new item'+(after-before>1?'s':'')+' synced ✓');
     return true;
@@ -1664,6 +1702,7 @@
           if(d.workConns&&typeof d.workConns==='object')workConns=d.workConns;
           if(Array.isArray(d.emails))emails=d.emails;
           if(Array.isArray(d.dismissed))dismissed=d.dismissed;
+          if(d.gmail&&typeof d.gmail==='object')gmailState=d.gmail;
           // A feed sync on another device can re-add a row this device deleted.
           items=items.filter(function(it){return !isDismissed(it.id);});
           USEREVENTS=USEREVENTS.filter(function(u){return !isDismissed(u.id);});
@@ -1680,6 +1719,14 @@
       toast('Welcome to Dayflow Pro ✦');
       try{history.replaceState(null,'',location.pathname);}catch(e){}
       [1500,4000,9000,20000].forEach(function(ms){setTimeout(function(){if(!isPro())refetchPro(true);},ms);});
+    }
+    // Back from the Google "Connect Gmail" approve screen. The callback wrote the
+    // status server-side; refetch a few times to pick it up, then leave it to sync.
+    var gm=location.search.match(/[?&]gmail=(connected|error)/);
+    if(gm){
+      toast(gm[1]==='connected'?'Gmail connected ✓ — your dates will start filling in':'Couldn\'t connect Gmail — try again');
+      try{history.replaceState(null,'',location.pathname);}catch(e){}
+      if(gm[1]==='connected')[1200,4000,9000].forEach(function(ms){setTimeout(refetchState,ms);});
     }
     const feedIds=Object.keys(schoolFeeds).filter(function(k){return schoolFeeds[k];});
     if(feedIds.length){const st=document.getElementById('schoolStatus');if(st)st.textContent='Syncing…';}
