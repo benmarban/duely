@@ -1251,6 +1251,18 @@
   document.getElementById('priceMonth').textContent=PRICE.monthly;document.getElementById('priceYear').textContent=PRICE.yearly;
   function busyBtn(btn,label){btn.disabled=true;btn._old=btn.innerHTML;btn.innerHTML=label;}
   function freeBtn(btn){btn.disabled=false;if(btn._old!=null)btn.innerHTML=btn._old;}
+  // Pull the function's own error text out of a supabase-js invoke() result.
+  async function checkoutError(r){
+    try{
+      var ctx=r.error&&r.error.context;
+      if(ctx&&typeof ctx.text==='function'){
+        var t=await ctx.text();
+        try{return JSON.parse(t).error||t;}catch(_){return t;}
+      }
+    }catch(_){}
+    if(r.data&&r.data.error)return r.data.error;
+    return (r.error&&r.error.message)||'unknown error';
+  }
   async function startCheckout(plan){
     if(isPro()){toast('You\'re already on Pro ✦');return;}
     if(!sb||!userId){toast('Sign in first to upgrade');return;}
@@ -1258,8 +1270,11 @@
     try{
       var r=await sb.functions.invoke('create-checkout',{body:{plan:plan,userId:userId,email:userEmail,returnUrl:location.origin+location.pathname}});
       if(!r.error&&r.data&&r.data.url){location.href=r.data.url;return;}
-      toast('Checkout isn\'t live yet — coming soon.');
-    }catch(e){toast('Checkout isn\'t live yet — coming soon.');}
+      // Don't swallow the reason. supabase-js puts the function's JSON body on
+      // error.context (a Response), not on error.message — without this, a real
+      // fault like "Price not configured" reads to the user as "not built yet".
+      toast('Checkout failed: '+(await checkoutError(r)));
+    }catch(e){console.error('create-checkout threw:',e);toast('Checkout failed: '+((e&&e.message)||e));}
     freeBtn(btn);
   }
   async function openPortal(){

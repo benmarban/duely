@@ -33,7 +33,8 @@ Prices live in one place in `app.html`: `const PRICE = { monthly:'$2.99', yearly
 4. **Add the webhook** in Stripe → Developers → Webhooks: endpoint =
    the `stripe-webhook` function URL; events =
    `checkout.session.completed`, `customer.subscription.updated`,
-   `customer.subscription.deleted`. Paste its signing secret as
+   `customer.subscription.deleted`, `customer.subscription.paused`,
+   `customer.subscription.resumed`. Paste its signing secret as
    `STRIPE_WEBHOOK_SECRET` above.
 
 5. **Enable the billing portal** once, in Stripe → Settings → Billing →
@@ -44,7 +45,46 @@ That's it. Flow: tap **Get Pro** → Stripe Checkout → back to `app.html?upgra
 the realtime/poll auto-update) with a thank-you toast. Pro members then see
 **Manage subscription** (Stripe billing portal) to update their card or cancel.
 
-## Testing before Stripe is live
+## Do it in test mode first
+Stripe's test and live modes are fully separate — separate keys, separate
+products, separate webhook endpoints, separate signing secrets. Nothing below
+can touch a real card. Do the whole loop here, then repeat step 3+4 with live
+values to go live.
+
+Everything is browser-only; no CLI, no Docker.
+
+1. **Stripe → toggle Test mode** (top right). Create the product + both prices
+   here; copy the two test `price_…` ids. Grab the test key (`sk_test_…`) from
+   Developers → API keys.
+2. **Deploy the three functions** — Supabase → Edge Functions → *Deploy a new
+   function* → *Via Editor*, once per function, pasting each `index.ts`.
+   On `stripe-webhook`, **turn JWT verification off** (the dashboard equivalent
+   of `--no-verify-jwt`). Stripe signs requests its own way and sends no Supabase
+   `Authorization` header, so with JWT on it gets a 401 and your code never runs.
+3. **Add the test webhook** — Stripe (still in Test mode) → Developers →
+   Webhooks → endpoint = `https://<project-ref>.supabase.co/functions/v1/stripe-webhook`,
+   events as in step 4 above. Copy its `whsec_…`.
+4. **Set the secrets** — Supabase → Edge Functions → Secrets:
+   `STRIPE_SECRET_KEY=sk_test_…`, the two test price ids, `STRIPE_WEBHOOK_SECRET=whsec_…`.
+   These are project-wide, so going live later means *overwriting* these four,
+   not adding a second set.
+5. **Buy it yourself.** Sign into the app, tap Get Pro, pay with `4242 4242 4242 4242`,
+   any future expiry, any CVC. You should land on `app.html?upgraded=1` and watch
+   the UI flip to Pro within a couple of seconds.
+6. **Then cancel**, via Manage subscription → Cancel. Pro should switch back off.
+
+Verify at both ends: Stripe → Webhooks → your endpoint shows each delivery and
+its response (200 = handled, 400 = signature/secret mismatch, 401 = JWT still on,
+500 = handler threw). Supabase → Edge Functions → `stripe-webhook` → Logs shows
+the thrown message.
+
+> **Don't verify with `stripe trigger`.** Its fixture events carry no
+> `client_reference_id` and no `subscription.metadata.userId`, so the webhook
+> can't tell which account to upgrade and returns 200 having done nothing. It
+> looks like a broken webhook and isn't. A real test-card checkout is the only
+> thing that exercises the metadata path.
+
+## Testing without any Stripe setup at all
 Set a user to Pro by hand in the Supabase SQL editor (replace the id):
 ```sql
 update user_state
