@@ -415,7 +415,7 @@
     </nav>
     <div class="sys">
       <div class="sys-lbl">Connected<button id="manageConn">Manage</button></div>
-      <div class="sys-row click" data-canvas><span class="sdot"></span>Canvas<span class="stag" id="canvasStatus">Connect</span></div>
+      <div class="sys-row click" data-school><span class="sdot"></span>School<span class="stag" id="schoolStatus">Connect</span></div>
       <div class="sys-row click off" data-work><span class="sdot"></span>Work shifts<span class="stag" id="workStatus">Connect</span></div>
       <div class="sys-row click" data-emails><span class="sdot"></span>Emails<span class="stag" id="emailStatus">1 linked</span></div>
       <div class="sys-acct" id="acct"></div>
@@ -558,16 +558,21 @@
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-h"><div><h2 id="connTitle">Connections</h2><p id="connSub">Pull your schedule in automatically — no copy-paste.</p></div><button class="mclose" id="connClose" aria-label="Close">×</button></div>
     <div class="mtabs">
-      <button class="mtab active" data-conn="canvas">Canvas</button>
+      <button class="mtab active" data-conn="school">School</button>
       <button class="mtab" data-conn="work">Work shifts</button>
       <button class="mtab" data-conn="emails">Emails</button>
     </div>
 
-    <div class="mpane" id="conn-canvas">
-      <div class="field"><label>Canvas calendar feed URL</label><input id="cvUrl" type="url" placeholder="https://yourschool.instructure.com/feeds/calendars/user_...ics"></div>
-      <button class="btn" id="cvSync">Sync my assignments</button>
-      <p class="cv-msg" id="cvMsg"></p>
-      <p class="pane-hint">In Canvas: open <b>Calendar</b> → scroll to the bottom of the right column → click <b>Calendar Feed</b> → copy that link. It's private to you, so don't share it.</p>
+    <div class="mpane" id="conn-school">
+      <p class="pane-hint" style="margin-top:14px">Pick your school's system. Dayflow pulls your assignments and due dates straight onto your timeline — so nothing slips.</p>
+      <div id="lmsList"></div>
+      <div id="lmsConnect" hidden>
+        <div class="field"><label id="lmsFeedLbl">Calendar feed URL</label><input id="lmsUrl" type="url" placeholder="https://…/feed.ics"></div>
+        <button class="btn" id="lmsSync">Sync my assignments</button>
+        <button class="btn sec" id="lmsBack" style="margin-top:9px">← Choose a different system</button>
+        <p class="cv-msg" id="lmsMsg"></p>
+        <p class="pane-hint" id="lmsHint"></p>
+      </div>
     </div>
 
     <div class="mpane" id="conn-work" hidden>
@@ -602,11 +607,11 @@
 
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[];
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null;
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   function cloudSave(){if(!sb||!userId)return;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:canvasFeed,workConns:workConns,emails:emails},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails},updated_at:new Date().toISOString()}).then(function(r){if(r&&r.error)console.warn('cloud save:',r.error.message);});}catch(e){}
   },600);}
 
   /* ================= date helpers ================= */
@@ -676,7 +681,7 @@
     if(diff<7)return{txt:`${DOW[d.getDay()]} · ${t}`,cls:''};
     return{txt:`${MON[d.getMonth()]} ${d.getDate()} · ${t}`,cls:''};}
   const CHECK='<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>';
-  const badge=s=>s==='canvas'?'<span class="badge canvas">Canvas</span>':s==='work'?'<span class="badge work">Work</span>':'<span class="badge email">Email</span>';
+  function badge(s){var p=LMS.find(function(x){return x.id===s;});if(p)return '<span class="badge canvas">'+esc(p.name.split(' ')[0])+'</span>';if(s==='work')return '<span class="badge work">Work</span>';return '<span class="badge email">Email</span>';}
   function drowHTML(it,i){const r=relDue(it.due);
     return `<div class="drow ${it.done?'done':''}" data-id="${it.id}" style="animation-delay:${(i||0)*35}ms">
       <button class="check" aria-label="Mark done">${CHECK}</button>
@@ -735,7 +740,7 @@
   }
   function renderDashUpcoming(){
     const list=items.filter(i=>!i.done).sort((a,b)=>new Date(a.due)-new Date(b.due)).slice(0,5);
-    document.getElementById('wUpcoming').innerHTML=list.length?list.map(drowHTML).join(''):emptyBox(ICO.check,'No deadlines yet','Connect Canvas or paste a message and Dayflow files the dates for you.','<button class="ebtn" data-canvas><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect Canvas</button>');
+    document.getElementById('wUpcoming').innerHTML=list.length?list.map(drowHTML).join(''):emptyBox(ICO.check,'No deadlines yet','Connect your school (Canvas, Blackboard, Schoology…) or paste a message and Dayflow files the dates for you.','<button class="ebtn" data-school><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect your school</button>');
   }
   function renderAskExamples(){
     const qs=["What's next?","When am I free today?","How busy is my week?"];
@@ -756,23 +761,24 @@
     let html='<div class="widget"><div class="wbody" style="padding:6px 14px 14px">',any=false,gi=0;
     groups.forEach(g=>{const l=active.filter(g.f);if(!l.length)return;any=true;
       html+=`<div class="group-label ${g.warn?'warn':''}">${g.label}<span>${l.length}</span></div>`+l.map(it=>drowHTML(it,gi++)).join('');});
-    if(!any&&!done.length){document.getElementById('view-deadlines').innerHTML=emptyBox(ICO.check,'No deadlines yet','Connect Canvas to pull in assignments automatically, or paste a professor\'s email and Dayflow files the date.','<button class="ebtn" data-canvas><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect Canvas</button>');return;}
+    if(!any&&!done.length){document.getElementById('view-deadlines').innerHTML=emptyBox(ICO.check,'No deadlines yet','Connect your school\'s system to pull in assignments automatically, or paste a professor\'s email and Dayflow files the date.','<button class="ebtn" data-school><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect your school</button>');return;}
     if(done.length)html+=`<div class="group-label">Completed<span>${done.length}</span></div>`+done.map(it=>drowHTML(it,gi++)).join('');
     html+='</div></div>';
     document.getElementById('view-deadlines').innerHTML=html;
   }
 
   /* ================= courses view (derived from real deadlines) ================= */
+  const LMS_LABELS=new Set(['from email','from work','Canvas','Blackboard','Schoology','Google','Moodle','Brightspace','PowerSchool','Infinite','Sakai','Another','Work']);
   function derivedCourses(){
     const map={};
-    items.forEach(it=>{const c=(it.course||'').trim();if(!c||c==='from email'||c==='Canvas'||c==='from work')return;
+    items.forEach(it=>{const c=(it.course||'').trim();if(!c||LMS_LABELS.has(c))return;
       if(!map[c])map[c]={code:c,open:0,next:null};
       if(!it.done){map[c].open++;const d=new Date(it.due);if(!map[c].next||d<map[c].next)map[c].next=d;}});
     return Object.values(map);
   }
   function renderCourses(){
     const cs=derivedCourses();
-    if(!cs.length){document.getElementById('view-courses').innerHTML=emptyBox(ICO.book,'No courses yet','Connect Canvas and your courses show up here automatically, color-coded across your whole schedule.','<button class="ebtn" data-canvas><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect Canvas</button>');return;}
+    if(!cs.length){document.getElementById('view-courses').innerHTML=emptyBox(ICO.book,'No courses yet','Connect your school\'s system and your courses show up here automatically, color-coded across your whole schedule.','<button class="ebtn" data-school><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect your school</button>');return;}
     document.getElementById('view-courses').innerHTML='<div class="courses-grid">'+cs.map((c,i)=>{
       const cc=courseCC(c.code);
       return `<div class="ccard" style="animation-delay:${i*45}ms"><div class="cctop" style="--cc:${cc}">
@@ -913,10 +919,10 @@
   document.addEventListener('click',e=>{
     const so=e.target.closest('#signOut');if(so){if(sb){sb.auth.signOut().then(function(){location.replace('login.html');});}else{location.replace('login.html');}return;}
     const g=e.target.closest('[data-goto]');if(g){switchView(g.dataset.goto);return;}
-    if(e.target.closest('[data-canvas]')){openConn('canvas');return;}
+    if(e.target.closest('[data-canvas]')||e.target.closest('[data-school]')){openConn('school');return;}
     if(e.target.closest('[data-work]')){openConn('work');return;}
     if(e.target.closest('[data-emails]')){openConn('emails');return;}
-    if(e.target.closest('#manageConn')){openConn('canvas');return;}
+    if(e.target.closest('#manageConn')){openConn('school');return;}
     const ask=e.target.closest('[data-ask]');if(ask){openAsst();askSend(ask.dataset.ask);return;}
     const chk=e.target.closest('.check');if(chk){const id=chk.closest('.drow').dataset.id;const it=items.find(x=>x.id===id);
       if(it){it.done=!it.done;save();updateBadge();rerender();toast(it.done?'Marked done ✓':'Marked not done');}return;}
@@ -982,13 +988,14 @@
 
   /* ================= Connections (Canvas + Work) ================= */
   const connBg=document.getElementById('connBg');
-  function openConn(which){connBg.classList.add('show');setConnTab(which||'canvas');var u=document.getElementById('cvUrl');if(u&&canvasFeed)u.value=canvasFeed;setCvMsg('');renderProviders();renderEmails();}
+  function openConn(which){connBg.classList.add('show');setConnTab(which||'school');renderProviders();renderEmails();renderLMS();}
   function closeConn(){connBg.classList.remove('show');}
   function setConnTab(which){
     document.querySelectorAll('#connBg .mtab').forEach(x=>x.classList.toggle('active',x.dataset.conn===which));
-    document.getElementById('conn-canvas').hidden=which!=='canvas';
+    document.getElementById('conn-school').hidden=which!=='school';
     document.getElementById('conn-work').hidden=which!=='work';
     document.getElementById('conn-emails').hidden=which!=='emails';
+    if(which==='school'){document.getElementById('lmsConnect').hidden=true;document.getElementById('lmsList').hidden=false;curLMS=null;renderLMS();}
     if(which==='emails')renderEmails();
   }
 
@@ -1032,27 +1039,68 @@
   document.getElementById('connClose').addEventListener('click',closeConn);
   connBg.addEventListener('click',e=>{if(e.target===connBg)closeConn();});
 
-  function setCvMsg(t,err){var el=document.getElementById('cvMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
-  async function syncCanvas(url,silent){
-    if(!sb){setCvMsg('Sign in first to sync Canvas.',true);return;}
-    var feed=((url||canvasFeed||'')+'').trim();
-    if(!feed){setCvMsg('Paste your Canvas calendar feed link first.',true);return;}
-    if(!silent)setCvMsg('Syncing your assignments…');
-    try{
-      var r=await sb.functions.invoke('canvas-import',{body:{feedUrl:feed}});
-      if(r.error){setCvMsg('Sync failed: '+r.error.message,true);return;}
-      if(!r.data||r.data.error){setCvMsg((r.data&&r.data.error)||'Sync failed.',true);return;}
-      var evs=r.data.events||[];
-      var doneMap={};items.forEach(function(it){if(it.id&&it.id.indexOf('cv_')===0)doneMap[it.id]=it.done;});
-      items=items.filter(function(it){return !(it.id&&it.id.indexOf('cv_')===0);});
-      evs.forEach(function(ev){var id='cv_'+(ev.uid||ev.title+ev.due);items.push({id:id,title:ev.title,course:'Canvas',source:'canvas',due:ev.due,done:!!doneMap[id],cat:'school'});});
-      canvasFeed=feed;save();updateBadge();rerender();
-      var st=document.getElementById('canvasStatus');if(st)st.textContent=evs.length?'Synced':'Connected';
-      setCvMsg('Imported '+evs.length+' assignment'+(evs.length===1?'':'s')+' from Canvas ✓');
-      if(silent)closeConn();
-    }catch(e){setCvMsg('Sync failed: '+((e&&e.message)||e),true);}
+  /* ---- School / LMS providers (Canvas, Blackboard, Moodle, …) ---- */
+  const LMS=[
+    {id:'canvas',name:'Canvas',short:'C',color:'#E2231A',help:'In Canvas: open <b>Calendar</b> → scroll to the bottom of the right column → <b>Calendar Feed</b> → copy the link. It\'s private to you.'},
+    {id:'blackboard',name:'Blackboard Learn',short:'Bb',color:'#2C6E9E',help:'In Blackboard: <b>Calendar → Get External Calendar Link</b> (iCal) → copy the URL.'},
+    {id:'schoology',name:'Schoology',short:'S',color:'#4A8FD4',help:'In Schoology: <b>Calendar → iCal / Sync</b> (bottom-right) → copy your personal feed URL.'},
+    {id:'googleclassroom',name:'Google Classroom',short:'GC',color:'#1E8E3E',help:'Classroom pushes due dates to <b>Google Calendar</b>. In Google Calendar → your class calendar → <b>Settings → Secret address in iCal format</b> → copy it.'},
+    {id:'moodle',name:'Moodle',short:'M',color:'#F98012',help:'In Moodle: <b>Calendar → Export / Manage calendars → Export calendar (iCal URL)</b> → copy it.'},
+    {id:'brightspace',name:'Brightspace (D2L)',short:'D2',color:'#EB4B26',help:'In Brightspace: <b>Calendar → Subscribe</b> → copy the iCal feed URL.'},
+    {id:'powerschool',name:'PowerSchool',short:'PS',color:'#004B87',help:'In PowerSchool: your class/assignment <b>Calendar → Subscribe / iCal</b> → copy the feed URL (varies by district).'},
+    {id:'infinitecampus',name:'Infinite Campus',short:'IC',color:'#5FA43A',help:'In Campus Student: <b>Calendar → Subscribe / iCal feed</b> → copy the URL.'},
+    {id:'sakai',name:'Sakai',short:'Sk',color:'#96BF48',help:'In Sakai: <b>Calendar / Schedule → iCal export</b> → generate and copy your feed URL.'},
+    {id:'lms_other',name:'Another school system',short:'+',color:'#3C5170',other:true,help:'Most LMSs have a <b>Calendar → iCal / Subscribe</b> link. Paste it here and Dayflow imports your assignments — it works with any calendar feed.'}
+  ];
+  function lmsName(id){var p=LMS.find(function(x){return x.id===id;});return p?p.name:'your school';}
+  function setLmsMsg(t,err){var el=document.getElementById('lmsMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
+  function renderLMS(){
+    var n=Object.keys(schoolFeeds).length;
+    var ss=document.getElementById('schoolStatus');if(ss)ss.textContent=n?(n===1?'Synced':n+' connected'):'Connect';
+    var sr=document.querySelector('.sys-row[data-school]');if(sr)sr.classList.toggle('off',!n);
+    var box=document.getElementById('lmsList');if(!box)return;
+    box.innerHTML=LMS.map(function(p){
+      var on=!!schoolFeeds[p.id];
+      var sub=on?'Connected · assignments import automatically':(p.other?'Not listed? Connect any calendar feed':'Import assignments &amp; due dates');
+      var stat=on?'Synced':(p.other?'Add':'Connect');
+      return '<button class="provider '+(on?'on':'')+(p.other?' other':'')+'" data-lms="'+p.id+'"><span class="plogo" style="background:'+p.color+'">'+p.short+'</span><span class="pb"><span class="pn">'+p.name+'</span><span class="pd">'+sub+'</span></span><span class="pstat">'+stat+'</span></button>';
+    }).join('');
   }
-  document.getElementById('cvSync').addEventListener('click',function(){syncCanvas(document.getElementById('cvUrl').value,false);});
+  document.getElementById('lmsList').addEventListener('click',function(e){
+    var b=e.target.closest('[data-lms]');if(!b)return;
+    curLMS=LMS.find(function(p){return p.id===b.dataset.lms;});
+    document.getElementById('lmsConnect').hidden=false;
+    document.getElementById('lmsList').hidden=true;
+    document.getElementById('lmsFeedLbl').textContent=curLMS.other?'Calendar feed URL':curLMS.name+' calendar feed URL';
+    document.getElementById('lmsHint').innerHTML=curLMS.help+'<br><br>Don\'t have a feed link? You can always paste a professor\'s email in <b>Add → From a message</b> instead.';
+    document.getElementById('lmsUrl').value=schoolFeeds[curLMS.id]||'';
+    setLmsMsg('');
+  });
+  document.getElementById('lmsBack').addEventListener('click',function(){document.getElementById('lmsConnect').hidden=true;document.getElementById('lmsList').hidden=false;curLMS=null;});
+  async function syncLMS(pid,url,silent){
+    var p=LMS.find(function(x){return x.id===pid;});if(!p)return;
+    if(!sb){setLmsMsg('Sign in first to sync '+p.name+'.',true);return;}
+    var feed=((url||schoolFeeds[pid]||'')+'').trim();
+    if(!feed){setLmsMsg('Paste your '+(p.other?'':p.name+' ')+'calendar feed link first.',true);return;}
+    var normalized=feed.replace(/^webcal:/i,'https:');
+    if(!silent)setLmsMsg('Syncing your assignments…');
+    try{
+      var r=await sb.functions.invoke('canvas-import',{body:{feedUrl:normalized}});
+      if(r.error){setLmsMsg('Sync failed: '+r.error.message,true);return;}
+      if(!r.data||r.data.error){setLmsMsg((r.data&&r.data.error)||'Sync failed.',true);return;}
+      var evs=r.data.events||[];
+      var tag='lms_'+pid+'_';
+      // preserve done state; drop this provider's previous items (and legacy cv_ for canvas)
+      var doneMap={};items.forEach(function(it){if(it.id&&(it.id.indexOf(tag)===0||(pid==='canvas'&&it.id.indexOf('cv_')===0)))doneMap[it.id]=it.done;});
+      items=items.filter(function(it){return !(it.id&&(it.id.indexOf(tag)===0||(pid==='canvas'&&it.id.indexOf('cv_')===0)));});
+      evs.forEach(function(ev){var id=tag+(ev.uid||ev.title+ev.due);items.push({id:id,title:ev.title,course:p.name.split(' ')[0],source:pid,due:ev.due,done:!!doneMap[id],cat:'school'});});
+      schoolFeeds[pid]=feed;save();updateBadge();renderLMS();rerender();
+      setLmsMsg('Imported '+evs.length+' assignment'+(evs.length===1?'':'s')+' from '+p.name+' ✓');
+      if(!silent)toast('Assignments imported ✓');
+      if(silent&&connBg.classList.contains('show'))closeConn();
+    }catch(e){setLmsMsg('Sync failed: '+((e&&e.message)||e),true);}
+  }
+  document.getElementById('lmsSync').addEventListener('click',function(){if(curLMS)syncLMS(curLMS.id,document.getElementById('lmsUrl').value,false);});
 
   // Work shift providers — import shifts via calendar feed (reuses the ICS importer).
   const PROVIDERS=[
@@ -1318,7 +1366,8 @@
           const d=res.data.data;
           if(Array.isArray(d.items))items=d.items.filter(it=>it&&!FAKE_IDS.has(it.id));
           if(Array.isArray(d.events))USEREVENTS=d.events;
-          if(d.canvasFeed)canvasFeed=d.canvasFeed;
+          if(d.schoolFeeds&&typeof d.schoolFeeds==='object')schoolFeeds=d.schoolFeeds;
+          if(d.canvasFeed&&!schoolFeeds.canvas)schoolFeeds.canvas=d.canvasFeed; // migrate legacy single Canvas feed
           if(d.workConns&&typeof d.workConns==='object')workConns=d.workConns;
           if(Array.isArray(d.emails))emails=d.emails;
           // If we purged legacy seed items, persist the clean state.
@@ -1326,10 +1375,11 @@
         }else{cloudSave();}
       }catch(err){console.warn('auth/load failed:',err);}
     }
-    renderExamples();renderSugg();renderProviders();renderEmails();updateBadge();refreshSub();
-    if(canvasFeed){const st=document.getElementById('canvasStatus');if(st)st.textContent='Syncing…';}
+    renderExamples();renderSugg();renderProviders();renderEmails();renderLMS();updateBadge();refreshSub();
+    const feedIds=Object.keys(schoolFeeds).filter(function(k){return schoolFeeds[k];});
+    if(feedIds.length){const st=document.getElementById('schoolStatus');if(st)st.textContent='Syncing…';}
     switchView('dashboard');
-    if(canvasFeed)syncCanvas(canvasFeed,true);
+    feedIds.forEach(function(pid){syncLMS(pid,schoolFeeds[pid],true);});
   }
   boot();
 })();
