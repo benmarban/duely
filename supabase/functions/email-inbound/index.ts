@@ -11,6 +11,13 @@
 // run Gemini to pull out dates/events, and write them into THAT user's saved
 // schedule using the service role (bypassing RLS, since there's no browser).
 //
+// Gemini also triages the mail first: marketing blasts and order receipts get
+// dropped before anything reaches the schedule (see geminiExtract). We ask the
+// model rather than pattern-matching headers or "unsubscribe" text, because
+// Canvas/Blackboard notifications are automated, no-reply, unsubscribable mail
+// that the student *does* want. A regex can't tell those apart from a DoorDash
+// promo; the model reading the body can.
+//
 // Multi-user: routing is by sender, so every user who has forwarded/linked an
 // inbox gets their own items — no per-user server config.
 //
@@ -36,12 +43,35 @@ function parseISO(s: string) {
   return { Y: m[1], Mo: m[2], D: m[3], H: m[4] ? +m[4] : 23, Mi: m[5] ? +m[5] : 59 };
 }
 
-async function geminiExtract(text: string): Promise<any[]> {
+// A forwarded body can be huge (long threads, quoted history, HTML stripped to
+// text). Cap what we hand the model: bounds the token spend and the blast radius
+// of anything hostile buried in the tail.
+const MAX_TEXT = 12_000;
+
+type Triage = { promotional: boolean; items: any[] };
+
+async function geminiExtract(text: string, from: string): Promise<Triage> {
   const key = Deno.env.get("GEMINI_API_KEY");
   if (!key) throw new Error("Missing GEMINI_API_KEY");
   const prompt =
-    `You extract important dates, deadlines, and events from a student's email. Today is ${new Date().toString()}. ` +
-    `Return every important item. For EACH: title = SHORT name only (no time/date/location in it); ` +
+    `You triage a student's forwarded email, then extract their schedule from it. ` +
+    `Today is ${new Date().toString()}. It was forwarded from ${cleanAddress(from) || "an unknown address"}.\n\n` +
+
+    `STEP 1 — set "promotional". TRUE when the message is commercial mail from a business ` +
+    `the student is merely a customer of: marketing, special offers, discount codes, ` +
+    `newsletters, sales and app promos, and also order receipts, delivery and shipping ` +
+    `updates. Such a message often still names a date — "offer ends Friday", "your order ` +
+    `arrives 7:15pm" — but that is the business's date, not the student's schedule.\n` +
+
+    `Set it FALSE for anything that belongs on a student's calendar, even when the mail is ` +
+    `automated, sent from a no-reply address, or carries an unsubscribe link: a professor, ` +
+    `coach, teammate, advisor, club or employer writing to them; automated notices from a ` +
+    `school system (Canvas, Blackboard, Moodle, Schoology); work shift schedules; calendar ` +
+    `invites. If you are genuinely unsure, answer FALSE — a missed deadline costs the ` +
+    `student far more than one stray event does.\n\n` +
+
+    `STEP 2 — if promotional is true, return items = [] and stop. Otherwise return every ` +
+    `important item. For EACH: title = SHORT name only (no time/date/location in it); ` +
     `start = ISO 8601 date-time (resolve relative dates; deadlines with only a date use 23:59); ` +
     `end = ISO 8601 if a range is given else omit; location = place if mentioned else omit; ` +
     `category = school|athletics|work|personal; kind = "event" (set-time things) or "deadline" (things due). ` +
@@ -50,19 +80,27 @@ async function geminiExtract(text: string): Promise<any[]> {
     contents: [{ parts: [{ text: prompt }] }],
     generationConfig: {
       responseMimeType: "application/json",
-      responseSchema: { type: "ARRAY", items: { type: "OBJECT", properties: {
-        title: { type: "STRING" }, start: { type: "STRING" }, end: { type: "STRING" },
-        location: { type: "STRING" },
-        category: { type: "STRING", enum: ["school", "athletics", "work", "personal"] },
-        kind: { type: "STRING", enum: ["event", "deadline"] } }, required: ["title", "start"] } },
+      responseSchema: { type: "OBJECT", properties: {
+        promotional: { type: "BOOLEAN" },
+        items: { type: "ARRAY", items: { type: "OBJECT", properties: {
+          title: { type: "STRING" }, start: { type: "STRING" }, end: { type: "STRING" },
+          location: { type: "STRING" },
+          category: { type: "STRING", enum: ["school", "athletics", "work", "personal"] },
+          kind: { type: "STRING", enum: ["event", "deadline"] } }, required: ["title", "start"] } },
+      }, required: ["promotional", "items"] },
     },
   };
   const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + encodeURIComponent(key);
   const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error("Gemini " + r.status + ": " + (await r.text()).slice(0, 200));
   const data = await r.json();
-  const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || "[]";
-  try { const p = JSON.parse(out); return Array.isArray(p) ? p : []; } catch { return []; }
+  const out = data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+  // A malformed reply must not read as "promotional" — that would silently bin a
+  // real email. Fall back to "not promotional, nothing found" and add nothing.
+  try {
+    const p = JSON.parse(out);
+    return { promotional: p?.promotional === true, items: Array.isArray(p?.items) ? p.items : [] };
+  } catch { return { promotional: false, items: [] }; }
 }
 
 // Pull a bare address out of "Name <a@b.com>" or a raw header value.
@@ -99,7 +137,8 @@ Deno.serve(async (req: Request) => {
     const userId = (await findUserByEmail(supa, from)) || Deno.env.get("TARGET_USER_ID") || "";
     if (!userId) return json({ ignored: true, reason: "sender not linked to any account", from: cleanAddress(from) }, 200);
 
-    const extracted = await geminiExtract(text);
+    const { promotional, items: extracted } = await geminiExtract(text.slice(0, MAX_TEXT), from);
+    if (promotional) return json({ ignored: true, reason: "promotional", from: cleanAddress(from) }, 200);
 
     const { data: row } = await supa.from("user_state").select("data").eq("user_id", userId).maybeSingle();
     const state: any = (row && (row as any).data) || {};
