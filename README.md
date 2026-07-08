@@ -6,9 +6,11 @@ Dayflow pulls everything a busy student (or student-athlete) juggles into a
 single dashboard: classes and assignment deadlines alongside athletics, work
 shifts, and personal events — sorted by what's happening next.
 
-> ⚠️ **Early build.** Real email/password accounts and cloud sync work (via
-> Supabase). Canvas, Gmail, and Google Calendar connections still run on
-> realistic **sample data** — those live integrations are the next phase.
+> **Status.** Real email/password accounts and cloud sync work (via Supabase).
+> **Live now:** importing a real calendar feed from Canvas and other LMS/work
+> apps (`canvas-import`), and auto-intake of forwarded email into the right
+> account (`email-inbound` → Gemini). **Still to come:** "Continue with Google"
+> (OAuth), writing back to Google Calendar, and grades/GPA.
 
 ## The three pages
 
@@ -52,9 +54,11 @@ Flow: **landing → login → app**. The app redirects to login when signed out.
 
 ## Roadmap
 
+- [x] Connect a real Canvas / LMS / work account via calendar feed
+- [x] Auto-add from forwarded email (Gemini extraction)
 - [ ] "Continue with Google" (Google OAuth)
-- [ ] Connect a real Canvas account (calendar feed / REST API)
-- [ ] Live Gmail sync + auto-add to Google Calendar
+- [ ] Write events back to Google Calendar
+- [ ] Verified email intake (SPF/DKIM) to stop sender spoofing
 - [ ] Push notifications / reminders
 - [ ] Real grade & GPA tracking
 

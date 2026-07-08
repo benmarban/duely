@@ -2,7 +2,7 @@
 //
 // A forwarding service (Cloudflare Email Routing / Postmark / SendGrid Inbound
 // Parse / a Val.town address, etc.) POSTs the forwarded email here as
-//   { text, secret, from }
+//   { text, secret, from, verified? }
 // where `from` is the address the mail was forwarded FROM (the user's inbox).
 //
 // We verify the shared secret, resolve `from` to a Dayflow account by matching
@@ -10,6 +10,17 @@
 // managed in the app's Connections → Emails tab, incl. their sign-in address),
 // run Gemini to pull out dates/events, and write them into THAT user's saved
 // schedule using the service role (bypassing RLS, since there's no browser).
+//
+// ⚠ SPOOFING: `from` is an email header, and headers are forgeable. Someone who
+// knows the intake address could send mail claiming From: victim@school.edu and
+// have events filed onto the victim's calendar. The shared secret guards the HTTP
+// endpoint, not the mail path. The real defence is to route only on a sender the
+// forwarder has cryptographically checked (SPF/DKIM/DMARC pass). Val.town's email
+// object exposes no such result and no raw signed message, so it CANNOT do this;
+// Cloudflare Email Routing and Postmark inbound can, and pass it in their webhook.
+// This function is ready for that: set the secret INBOUND_REQUIRE_VERIFIED=true and
+// it will refuse any message the forwarder didn't mark { verified: true }. Left off
+// (the default) it keeps working with Val.town, spoofable — a known, documented gap.
 //
 // Gemini also triages the mail first: marketing blasts and order receipts get
 // dropped before anything reaches the schedule (see geminiExtract). We ask the
@@ -127,9 +138,16 @@ async function findUserByEmail(supa: any, from: string): Promise<string | null> 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { text, secret, from } = await req.json().catch(() => ({}));
+    const { text, secret, from, verified } = await req.json().catch(() => ({}));
     if (secret !== Deno.env.get("INBOUND_SECRET")) return json({ error: "Unauthorized" }, 401);
     if (!text || typeof text !== "string") return json({ error: "No email text" }, 400);
+
+    // Anti-spoofing gate. Off by default (Val.town can't produce a verified signal);
+    // flip INBOUND_REQUIRE_VERIFIED=true once you're behind a forwarder that checks
+    // SPF/DKIM and passes { verified: true }, and forged senders get turned away here.
+    if (Deno.env.get("INBOUND_REQUIRE_VERIFIED") === "true" && verified !== true) {
+      return json({ ignored: true, reason: "sender not verified", from: cleanAddress(from) }, 200);
+    }
 
     const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 

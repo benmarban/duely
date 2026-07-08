@@ -49,6 +49,12 @@ export default async function (email: {
 
   const message = [email.subject, bodyText].filter(Boolean).join("\n\n");
 
+  // verified: false — Val.town's email object carries no SPF/DKIM/DMARC result and
+  // no raw signed message, so we cannot vouch that `from` is really who it claims.
+  // That means routing here is spoofable (see the SPOOFING note in email-inbound).
+  // To close it, move intake to a provider that verifies inbound mail — Cloudflare
+  // Email Routing or Postmark inbound — read its SPF/DKIM pass, send verified: true
+  // only when it passed, and set INBOUND_REQUIRE_VERIFIED=true on the function.
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -56,6 +62,7 @@ export default async function (email: {
       from: email.from, // "Name <addr>" or bare address — the function cleans it
       text: message,
       secret,
+      verified: false,
     }),
   });
 
