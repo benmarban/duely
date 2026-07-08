@@ -21,6 +21,7 @@ Prices live in one place in `app.html`: `const PRICE = { monthly:'$2.99', yearly
 2. **Deploy the functions**
    ```
    supabase functions deploy create-checkout
+   supabase functions deploy customer-portal
    supabase functions deploy stripe-webhook --no-verify-jwt
    ```
 3. **Set secrets**
@@ -35,9 +36,13 @@ Prices live in one place in `app.html`: `const PRICE = { monthly:'$2.99', yearly
    `customer.subscription.deleted`. Paste its signing secret as
    `STRIPE_WEBHOOK_SECRET` above.
 
+5. **Enable the billing portal** once, in Stripe → Settings → Billing →
+   Customer portal → **Activate**. (Powers the "Manage subscription" button.)
+
 That's it. Flow: tap **Get Pro** → Stripe Checkout → back to `app.html?upgraded=1`
 → the webhook sets `data.pro.active = true` → the app flips to Pro **live** (via
-the realtime/poll auto-update) with a thank-you toast.
+the realtime/poll auto-update) with a thank-you toast. Pro members then see
+**Manage subscription** (Stripe billing portal) to update their card or cancel.
 
 ## Testing before Stripe is live
 Set a user to Pro by hand in the Supabase SQL editor (replace the id):

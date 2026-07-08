@@ -292,6 +292,7 @@
   .seg.active{color:#04141a;background:var(--cc);border-color:var(--cc)}
   .btn{display:block;width:100%;margin-top:16px;background:var(--teal);color:#04141a;font-size:14.5px;font-weight:700;padding:13px;border-radius:12px;transition:.14s}
   .btn:hover{background:var(--teal-2)}
+  .btn:disabled{opacity:.65;pointer-events:none}
   .btn.sec{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line-2)}
   .btn.sec:hover{background:rgba(255,255,255,.08)}
   .examples{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
@@ -1228,8 +1229,14 @@
   function isPro(){return !!(proState&&proState.active&&(!proState.until||Date.now()<proState.until));}
   function schoolCount(){return Object.keys(schoolFeeds).filter(function(k){return schoolFeeds[k];}).length;}
   function workCount(){return Object.keys(workConns).length;}
-  function selectPlan(plan){proPlan=plan;document.querySelectorAll('#proPlans .plan').forEach(function(p){p.classList.toggle('sel',p.dataset.plan===plan);});document.getElementById('proCtaPrice').textContent=(plan==='yearly'?PRICE.yearly+'/year':PRICE.monthly+'/month');}
-  function showPro(reason){document.getElementById('proReason').textContent=reason||'Everything you\'re juggling, with no limits.';selectPlan(proPlan);proBg.classList.add('show');}
+  function selectPlan(plan){proPlan=plan;document.querySelectorAll('#proPlans .plan').forEach(function(p){p.classList.toggle('sel',p.dataset.plan===plan);});var el=document.getElementById('proCtaPrice');if(el)el.textContent=(plan==='yearly'?PRICE.yearly+'/year':PRICE.monthly+'/month');}
+  function showPro(reason){
+    document.getElementById('proReason').textContent=reason||'Everything you\'re juggling, with no limits.';
+    var plans=document.getElementById('proPlans'),cta=document.getElementById('proUpgrade');
+    if(isPro()){plans.style.display='none';cta.innerHTML='Manage subscription';cta.dataset.mode='manage';}
+    else{plans.style.display='';cta.innerHTML='Get Pro — <span id="proCtaPrice"></span>';cta.dataset.mode='buy';selectPlan(proPlan);}
+    proBg.classList.add('show');
+  }
   function closePro(){proBg.classList.remove('show');}
   function renderProStatus(){
     var sub=document.getElementById('proUpsellSub'),ic=document.querySelector('#proUpsell .pu-ic');
@@ -1240,17 +1247,30 @@
   document.getElementById('proClose').addEventListener('click',closePro);
   proBg.addEventListener('click',function(e){if(e.target===proBg)closePro();});
   document.getElementById('proPlans').addEventListener('click',function(e){var p=e.target.closest('[data-plan]');if(p)selectPlan(p.dataset.plan);});
-  document.getElementById('proUpgrade').addEventListener('click',function(){startCheckout(proPlan);});
+  document.getElementById('proUpgrade').addEventListener('click',function(){if(this.dataset.mode==='manage')openPortal();else startCheckout(proPlan);});
   document.getElementById('priceMonth').textContent=PRICE.monthly;document.getElementById('priceYear').textContent=PRICE.yearly;
+  function busyBtn(btn,label){btn.disabled=true;btn._old=btn.innerHTML;btn.innerHTML=label;}
+  function freeBtn(btn){btn.disabled=false;if(btn._old!=null)btn.innerHTML=btn._old;}
   async function startCheckout(plan){
     if(isPro()){toast('You\'re already on Pro ✦');return;}
     if(!sb||!userId){toast('Sign in first to upgrade');return;}
-    toast('Opening secure checkout…');
+    var btn=document.getElementById('proUpgrade');busyBtn(btn,'Opening secure checkout…');
     try{
       var r=await sb.functions.invoke('create-checkout',{body:{plan:plan,userId:userId,email:userEmail,returnUrl:location.origin+location.pathname}});
       if(!r.error&&r.data&&r.data.url){location.href=r.data.url;return;}
       toast('Checkout isn\'t live yet — coming soon.');
     }catch(e){toast('Checkout isn\'t live yet — coming soon.');}
+    freeBtn(btn);
+  }
+  async function openPortal(){
+    if(!sb||!userId)return;
+    var btn=document.getElementById('proUpgrade');busyBtn(btn,'Opening billing…');
+    try{
+      var r=await sb.functions.invoke('customer-portal',{body:{returnUrl:location.origin+location.pathname}});
+      if(!r.error&&r.data&&r.data.url){location.href=r.data.url;return;}
+      toast('Billing portal isn\'t live yet.');
+    }catch(e){toast('Billing portal isn\'t live yet.');}
+    freeBtn(btn);
   }
 
   /* ================= live auto-update (realtime + polling + feed re-pull) ================= */
