@@ -58,6 +58,11 @@ Deno.serve(async (req) => {
       metadata: { userId, plan: plan || "yearly" },
       subscription_data: { metadata: { userId } },
       allow_promotion_codes: true,
+      // Stripe validates a card even when today's total is $0, because it plans to
+      // charge it at renewal — so a 100%-off comp still fails on a bad card.
+      // "if_required" skips collection only when nothing is ever owed. Paying
+      // customers are unaffected: their total is > 0, so a card is still required.
+      payment_method_collection: "if_required",
       success_url: base + "?upgraded=1",
       cancel_url: base,
     });
