@@ -717,7 +717,7 @@
     document.getElementById('wUpcoming').innerHTML=list.length?list.map(drowHTML).join(''):emptyBox(ICO.check,'No deadlines yet','Connect Canvas or paste a message and Dayflow files the dates for you.','<button class="ebtn" data-canvas><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Connect Canvas</button>');
   }
   function renderAskExamples(){
-    const qs=["What's next?","What's due this week?","Add a work shift Friday 6–9pm"];
+    const qs=["What's next?","When am I free today?","How busy is my week?"];
     document.getElementById('askExamples').innerHTML=qs.map(q=>`<button class="chip" data-ask="${esc(q)}">${esc(q)}</button>`).join('');
   }
 
@@ -1057,11 +1057,11 @@
   /* ================= AI assistant ================= */
   const asst=document.getElementById('assistant'),asstScrim=document.getElementById('asstScrim'),asstMsgs=document.getElementById('asstMsgs');
   let asstStarted=false;
-  const SUGG=["What's next?","What's on today?","What's due this week?","What do I have Friday?","Add practice tomorrow 6am"];
+  const SUGG=["What's next?","When am I free today?","How busy is my week?","When's my next practice?","What's due tomorrow?","Add a shift Friday 6-9pm"];
   function renderSugg(){document.getElementById('asstSugg').innerHTML=SUGG.map(s=>`<button data-s="${esc(s)}">${esc(s)}</button>`).join('');}
   document.getElementById('asstSugg').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(b)askSend(b.dataset.s);});
   function openAsst(){asst.classList.add('show');asstScrim.classList.add('show');asst.setAttribute('aria-hidden','false');document.getElementById('fab').style.display='none';
-    if(!asstStarted){asstStarted=true;const nm=(userEmail||'').split('@')[0];botSay(`Hi${nm?' '+esc(nm):''} 👋 I'm your Dayflow assistant — I can see your real schedule. Ask me what's next, what's due, or tell me to add something.`);}
+    if(!asstStarted){asstStarted=true;const nm=(userEmail||'').split('@')[0];botSay(`Hi${nm?' '+esc(nm):''} 👋 I'm your Dayflow assistant — I read your real schedule. Ask what's next, when you're free, how your week looks, where things are — or tell me to add or check off items.`);}
     setTimeout(()=>document.getElementById('asstText').focus(),320);}
   function closeAsst(){asst.classList.remove('show');asstScrim.classList.remove('show');asst.setAttribute('aria-hidden','true');document.getElementById('fab').style.display='';}
   document.getElementById('fab').addEventListener('click',openAsst);
@@ -1080,57 +1080,146 @@
     for(let o=1;o<=14;o++){const l=dayTimeline(addDays(today0,o)).filter(m=>!(m.kind==='due'&&m.done));if(l.length)return l[0];}
     return null;}
   function humanDay(d){const df=dayDiff(d);if(df===0)return 'today';if(df===1)return 'tomorrow';if(df>1&&df<7)return DOWL[d.getDay()];return MONL[d.getMonth()]+' '+d.getDate();}
+  // ---- assistant data helpers ----
+  const STOP=new Set('the a an and or my your this that is are am was on at in of to for me i you we do does did have has had get got gonna wanna when what where whats how who why can could would should please tell show me about it its any some all next last first day today tomorrow tonight week weekend month time thing things got'.split(' '));
+  function upcomingEvents(nDays){const out=[];for(let o=0;o<=nDays;o++){const d=addDays(today0,o);eventsForDate(d).forEach(e=>{if(o>0||e.end>=now)out.push(e);});}return out.sort((a,b)=>a.start-b.start);}
+  function openDeadlines(){return items.filter(i=>!i.done).sort((a,b)=>new Date(a.due)-new Date(b.due));}
+  function nextDeadline(){return openDeadlines().find(i=>dayDiff(new Date(i.due))>=0)||openDeadlines()[0]||null;}
+  function nextOfCat(cat){return upcomingEvents(30).find(e=>e.cat===cat)||null;}
+  function sigWords(s){return String(s).toLowerCase().split(/[^a-z0-9]+/).filter(w=>w.length>=3&&!STOP.has(w));}
+  function matchByQuery(q){const cand=upcomingEvents(60).map(e=>({type:'event',obj:e,title:e.title})).concat(openDeadlines().map(i=>({type:'deadline',obj:i,title:i.title})));for(const c of cand){if(sigWords(c.title).some(w=>q.indexOf(w)>=0))return c;}return null;}
+  function catFromWords(q){if(/\b(practice|film|lift|workout|game|match|meet|athletic|sport|scrimmage)/.test(q))return 'athletics';if(/\b(shift|work|job|clock)/.test(q))return 'work';if(/\b(class|lecture|lab|seminar|course)/.test(q))return 'school';if(/\b(appointment|personal|meeting|club|dentist|doctor)/.test(q))return 'personal';return null;}
+  function countCatThisWeek(cat){let c=0;for(let o=0;o<7;o++)c+=eventsForDate(addDays(today0,o)).filter(e=>e.cat===cat).length;return c;}
+  function weekWorkload(){const evs=upcomingEvents(6).length;const dls=items.filter(i=>!i.done&&dayDiff(new Date(i.due))>=0&&dayDiff(new Date(i.due))<7).length;let busiest=null,max=-1;for(let o=0;o<7;o++){const d=addDays(today0,o);const c=dayTimeline(d).filter(m=>!(m.kind==='due'&&m.done)).length;if(c>max){max=c;busiest=d;}}return{evs,dls,busiest,max};}
+  function freeBlocks(dateObj){const evs=eventsForDate(dateObj).slice().sort((a,b)=>a.start-b.start);const dS=startOfDay(dateObj);dS.setHours(8,0,0,0);const dE=startOfDay(dateObj);dE.setHours(22,0,0,0);let cur=(isoDate(dateObj)===isoDate(today0)&&now>dS)?new Date(now):new Date(dS);const gaps=[];evs.forEach(e=>{if(e.start>cur)gaps.push({start:new Date(cur),end:new Date(e.start)});if(e.end>cur)cur=new Date(e.end);});if(cur<dE)gaps.push({start:new Date(cur),end:new Date(dE)});return gaps.filter(g=>(g.end-g.start)>=30*60000);}
+  function dur(ms){const m=Math.round(ms/60000);if(m<60)return m+' min';const h=Math.floor(m/60),mm=m%60;return h+'h'+(mm?' '+mm+'m':'');}
+  function markDone(kw){kw=(kw||'').trim();const dls=openDeadlines();if(!dls.length)return null;const words=sigWords(kw);let dl=kw&&dls.find(i=>i.title.toLowerCase().indexOf(kw)>=0);if(!dl&&words.length)dl=dls.find(i=>{const t=i.title.toLowerCase();return words.every(w=>t.indexOf(w)>=0);});if(!dl&&words.length)dl=dls.find(i=>{const t=i.title.toLowerCase();return words.some(w=>t.indexOf(w)>=0);});if(!dl)return null;dl.done=true;save();updateBadge();rerender();return dl;}
+  function delEvent(q){const ev=upcomingEvents(120).find(e=>e.uid&&sigWords(e.title).some(w=>q.indexOf(w)>=0));if(!ev)return null;USEREVENTS=USEREVENTS.filter(u=>u.id!==ev.uid);saveEvents();rerender();return ev;}
+  function evLine(t){const mins=Math.round((t.start-now)/60000);const soon=mins>0&&mins<300?` — in <b>${dur(t.start-now)}</b>`:'';return `<b>${esc(t.title)}</b> — ${humanDay(t.start)} at ${fmtTime(t.start)}${t.end?'–'+fmtTime(t.end):''}${t.loc?' · '+esc(t.loc):''}${soon}.`;}
+
   // AI response engine — grounded in real data
   function answer(qRaw){
     const q=qRaw.toLowerCase().trim();
-    // ADD intent
-    if(/^(add|create|schedule|put|new)\b/.test(q)||/\badd (a|an|my)?\b/.test(q)){
-      const cat=/\bpractice|film|lift|workout|game|athlet/.test(q)?'athletics':/\bshift|work\b/.test(q)?'work':/\bclass|lecture|exam|study|hw|homework|assignment|quiz/.test(q)?'school':'personal';
-      const found=extract(qRaw);
-      if(found.length){const f=found[0];const d=new Date(f.due);const isEvent=f.hasTime||cat!=='school';
-        addFound({title:f.title,start:f.due,end:null,loc:'',cat:cat,kind:isEvent?'event':'deadline'});
-        return `Added <b>${esc(f.title)}</b> — ${humanDay(d)}${f.hasTime?' at '+fmtTime(d):''}. It's on your ${isEvent?'timeline':'deadlines'} now. ✓`;}
-      return "I couldn't spot a date in that. Try something like <b>&ldquo;add a work shift Friday 6–9pm&rdquo;</b> or <b>&ldquo;add practice tomorrow at 6am.&rdquo;</b>";
+
+    // greetings / thanks / identity
+    if(/^(hi|hey|hello|yo|sup|howdy|good (morning|afternoon|evening))\b/.test(q))return "Hey! I'm your schedule assistant. Ask me what's next, when you're free, how your week looks — or tell me to add or check something off.";
+    if(q.length<26&&/\b(thanks|thank you|thx|ty|appreciate it|nice|cool|awesome|perfect|great|sweet)\b/.test(q))return "Anytime. 👍 Anything else on your plate?";
+    if(/\b(who are you|what are you|your name)\b/.test(q))return "I'm Dayflow's assistant — I read your real schedule (classes, practice, work, deadlines) and can answer questions or add things for you.";
+
+    // help / capabilities
+    if(/\b(help|what can you|how do you work|commands|examples|what do you do)\b/.test(q))
+      return "Here's the kind of thing I can do:"+
+      "<div class='qline'><span class='qd' style='background:var(--teal)'></span><span>&ldquo;What's next?&rdquo; · &ldquo;What's on Friday?&rdquo;</span></div>"+
+      "<div class='qline'><span class='qd' style='background:var(--rose)'></span><span>&ldquo;When's my next practice?&rdquo; · &ldquo;Where's my next class?&rdquo;</span></div>"+
+      "<div class='qline'><span class='qd' style='background:var(--amber)'></span><span>&ldquo;When am I free today?&rdquo; · &ldquo;How busy is my week?&rdquo;</span></div>"+
+      "<div class='qline'><span class='qd' style='background:var(--violet)'></span><span>&ldquo;Add a shift Friday 6–9pm&rdquo; · &ldquo;Mark Problem Set 4 done&rdquo;</span></div>";
+
+    // delete / cancel (before add)
+    if(/\b(delete|cancel|remove|drop|scratch)\b/.test(q)&&!/how|list|show/.test(q)){
+      const ev=delEvent(q);
+      if(ev)return `Removed <b>${esc(ev.title)}</b> (${humanDay(ev.start)}) from your schedule. ✓`;
+      return "I couldn't find a matching event to remove. Try naming it — e.g. <b>&ldquo;cancel practice.&rdquo;</b>";
     }
-    // NEXT
-    if(/\b(next|coming up|what.?s after)\b/.test(q)&&!/week|month/.test(q)){
-      const n=nextUp();if(!n)return "Nothing coming up on your schedule. Add an event or connect an app and I'll keep track.";
-      const when=isoDate(n.start)===isoDate(today0)?'at '+fmtTime(n.start):humanDay(n.start)+' at '+fmtTime(n.start);
-      const mins=Math.round((n.start-now)/60000);const soon=mins>0&&mins<180?` — that's in <b>${mins<60?mins+' min':Math.round(mins/60)+'h'}</b>`:'';
+    // mark done (before add)
+    if(/\b(mark|done|finished|complete|completed|check off|checked off|turned in|submitted)\b/.test(q)&&!/how|what|when|list|next|due this/.test(q)){
+      let kw=q.replace(/\b(mark|as|done|i|ve|have|already|finished|complete[d]?|check(ed)? off|turn(ed)? in|submitted|the|my|off)\b/g,' ').replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+      const dl=markDone(kw);
+      if(dl)return `Nice — marked <b>${esc(dl.title)}</b> as done. ✓`;
+      if(sigWords(kw).length<1)return "Which one? Tell me the name — e.g. <b>&ldquo;mark Problem Set 4 done.&rdquo;</b>";
+      return `I couldn't find an open deadline matching &ldquo;${esc(kw)}.&rdquo;`;
+    }
+    // add
+    if(/^(add|create|schedule|put|new|set up|remind)\b/.test(q)||/\badd (a|an|my)?\b/.test(q)){
+      const cat=catFromWords(q)||(/\b(exam|study|hw|homework|assignment|quiz|essay|paper|reading|project|problem set|pset)\b/.test(q)?'school':'personal');
+      const found=extract(qRaw);
+      if(found.length){const f=found[0];const d=new Date(f.due);const isDeadline=cat==='school'&&!/\b(class|lecture|lab|seminar|study block)\b/.test(q)&&(!f.hasTime||/\b(due|deadline|submit|turn in)\b/.test(q));
+        addFound({title:f.title,start:f.due,end:null,loc:'',cat:cat,kind:isDeadline?'deadline':'event'});
+        return `Added <b>${esc(f.title||'it')}</b> — ${humanDay(d)}${f.hasTime?' at '+fmtTime(d):''}. It's on your ${isDeadline?'deadlines':'timeline'} now. ✓`;}
+      return "I couldn't spot a date in that. Try <b>&ldquo;add a work shift Friday 6–9pm&rdquo;</b> or <b>&ldquo;add practice tomorrow at 6am.&rdquo;</b>";
+    }
+
+    // where is X
+    if(/\bwhere\b/.test(q)){
+      const mm=matchByQuery(q);const cat=catFromWords(q);let t=mm&&mm.type==='event'?mm.obj:(cat?nextOfCat(cat):null);
+      if(t)return t.loc?`<b>${esc(t.title)}</b> is at <b>${esc(t.loc)}</b> — ${humanDay(t.start)} at ${fmtTime(t.start)}.`:`No location saved for <b>${esc(t.title)}</b> (${humanDay(t.start)} at ${fmtTime(t.start)}).`;
+      return "Tell me which event and I'll find where it is — e.g. <b>&ldquo;where's my next class?&rdquo;</b>";
+    }
+
+    // when / next / what time  (named or by category)
+    if(/\b(when|what time|next|coming up|after this)\b/.test(q)&&!/free|busy|due this week|how busy/.test(q)){
+      if(/\b(deadline|assignment)\b/.test(q)&&/next/.test(q)){const d=nextDeadline();if(d)return `Your next deadline is <b>${esc(d.title)}</b> — ${relDue(d.due).txt}.`;}
+      const mm=matchByQuery(q);const cat=catFromWords(q);
+      if(mm){if(mm.type==='deadline')return `<b>${esc(mm.obj.title)}</b> is due ${relDue(mm.obj.due).txt}.`;return evLine(mm.obj);}
+      if(cat){const t=nextOfCat(cat);if(t)return "Next "+CATS[cat].label.toLowerCase()+": "+evLine(t);return `Nothing ${CATS[cat].label.toLowerCase()} coming up on your schedule.`;}
+      const n=nextUp();if(!n)return "Nothing coming up yet. Add something or connect an app and I'll track it.";
+      const when=isoDate(n.start)===isoDate(today0)?'at '+fmtTime(n.start):humanDay(n.start)+' at '+fmtTime(n.start);const mins=Math.round((n.start-now)/60000);const soon=mins>0&&mins<300?` — in <b>${dur(n.start-now)}</b>`:'';
       return `Up next: <b>${esc(n.title)}</b> ${when}${n.loc?' · '+esc(n.loc):''}${soon}.`;
     }
-    // DUE / DEADLINES this week
-    if(/\bdue\b|\bdeadline/.test(q)||(/\bweek\b/.test(q)&&!/schedule|events|have/.test(q))){
+
+    // first / last of a day
+    if(/\b(first|start|begin|earliest|kick off)\b/.test(q)&&/\b(today|tomorrow|day|morning)\b/.test(q)){const tm=/tomorrow/.test(q);const d=tm?addDays(today0,1):today0;const l=dayTimeline(d).filter(m=>m.kind==='event');if(!l.length)return `No timed events ${tm?'tomorrow':'today'}.`;const f=l[0];return `Your first thing ${tm?'tomorrow':'today'} is <b>${esc(f.title)}</b> at ${fmtTime(f.start)}${f.loc?' · '+esc(f.loc):''}.`;}
+    if(/\b(last|finish|end|done for the|latest|wrap)\b/.test(q)&&/\b(today|tonight|tomorrow|day)\b/.test(q)){const tm=/tomorrow/.test(q);const d=tm?addDays(today0,1):today0;const l=dayTimeline(d).filter(m=>m.kind==='event');if(!l.length)return `Nothing timed ${tm?'tomorrow':'today'}.`;const f=l[l.length-1];return `You wrap up ${tm?'tomorrow':'today'} with <b>${esc(f.title)}</b> at ${fmtTime(f.end||f.start)}.`;}
+
+    // free time / gaps
+    if(/\b(free|open|break|gap|available|down ?time|any time)\b/.test(q)&&!/week|month/.test(q)){
+      const tm=/tomorrow/.test(q);const d=tm?addDays(today0,1):today0;const gaps=freeBlocks(d);const lbl=tm?'tomorrow':'today';
+      if(!gaps.length)return `You're pretty booked ${lbl} — no open blocks over 30 min between 8am and 10pm.`;
+      const g=gaps[0];return `You're free ${lbl} from <b>${fmtTime(g.start)}</b> to <b>${fmtTime(g.end)}</b> (${dur(g.end-g.start)})`+(gaps.length>1?`, plus ${gaps.length-1} more block${gaps.length>2?'s':''} later.`:'.');
+    }
+
+    // workload / week overview
+    if(/\b(busy|workload|how.?s my week|week (look|overview|summary|going)|summarize|how much|rundown of my week)\b/.test(q)){
+      const w=weekWorkload();
+      if(!w.evs&&!w.dls)return "Your week's wide open so far — nothing scheduled and nothing due. 🌤️";
+      return `This week: <b>${w.evs}</b> event${w.evs===1?'':'s'} and <b>${w.dls}</b> deadline${w.dls===1?'':'s'}.`+(w.busiest&&w.max>0?` Busiest day is <b>${dayDiff(w.busiest)===0?'today':DOWL[w.busiest.getDay()]}</b> (${w.max} item${w.max===1?'':'s'}).`:'');
+    }
+
+    // weekend
+    if(/\bweekend\b/.test(q)){
+      let sat=(6-now.getDay()+7)%7;if(now.getDay()===0)sat=6;const days=[addDays(today0,sat),addDays(today0,sat+1)];const all=[];days.forEach(d=>dayTimeline(d).filter(m=>!(m.kind==='due'&&m.done)).forEach(m=>all.push(m)));
+      if(!all.length)return "Your weekend's clear so far. 🌤️";
+      return `This weekend (${all.length} item${all.length>1?'s':''}):`+qlineHTML(all);
+    }
+
+    // deadlines / due
+    if(/\b(due|deadline|assignment|homework|turn in|submit)\b/.test(q)){
+      if(/tomorrow/.test(q)){const l=items.filter(i=>!i.done&&dayDiff(new Date(i.due))===1);return l.length?"Due tomorrow:"+l.map(i=>`<div class="qline"><span class="qd" style="background:var(--red)"></span><span class="qt">${fmtTime(new Date(i.due))}</span><span>${esc(i.title)}</span></div>`).join(''):"Nothing due tomorrow. 🎉";}
+      if(/overdue|late|behind/.test(q)){const l=items.filter(i=>!i.done&&dayDiff(new Date(i.due))<0);return l.length?`<b>${l.length}</b> overdue:`+l.map(i=>`<div class="qline"><span class="qd" style="background:var(--red)"></span><span class="qt">${Math.abs(dayDiff(new Date(i.due)))}d</span><span>${esc(i.title)}</span></div>`).join(''):"Nothing overdue — you're on top of it. ✓";}
+      if(/\bnext\b/.test(q)){const d=nextDeadline();return d?`Next up: <b>${esc(d.title)}</b> — ${relDue(d.due).txt}.`:"No open deadlines. 🎉";}
       const week=items.filter(i=>!i.done&&dayDiff(new Date(i.due))>=0&&dayDiff(new Date(i.due))<7).sort((a,b)=>new Date(a.due)-new Date(b.due));
       const overdue=items.filter(i=>!i.done&&dayDiff(new Date(i.due))<0);
       if(!week.length&&!overdue.length)return "You're all caught up — nothing due in the next 7 days. 🎉";
       let out=(overdue.length?`<b>${overdue.length} overdue</b> and `:'')+`<b>${week.length}</b> due this week:`;
-      out+=week.slice(0,6).map(i=>`<div class="qline"><span class="qd" style="background:var(--red)"></span><span class="qt">${relDue(i.due).txt.split(' · ')[0]}</span><span>${esc(i.title)}</span></div>`).join('');
+      out+=week.slice(0,7).map(i=>`<div class="qline"><span class="qd" style="background:var(--red)"></span><span class="qt">${relDue(i.due).txt.split(' · ')[0]}</span><span>${esc(i.title)}</span></div>`).join('');
       return out;
     }
-    // TODAY / TOMORROW / weekday / month
+
+    // count / how many
+    if(/\bhow many\b|\bcount\b|\bnumber of\b/.test(q)){
+      if(/deadline|due|assignment/.test(q)){const n=openDeadlines().length;return `You have <b>${n}</b> open deadline${n===1?'':'s'}.`;}
+      const cat=catFromWords(q);if(cat){const n=countCatThisWeek(cat);return `You have <b>${n}</b> ${CATS[cat].label.toLowerCase()} event${n===1?'':'s'} this week.`;}
+      if(/today/.test(q)){const n=dayTimeline(today0).filter(m=>!(m.kind==='due'&&m.done)).length;return `<b>${n}</b> thing${n===1?'':'s'} on today.`;}
+      const n=upcomingEvents(6).length;return `<b>${n}</b> event${n===1?'':'s'} coming up this week.`;
+    }
+
+    // schedule for a day / weekday
     let target=null,label='';
     if(/\btomorrow\b/.test(q)){target=addDays(today0,1);label='tomorrow';}
-    else if(/\btoday\b|\btonight\b/.test(q)||/what.?s on|my (day|schedule)/.test(q)){target=new Date(today0);label='today';}
-    else{const wm=q.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);if(wm){const t=WD[wm[1]];let delta=(t-now.getDay()+7)%7;if(delta===0&&/next/.test(q))delta=7;target=addDays(today0,delta);label=(delta===0?'today':(delta===1?'tomorrow':DOWL[t]));}}
-    if(target){
-      const list=dayTimeline(target).filter(m=>!(m.kind==='due'&&m.done));
-      if(!list.length)return `Nothing scheduled ${label}. A clear ${label==='today'?'day':'one'} — enjoy it, or add something.`;
-      return `Here's ${label} (${list.length} item${list.length>1?'s':''}):`+qlineHTML(list);
-    }
-    // COUNT / how many
-    if(/how many|count/.test(q)){
-      if(/deadline|due|assignment/.test(q)){const n=items.filter(i=>!i.done).length;return `You have <b>${n}</b> open deadline${n===1?'':'s'}.`;}
-      const n=dayTimeline(today0).filter(m=>!(m.kind==='due'&&m.done)).length;return `You've got <b>${n}</b> thing${n===1?'':'s'} on today.`;
-    }
+    else if(/\btoday\b|\btonight\b/.test(q)||/what.?s on|my (day|schedule)|rundown|agenda|going on/.test(q)){target=new Date(today0);label='today';}
+    else{const wm=q.match(/\b(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b/);if(wm){const tt=WD[wm[1]];let delta=(tt-now.getDay()+7)%7;if(delta===0&&/next/.test(q))delta=7;target=addDays(today0,delta);label=(dayDiff(target)===0?'today':(dayDiff(target)===1?'tomorrow':DOWL[tt]));}}
+    if(target){const list=dayTimeline(target).filter(m=>!(m.kind==='due'&&m.done));if(!list.length)return `Nothing scheduled ${label}. ${label==='today'?'Clear day':'A clear one'} — enjoy it, or add something.`;return `Here's ${label} (${list.length} item${list.length>1?'s':''}):`+qlineHTML(list);}
+
     // connect help
-    if(/connect|sync|canvas|import/.test(q)&&/canvas|assignment|grade/.test(q)){return "Open <b>Connections → Canvas</b> and paste your Canvas calendar feed link — I'll pull your assignments in automatically. Want me to open it?";}
-    if(/connect|sync/.test(q)&&/work|shift|job/.test(q)){return "Head to <b>Connections → Work shifts</b>, pick your app (When I Work, Homebase, Sling, 7shifts, Deputy) and paste its calendar feed — your shifts land right on your timeline.";}
-    if(/free|open|nothing|available/.test(q)&&/today|day/.test(q)){const list=dayTimeline(today0).filter(m=>!(m.kind==='due'&&m.done));return list.length?`Not totally free — you've got ${list.length} thing${list.length>1?'s':''} today.`:"You're free today. 🌤️";}
-    if(/help|what can you|how do you/.test(q)){return "I read your real schedule. Try:<div class='qline'><span class='qd' style='background:var(--teal)'></span><span>&ldquo;What's next?&rdquo;</span></div><div class='qline'><span class='qd' style='background:var(--rose)'></span><span>&ldquo;What do I have Friday?&rdquo;</span></div><div class='qline'><span class='qd' style='background:var(--violet)'></span><span>&ldquo;Add a shift Friday 6–9pm&rdquo;</span></div>";}
+    if(/\b(connect|sync|import|link|hook up)\b/.test(q)&&/canvas|assignment|grade|class/.test(q))return "Open <b>Connections → Canvas</b> and paste your Canvas calendar feed link — I'll pull your assignments in automatically.";
+    if(/\b(connect|sync|import|link|hook up)\b/.test(q)&&/work|shift|job/.test(q))return "Go to <b>Connections → Work shifts</b>, pick your app (When I Work, Homebase, Sling, 7shifts, Deputy) and paste its calendar feed — your shifts land on your timeline.";
+
+    // named lookup fallback (references a specific event without when/where)
+    const mm2=matchByQuery(q);
+    if(mm2){if(mm2.type==='deadline')return `<b>${esc(mm2.obj.title)}</b> is due ${relDue(mm2.obj.due).txt}.`;return evLine(mm2.obj);}
+
     // fallback
     const n=nextUp();
-    return "I can tell you what's next, what's due, or what's on any day — and I can add things for you. "+(n?`For now, next up is <b>${esc(n.title)}</b> ${humanDay(n.start)}.`:'Try asking &ldquo;what\'s due this week?&rdquo;');
+    return "I can tell you what's next, what's due, how your week looks, where things are — and I can add or check off items. "+(n?`Right now, next up is <b>${esc(n.title)}</b> ${humanDay(n.start)} at ${fmtTime(n.start)}.`:'Try &ldquo;what\'s due this week?&rdquo; or &ldquo;how busy is my week?&rdquo;');
   }
   function askSend(text){
     text=(text||'').trim();if(!text)return;
