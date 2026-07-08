@@ -4,77 +4,142 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Sign in to Dayflow.">
-<meta name="theme-color" content="#0A1020">
-</head>
-<body>
+<meta name="theme-color" content="#080D1A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <title>Sign in · Dayflow</title>
 <style>
   :root{
-    --bg:#0A1020; --card:#0F1A2E; --line:rgba(255,255,255,.1); --line-2:rgba(255,255,255,.16);
-    --text:#EAF0FA; --dim:#93A3BD; --faint:#5F6E88;
-    --teal:#2DD4BF; --teal-2:#5EEAD4; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.35);
+    --bg:#080D1A; --bg-2:#0A1122; --panel:#0F1A30; --card:#0E1728; --card-2:#101d33;
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+    --text:#EDF2FB; --dim:#98A7C2; --faint:#61708C;
+    --teal:#2DD4BF; --teal-2:#6BEAD9; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.34);
+    --violet:#9A7BFF; --rose:#F4699A; --amber:#F2B03C;
     --font:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
     --font-display:"Schibsted Grotesk","Hanken Grotesk",system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{background:var(--bg)}
-  body{background:transparent;color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.5}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.5;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none}
-  ::selection{background:var(--teal);color:#041018}
+  input{font-family:inherit}
+  ::selection{background:var(--teal);color:#04141a}
+  :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:2px;border-radius:6px}
+  .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
 
-  .authwrap{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:26px;position:relative;overflow:hidden}
-  .glow{position:absolute;top:-14%;left:50%;transform:translateX(-50%);width:760px;height:600px;max-width:120vw;
-    background:radial-gradient(closest-side,var(--teal-soft),transparent 70%);pointer-events:none;filter:blur(10px)}
-  .home{position:absolute;top:22px;left:24px;display:flex;align-items:center;gap:9px;font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:-.02em;z-index:2}
-  .home .mark{width:28px;height:28px;border-radius:8px;background:linear-gradient(140deg,var(--teal),#0EA5A5);display:grid;place-items:center}
-  .home .mark svg{width:16px;height:16px;stroke:#041018;stroke-width:2.6;fill:none}
+  /* ambient aurora, like the app + landing */
+  .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:radial-gradient(60% 80% at 20% 0,var(--teal-soft),transparent 60%),
+               radial-gradient(55% 80% at 85% 10%,rgba(154,123,255,.12),transparent 62%),
+               radial-gradient(50% 60% at 60% 100%,rgba(244,105,154,.07),transparent 65%);
+    filter:blur(8px);animation:drift 20s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translateX(-2.5%)}to{transform:translateX(2.5%)}}
+  @media (prefers-reduced-motion:reduce){.aurora{animation:none}}
+
+  .home{position:fixed;top:22px;left:24px;display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:-.02em;z-index:5}
+  .home .mark{width:29px;height:29px;border-radius:8px;background:linear-gradient(140deg,var(--teal),#0E9E8E);display:grid;place-items:center;box-shadow:0 4px 16px -4px var(--teal-line)}
+  .home .mark svg{width:16px;height:16px;stroke:#04141a;stroke-width:2.6;fill:none}
   .home .dot{color:var(--teal)}
 
-  .card{position:relative;width:100%;max-width:412px;background:var(--card);border:1px solid var(--line);
-    border-radius:22px;padding:34px 30px 26px;box-shadow:0 30px 70px -24px rgba(0,0,0,.7)}
-  .badge{position:absolute;top:18px;right:18px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;
-    color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:4px 9px;border-radius:999px}
-  .card h1{font-family:var(--font-display);font-size:27px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
+  .authwrap{position:relative;z-index:1;min-height:100vh;min-height:100dvh;display:grid;
+    grid-template-columns:1.02fr .98fr;align-items:center;gap:48px;max-width:1000px;margin:0 auto;padding:96px 26px 40px}
+  @media(max-width:900px){.authwrap{grid-template-columns:1fr;max-width:440px;gap:0;place-items:center;padding:88px 22px 36px}}
+
+  /* ---- left: brand + mini timeline preview ---- */
+  .pitch{animation:rise .6s both}
+  @media(max-width:900px){.pitch{display:none}}
+  .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:var(--teal-2)}
+  .pitch h2{font-family:var(--font-display);font-size:clamp(30px,4vw,42px);font-weight:800;letter-spacing:-.035em;line-height:1.06;margin:16px 0 0}
+  .pitch h2 .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .pitch .lede{color:var(--dim);font-size:15.5px;margin-top:16px;max-width:38ch;line-height:1.6}
+
+  .preview{margin-top:26px;background:linear-gradient(165deg,rgba(20,32,54,.85),rgba(11,18,34,.9));
+    border:1px solid var(--line-2);border-radius:18px;padding:16px 16px 18px;max-width:360px;
+    box-shadow:0 34px 80px -34px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,255,255,.05)}
+  .pv-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .pv-date{font-family:var(--font-mono);font-size:12px;color:var(--dim);letter-spacing:.02em}
+  .pv-live{font-family:var(--font-mono);font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--rose);display:flex;align-items:center;gap:6px}
+  .pv-live .pulse{width:7px;height:7px;border-radius:50%;background:var(--rose);box-shadow:0 0 0 0 var(--rose);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(244,105,154,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.pv-live .pulse{animation:none}}
+  .pv-row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:11px;align-items:center;padding:8px 0;animation:rise .5s both}
+  .pv-row+.pv-row{border-top:1px solid var(--line)}
+  .pv-row .pt{font-family:var(--font-mono);font-size:11px;color:var(--faint);text-align:right}
+  .pv-row .pb{display:flex;align-items:center;gap:9px;min-width:0}
+  .pv-row .cd{width:8px;height:8px;border-radius:50%;background:var(--cc);flex-shrink:0;box-shadow:0 0 8px var(--cc)}
+  .pv-row .pn{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pv-row .tag{margin-left:auto;font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--cc);background:color-mix(in srgb,var(--cc) 14%,transparent);padding:2px 8px;border-radius:999px;flex-shrink:0}
+  .pv-row.on .pn{color:#fff}
+  .pv-now{display:flex;align-items:center;gap:8px;margin:2px 0 2px 60px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--rose)}
+  .pv-now .ln{flex:1;height:1.5px;border-radius:2px;background:linear-gradient(to right,var(--rose),transparent)}
+
+  /* ---- right: auth card ---- */
+  .card{position:relative;width:100%;max-width:412px;background:var(--panel);border:1px solid var(--line-2);
+    border-radius:22px;padding:32px 30px 26px;box-shadow:0 40px 90px -30px rgba(0,0,0,.8);animation:rise .55s both;animation-delay:.06s}
+  .badge{position:absolute;top:18px;right:18px;font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:4px 10px;border-radius:999px}
+  .card h1{font-family:var(--font-display);font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1.1}
   .card .sub{color:var(--dim);font-size:14.5px;margin-top:10px;max-width:34ch}
 
-  .gbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;background:#fff;color:#1f2430;
-    font-weight:650;font-size:15px;padding:12px;border-radius:12px;margin-top:24px;transition:.15s}
-  .gbtn:hover{background:#eef1f6;transform:translateY(-1px)}
+  .gbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:11px;background:rgba(255,255,255,.04);color:var(--text);
+    border:1px solid var(--line-2);font-weight:600;font-size:14.5px;padding:12px;border-radius:12px;margin-top:24px;transition:.15s}
+  .gbtn:hover{background:rgba(255,255,255,.08);border-color:var(--line-2);transform:translateY(-1px)}
   .gbtn svg{width:19px;height:19px}
 
-  .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--faint);font-size:12px;font-weight:600}
+  .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--faint);font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
   .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 
   .lbl{display:block;font-size:12.5px;font-weight:600;color:var(--dim);margin-bottom:7px}
-  input{width:100%;background:#0B1526;color:var(--text);border:1px solid var(--line-2);border-radius:12px;
-    padding:12px 14px;font-family:var(--font);font-size:15px}
+  input[type=email],input[type=password]{width:100%;background:var(--card);color:var(--text);border:1px solid var(--line-2);border-radius:12px;
+    padding:12px 14px;font-size:15px}
   input::placeholder{color:var(--faint)}
   input:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
   .primary{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--teal);color:#04141a;
-    font-weight:700;font-size:15px;padding:13px;border-radius:12px;margin-top:12px;transition:.15s;box-shadow:0 8px 24px -8px var(--teal-line)}
+    font-weight:700;font-size:15px;padding:13px;border-radius:12px;margin-top:14px;transition:.15s;box-shadow:0 8px 26px -10px var(--teal-line)}
   .primary:hover{background:var(--teal-2);transform:translateY(-1px)}
+  .primary:disabled{opacity:.6;pointer-events:none}
 
-  .note{display:flex;gap:9px;margin-top:22px;padding:12px 13px;background:rgba(255,255,255,.03);border:1px solid var(--line);
-    border-radius:12px;font-size:12.5px;color:var(--dim);line-height:1.5}
+  .note{display:flex;gap:10px;margin-top:22px;padding:12px 13px;background:rgba(255,255,255,.03);border:1px solid var(--line);
+    border-radius:12px;font-size:12.5px;color:var(--dim);line-height:1.5;align-items:flex-start}
+  .note svg{width:16px;height:16px;stroke:var(--teal-2);stroke-width:1.9;fill:none;flex-shrink:0;margin-top:1px}
   .note b{color:var(--text);font-weight:650}
-  .msg{font-size:12.5px;margin-top:11px;min-height:1.1em;color:var(--teal-2);line-height:1.4}
-  .msg.err{color:#F26D6D}
+  .msg{font-size:12.5px;margin-top:12px;min-height:1.1em;color:var(--teal-2);line-height:1.4}
+  .msg.err{color:#F86A5B}
   .toggle{font-size:13px;color:var(--dim);margin-top:16px;text-align:center}
   .toggle a{color:var(--teal-2);font-weight:600;cursor:pointer}
   .toggle a:hover{text-decoration:underline}
   .foot{text-align:center;color:var(--faint);font-size:12.5px;margin-top:20px}
   .foot a{color:var(--dim);font-weight:600}
   .foot a:hover{color:var(--text)}
+
+  @keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.pitch,.card,.pv-row{animation:none}}
 </style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+<a class="home" href="index.html"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow<span class="dot">.</span></a>
 
 <div class="authwrap">
-  <div class="glow"></div>
-  <a class="home" href="https://benmarban.github.io/duely/"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow<span class="dot">.</span></a>
+  <!-- Left: brand pitch + mini timeline preview -->
+  <div class="pitch" aria-hidden="true">
+    <span class="eyebrow">One timeline · class to curfew</span>
+    <h2>Your whole day,<br>the moment you <span class="grad">sign in.</span></h2>
+    <p class="lede">Class, practice, film, your work shift, every deadline — pulled into one place, sorted by what's next.</p>
+    <div class="preview">
+      <div class="pv-top"><span class="pv-date">Tuesday · Jul 7</span><span class="pv-live"><span class="pulse"></span>Now 3:30pm</span></div>
+      <div class="pv-row" style="--cc:var(--teal);animation-delay:.12s"><span class="pt">9:00a</span><span class="pb"><span class="cd"></span><span class="pn">MATH 231 · Lecture</span><span class="tag">Class</span></span></div>
+      <div class="pv-row" style="--cc:var(--rose);animation-delay:.18s"><span class="pt">12:30p</span><span class="pb"><span class="cd"></span><span class="pn">Film session</span><span class="tag">Athletics</span></span></div>
+      <div class="pv-row on" style="--cc:var(--rose);animation-delay:.24s"><span class="pt">3:30p</span><span class="pb"><span class="cd"></span><span class="pn">Practice</span><span class="tag">Athletics</span></span></div>
+      <div class="pv-now"><span>Now · 3:41pm</span><span class="ln"></span></div>
+      <div class="pv-row" style="--cc:var(--violet);animation-delay:.3s"><span class="pt">6:00p</span><span class="pb"><span class="cd"></span><span class="pn">Work shift</span><span class="tag">Work</span></span></div>
+    </div>
+  </div>
 
+  <!-- Right: auth card -->
   <div class="card">
     <span class="badge">Preview</span>
     <h1>Welcome to Dayflow</h1>
@@ -95,9 +160,9 @@
     <p class="msg" id="msg"></p>
     <p class="toggle" id="toggle">New to Dayflow? <a>Create an account</a></p>
 
-    <div class="note">🔒<div><b>Your schedule is private.</b> Signing in saves your day to your own account — only you can see it. We only store what you add.</div></div>
+    <div class="note"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><div><b>Your schedule is private.</b> Signing in saves your day to your own account — only you can see it. We only store what you add.</div></div>
 
-    <p class="foot"><a href="https://benmarban.github.io/duely/">← Back to home</a></p>
+    <p class="foot"><a href="index.html">← Back to home</a></p>
   </div>
 </div>
 
