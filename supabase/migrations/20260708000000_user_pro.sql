@@ -19,9 +19,11 @@
 -- service role and bypasses RLS — so there is deliberately no write policy below.
 --
 -- Note: this repo has no migration for `user_state` itself; that table was created
--- by hand in the dashboard before migrations existed. Run this file in the SQL
--- editor (Supabase → SQL Editor → New query) rather than via `supabase db push`,
--- which would try to rebuild a schema it has never seen.
+-- by hand in the dashboard before migrations existed. Run this file in the SQL Editor
+-- (Supabase → SQL Editor → New query). `supabase db push` would apply it too, but it
+-- prompts for the database password and would record this as the project's entire
+-- migration history while `user_state` stays uncaptured. The editor also shows you
+-- the output of the verification query at the bottom, which you want to read.
 
 create table if not exists public.user_pro (
   user_id      uuid primary key references auth.users (id) on delete cascade,
