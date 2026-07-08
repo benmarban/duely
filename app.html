@@ -313,6 +313,8 @@
   .provider{display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line-2);border-radius:13px;background:var(--card);margin-top:10px;transition:.14s;text-align:left;width:100%}
   .provider:hover{border-color:var(--teal-line);background:var(--teal-soft)}
   .provider.on{border-color:var(--ok);background:var(--ok-soft)}
+  .provider.other:not(.on){border-style:dashed}
+  .provider.other .plogo{font-size:22px}
   .plogo{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;font-family:var(--font-display);font-weight:800;font-size:17px;color:#fff}
   .pb{flex:1;min-width:0}
   .pn{display:block;font-size:14px;font-weight:650}
@@ -1058,7 +1060,10 @@
     {id:'homebase',name:'Homebase',short:'H',color:'#E8552D',feed:true,help:'In Homebase: <b>Schedule → ⋯ → Sync to calendar</b> → copy the feed URL.'},
     {id:'sling',name:'Sling',short:'S',color:'#48A9A6',feed:true,help:'In Sling: <b>My Schedule → Calendar feed</b> → copy the subscription link.'},
     {id:'7shifts',name:'7shifts',short:'7',color:'#111827',feed:true,help:'In 7shifts: <b>My Availability / Schedule → Sync to calendar</b> → copy the iCal URL.'},
-    {id:'deputy',name:'Deputy',short:'D',color:'#F26722',feed:true,help:'In Deputy: <b>Me → My Roster → Export/Sync</b> → copy the calendar feed URL.'}
+    {id:'deputy',name:'Deputy',short:'D',color:'#F26722',feed:true,help:'In Deputy: <b>Me → My Roster → Export/Sync</b> → copy the calendar feed URL.'},
+    {id:'dayforce',name:'Dayforce',short:'Df',color:'#1C6E8C',feed:true,help:'In Dayforce: <b>Menu → Calendar → Subscribe / Sync</b> → copy the iCal feed link (your employer may need to enable schedule sync).'},
+    {id:'digiquatics',name:'DigiQuatics',short:'Dq',color:'#159FD4',feed:true,help:'In DigiQuatics: <b>My Schedule → Sync to calendar / Subscribe</b> → copy the iCal feed URL.'},
+    {id:'other',name:'Another app',short:'+',color:'#3C5170',feed:true,other:true,help:'Most shift apps have a &ldquo;Sync to calendar,&rdquo; &ldquo;iCal,&rdquo; or &ldquo;Subscribe&rdquo; link. Paste it here and Dayflow imports your shifts — it works with any calendar feed.'}
   ];
   let curProvider=null;
   function renderProviders(){
@@ -1066,7 +1071,9 @@
     document.querySelector('.sys-row[data-work]').classList.toggle('off',!Object.keys(workConns).length);
     document.getElementById('providerList').innerHTML=PROVIDERS.map(function(p){
       var on=!!workConns[p.id];
-      return '<button class="provider '+(on?'on':'')+'" data-prov="'+p.id+'"><span class="plogo" style="background:'+p.color+'">'+p.short+'</span><span class="pb"><span class="pn">'+p.name+'</span><span class="pd">'+(on?'Connected · shifts import to your timeline':'Import shifts automatically')+'</span></span><span class="pstat">'+(on?'Synced':'Connect')+'</span></button>';
+      var sub=on?'Connected · shifts import to your timeline':(p.other?'Not listed? Connect any calendar feed':'Import shifts automatically');
+      var stat=on?'Synced':(p.other?'Add':'Connect');
+      return '<button class="provider '+(on?'on':'')+(p.other?' other':'')+'" data-prov="'+p.id+'"><span class="plogo" style="background:'+p.color+'">'+p.short+'</span><span class="pb"><span class="pn">'+p.name+'</span><span class="pd">'+sub+'</span></span><span class="pstat">'+stat+'</span></button>';
     }).join('');
   }
   document.getElementById('providerList').addEventListener('click',function(e){
@@ -1074,7 +1081,7 @@
     curProvider=PROVIDERS.find(function(p){return p.id===b.dataset.prov;});
     document.getElementById('workConnect').hidden=false;
     document.getElementById('providerList').hidden=true;
-    document.getElementById('workFeedLbl').textContent=curProvider.name+' shift calendar feed URL';
+    document.getElementById('workFeedLbl').textContent=curProvider.other?'Shift calendar feed URL':curProvider.name+' shift calendar feed URL';
     document.getElementById('workHint').innerHTML=curProvider.help+'<br><br>Don\'t have a feed link? Practices and shifts can always be added by hand or pasted from a message.';
     document.getElementById('workUrl').value=(workConns[curProvider.id]&&workConns[curProvider.id].feed)||'';
     setWorkMsg('');
@@ -1083,8 +1090,10 @@
   function setWorkMsg(t,err){var el=document.getElementById('workMsg');if(el){el.textContent=t||'';el.className='cv-msg'+(err?' err':'');}}
   async function syncWork(){
     if(!curProvider)return;
+    var pname=curProvider.other?'your shift app':curProvider.name;
+    var locName=curProvider.other?'Work':curProvider.name;
     var feed=(document.getElementById('workUrl').value||'').trim();
-    if(!feed){setWorkMsg('Paste your '+curProvider.name+' feed link first.',true);return;}
+    if(!feed){setWorkMsg('Paste '+(curProvider.other?'a shift calendar feed link':'your '+curProvider.name+' feed link')+' first.',true);return;}
     setWorkMsg('Importing your shifts…');
     var normalized=feed.replace(/^webcal:/i,'https:');
     var imported=0,ok=false;
@@ -1099,7 +1108,7 @@
           r.data.events.forEach(function(ev){
             var s=new Date(ev.start||ev.due),en=ev.end?new Date(ev.end):new Date(s.getTime()+3*3600e3);
             if(isNaN(s))return;
-            USEREVENTS.push({id:tag+(ev.uid||imported),title:ev.title||(curProvider.name+' shift'),cat:'work',date:isoDate(s),sh:s.getHours(),sm:s.getMinutes(),eh:en.getHours(),em:en.getMinutes(),loc:curProvider.name});
+            USEREVENTS.push({id:tag+(ev.uid||imported),title:ev.title||(locName+' shift'),cat:'work',date:isoDate(s),sh:s.getHours(),sm:s.getMinutes(),eh:en.getHours(),em:en.getMinutes(),loc:locName});
             imported++;
           });
           saveEvents();
@@ -1108,8 +1117,8 @@
     }
     workConns[curProvider.id]={feed:feed,at:Date.now(),count:imported};cloudSave();
     renderProviders();rerender();
-    if(ok&&imported){setWorkMsg('Imported '+imported+' shift'+(imported===1?'':'s')+' from '+curProvider.name+' ✓');toast('Shifts imported ✓');}
-    else{setWorkMsg(curProvider.name+' connected. We\'ll pull shifts onto your timeline as they publish.');toast(curProvider.name+' connected ✓');}
+    if(ok&&imported){setWorkMsg('Imported '+imported+' shift'+(imported===1?'':'s')+' from '+pname+' ✓');toast('Shifts imported ✓');}
+    else{setWorkMsg((curProvider.other?'Connected':curProvider.name+' connected')+'. We\'ll pull shifts onto your timeline as they publish.');toast((curProvider.other?'Connected':curProvider.name+' connected')+' ✓');}
   }
   document.getElementById('workSync').addEventListener('click',syncWork);
 
