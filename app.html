@@ -179,6 +179,33 @@
   .stat.warn{--sc:var(--red)} .stat.warn .sv{color:var(--red)}
   .stat.good{--sc:var(--ok)}
 
+  /* ---- Conflict bar ----
+     Danger red, not coral: this is the only thing on the dashboard allowed to
+     claim it's urgent, and coral already means athletics. */
+  .cfl{border:1px solid rgba(255,77,106,.4);background:linear-gradient(180deg,rgba(255,77,106,.08),transparent),var(--card);
+    border-radius:var(--r);padding:14px 16px 15px;margin-bottom:18px}
+  .cfl-h{display:flex;align-items:center;gap:9px;font-size:14.5px}
+  .cfl-h b{font-weight:700}
+  .cfl-ic{display:grid;place-items:center;flex-shrink:0}
+  .cfl-ic svg{width:17px;height:17px;stroke:var(--danger);stroke-width:2;fill:none}
+  .cfl-tag{margin-left:auto;font-family:var(--font-mono);font-size:9.5px;font-weight:500;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--solar);background:var(--solar-soft);border:1px solid var(--solar-line);
+    padding:2px 8px;border-radius:999px}
+  .cfl-row{display:flex;gap:14px;align-items:flex-start;padding:11px 0 2px;flex-wrap:wrap}
+  .cfl-row+.cfl-row{border-top:1px solid var(--line);margin-top:8px}
+  .cfl-when{flex-shrink:0;min-width:96px;font-family:var(--font-mono);font-size:11.5px;font-weight:500;
+    color:var(--danger);padding-top:2px;letter-spacing:.02em}
+  .cfl-pair{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+  .cfl-pair span{font-size:13.5px;font-weight:600;padding-left:11px;position:relative;color:var(--text)}
+  .cfl-pair span::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:2px;background:var(--cc)}
+  .cfl-pair i{font-family:var(--font-mono);font-style:normal;font-size:11.5px;font-weight:400;color:var(--text-dim);margin-left:5px}
+  /* Redacted blocks, not blurred text: the titles are never sent to the client.
+     The soft blur is cosmetic, so the row reads as withheld rather than broken. */
+  .cfl-pair.hidden-pair span{color:var(--text-faint);letter-spacing:-.06em;filter:blur(1.4px);user-select:none}
+  /* .btn is width:100% and is declared later in this sheet, so a bare .cfl-cta
+     (same specificity) loses. Qualify it. */
+  .btn.cfl-cta{display:inline-flex;align-items:center;width:auto;padding:10px 16px;margin-top:12px;font-size:13.5px}
+
   /* ---- Grid + widgets ---- */
   .grid{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start}
   @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -537,6 +564,7 @@
       <!-- DASHBOARD -->
       <section class="view active" id="view-dashboard">
         <div class="stats" id="stats"></div>
+        <div id="conflictBar"></div>
         <div class="grid">
           <div class="col">
             <div class="widget">
@@ -715,13 +743,15 @@
 <div class="modal-bg" id="proBg">
   <div class="modal pro-modal" role="dialog" aria-modal="true">
     <div class="modal-h"><div><h2>Dayflow <span class="spk">Pro ✦</span></h2><p id="proReason">Everything you're juggling, with no limits.</p></div><button class="mclose" id="proClose" aria-label="Close">×</button></div>
+    <!-- Free shows you the day. Pro watches it. Nothing here is a limit lifted;
+         every line is something Dayflow does on the student's behalf. -->
     <div class="feat-list">
-      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Connect <b>unlimited</b>&nbsp;school systems — Canvas, Blackboard, Moodle &amp; more</div>
-      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Connect <b>unlimited</b>&nbsp;work apps for your shifts</div>
-      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Link <b>unlimited</b>&nbsp;email inboxes for auto-intake</div>
+      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg><b>Conflict alerts</b>&nbsp;— know the moment two things want the same hour</div>
+      <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Unlimited school, work, and email connections</div>
       <div class="fli"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Priority sync &amp; early access to new features</div>
-      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Reminders &amp; notifications<span class="soontag">soon</span></div>
-      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Grade tracking &amp; GPA<span class="soontag">soon</span></div>
+      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Reminders that fit the event — 6&nbsp;hours for a deadline, 20&nbsp;minutes for practice<span class="soontag">soon</span></div>
+      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>The Sunday plan — your week, and where it's tight<span class="soontag">soon</span></div>
+      <div class="fli soon"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>Emails to your professors when you travel<span class="soontag">soon</span></div>
     </div>
     <div class="plans" id="proPlans">
       <button class="plan sel" data-plan="yearly"><span class="psave">Save 44%</span><span class="pname">Yearly</span><span class="pprice" id="priceYear">$19.99</span><span class="pper">per year · $1.67/mo</span></button>
@@ -863,6 +893,87 @@
   function dayTimeline(dateObj){
     return eventsForDate(dateObj).concat(deadlinesForDate(dateObj)).sort((a,b)=>(a.start-b.start)||(a.kind==='due'?1:-1));
   }
+
+  /* ================= conflict detection =================
+     The one thing only Dayflow can see: two commitments from two different
+     systems landing on the same minutes. Canvas doesn't know about your shift;
+     When I Work doesn't know about practice. The merged timeline does.
+
+     Scans the next 7 days. Touching events (one ends exactly when the next
+     begins) are not conflicts — back-to-back is normal and flagging it would
+     train people to ignore the banner. */
+  const WARN_SVG='<svg viewBox="0 0 24 24"><path d="M12 9v4.5M12 17.2h.01M10.3 3.9L2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
+
+  function overlaps(a,b){ return a.start < b.end && b.start < a.end; }
+
+  function weekConflicts(){
+    const out=[];
+    for(let off=0; off<7; off++){
+      const d=startOfDay(new Date(today0)); d.setDate(d.getDate()+off);
+      // Deadlines are points in time, not spans — a due date can't "overlap" a
+      // practice. Only real events with duration can collide.
+      const evs=eventsForDate(d).filter(e=>e.end>e.start).sort((x,y)=>x.start-y.start);
+      for(let i=0;i<evs.length;i++)
+        for(let j=i+1;j<evs.length;j++)
+          if(overlaps(evs[i],evs[j])) out.push({date:new Date(d),a:evs[i],b:evs[j]});
+    }
+    return out.sort((x,y)=>x.a.start-y.a.start);
+  }
+
+  function fmtRange(e){ return fmtTime(e.start)+'–'+fmtTime(e.end); }
+  function conflictDay(c){
+    const off=dayDiff(c.date);
+    return off===0?'Today':off===1?'Tomorrow':DOW[c.date.getDay()];
+  }
+
+  function renderConflicts(){
+    const box=document.getElementById('conflictBar'); if(!box) return;
+    const cs=weekConflicts();
+    if(!cs.length){ box.innerHTML=''; return; }
+
+    const n=cs.length, plural=n===1?'conflict':'conflicts';
+
+    if(isPro()){
+      box.innerHTML='<div class="cfl">'+
+        '<div class="cfl-h"><span class="cfl-ic">'+WARN_SVG+'</span>'+
+          '<b>'+n+' '+plural+' this week</b><span class="cfl-tag">Pro</span></div>'+
+        cs.map(function(c){
+          return '<div class="cfl-row">'+
+            '<span class="cfl-when">'+conflictDay(c)+' · '+fmtTime(c.a.start)+'</span>'+
+            '<div class="cfl-pair">'+
+              '<span style="--cc:'+catOf(c.a.cat).color+'">'+esc(c.a.title)+' <i>'+fmtRange(c.a)+'</i></span>'+
+              '<span style="--cc:'+catOf(c.b.cat).color+'">'+esc(c.b.title)+' <i>'+fmtRange(c.b)+'</i></span>'+
+            '</div></div>';
+        }).join('')+
+      '</div>';
+      return;
+    }
+
+    // Free: the count and the day/time are true and useful on their own. What's
+    // withheld is *which* two things collide.
+    //
+    // Redact before render rather than blurring the real titles with CSS: a blur
+    // leaves the answer in the DOM, one devtools click away. Nothing here is a
+    // secret the user couldn't find by reading their own timeline — the product
+    // being sold is noticing, not concealment — but a paywall you defeat by
+    // pressing F12 is a paywall that teaches people to press F12.
+    const c=cs[0];
+    const redact=t=>'█'.repeat(Math.max(6,Math.min(16,String(t||'').length)));
+    box.innerHTML='<div class="cfl locked">'+
+      '<div class="cfl-h"><span class="cfl-ic">'+WARN_SVG+'</span>'+
+        '<b>'+n+' '+plural+' this week</b></div>'+
+      '<div class="cfl-row">'+
+        '<span class="cfl-when">'+conflictDay(c)+' · '+fmtTime(c.a.start)+'</span>'+
+        '<div class="cfl-pair hidden-pair">'+
+          '<span style="--cc:var(--text-faint)">'+redact(c.a.title)+'</span>'+
+          '<span style="--cc:var(--text-faint)">'+redact(c.b.title)+'</span>'+
+        '</div></div>'+
+      '<button class="btn cfl-cta" id="cflUpgrade">See what\'s clashing →</button>'+
+    '</div>';
+  }
+  (function(){var b=document.getElementById('conflictBar');if(b)b.addEventListener('click',function(e){
+    if(e.target.closest('#cflUpgrade')) showPro("Two things on your schedule want the same minutes. Pro tells you which.");
+  });})();
 
   /* ================= small helpers ================= */
   function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -1102,7 +1213,7 @@
 
   /* ================= views / nav ================= */
   const views=['dashboard','deadlines','calendar','grades','courses'];
-  const renderers={dashboard:()=>{renderStats();renderTimeline();renderDashUpcoming();renderAskExamples();},deadlines:renderDeadlines,calendar:renderCalendar,grades:renderGradesView,courses:renderCourses};
+  const renderers={dashboard:()=>{renderStats();renderConflicts();renderTimeline();renderDashUpcoming();renderAskExamples();},deadlines:renderDeadlines,calendar:renderCalendar,grades:renderGradesView,courses:renderCourses};
   function curView(){const el=document.querySelector('.view.active');return el?el.id.replace('view-',''):'dashboard';}
   function rerender(){(renderers[curView()]||function(){})();}
   function switchView(v){
