@@ -772,13 +772,16 @@
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
   let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly',gmailState=null,intakeToken='',fwdConfirm=null;
+  // The weekly digest has to land Sunday 7pm where the student is, not where the
+  // server is. The browser is the only thing that knows, so it tells us.
+  let userTz='';try{userTz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){userTz='';}
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   // NB: `pro` is deliberately absent from this payload. Entitlement lives in the
   // user_pro table, which the browser may read and never write — see refetchPro().
   // Putting it back here would hand every customer a free subscription.
   function cloudSave(){if(!sb||!userId)return;savePending=true;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed,gmail:gmailState,intake:intakeToken,fwdConfirm:fwdConfirm},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed,gmail:gmailState,intake:intakeToken,fwdConfirm:fwdConfirm,tz:userTz},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
   },600);}
 
   /* ---- Pro entitlement (read-only to this client) ---- */
