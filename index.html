@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Dayflow pulls your entire day - class, practice, film, work shifts, and deadlines - into one timeline, sorted by what's next.">
-<meta name="theme-color" content="#0A0912">
+<meta name="theme-color" content="#08070E">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -24,33 +24,41 @@
        Plum-black night, sunrise-amber brand. The old names (--teal, --rose…) survive
        as aliases so ~1300 lines of rules keep resolving; only these values moved. */
 
-    /* Night — warm-shifted black, not blue-black. Softer at 6am in a dark room. */
-    --bg:#0A0912; --bg-2:#100E1C; --panel:#171528; --card:#14121F; --card-2:#1A1830;
+    /* Never pure black — #000 smears on OLED during scroll. Violet-tinted near-black. */
+    --bg:#08070E; --bg-2:#0D0B16; --panel:#191627; --card:#12101D; --card-2:#191627;
     --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
-    --text:#ECEAF5; --text-dim:#A09CB8; --text-faint:#6B6785;
+    /* Never pure white — #FFF on near-black vibrates. */
+    --text:#F4F3F8; --text-dim:#A5A0BC; --text-faint:#6D6788;
 
-    /* Brand */
-    --solar:#FFB020; --solar-2:#FFD27A; --solar-deep:#C97A12;
-    --solar-soft:rgba(255,176,32,.12); --solar-line:rgba(255,176,32,.34);
-    --ink:#1B1204;                 /* text ON solar. Never --text on a solar fill. */
+    /* Brand. Volt is never a category: nobody should wonder whether purple means
+       "class" or "the button". */
+    --volt:#7C5CFF; --volt-2:#A78BFF; --volt-deep:#5B3FD6;
+    --volt-soft:rgba(124,92,255,.14); --volt-line:rgba(124,92,255,.38);
+    --ink:#0A0614;
 
-    /* Categories — a spectrum across the day, not arbitrary labels */
-    --iris:#8B7CFF;  --iris-soft:rgba(139,124,255,.13);  --iris-line:rgba(139,124,255,.4);
-    --coral:#FF6B57; --coral-soft:rgba(255,107,87,.13);  --coral-line:rgba(255,107,87,.4);
-    --mint:#46E0B0;  --mint-soft:rgba(70,224,176,.13);
-    --azure:#58A6FF;
-    --danger:#FF4D6A;
+    /* Categories — six hues, each used exactly once */
+    --cyan:#22E4F5;     --cyan-soft:rgba(34,228,245,.13);
+    --magenta:#FF3D9A;  --magenta-soft:rgba(255,61,154,.13);
+    --lime:#C8FF3D;     --lime-soft:rgba(200,255,61,.13);   /* the shock. live/now only */
+    --tangerine:#FF8A3D;
+    --azure:#5B8CFF;
+    --danger:#FF4D5E;
 
-    /* Aliases — old names, new blood */
-    --teal:var(--solar); --teal-2:var(--solar-2);
-    --teal-soft:var(--solar-soft); --teal-line:var(--solar-line);
-    --rose:#F2568C; --rose-soft:rgba(242,86,140,.13); --rose-line:rgba(242,86,140,.4);
-    --violet:var(--iris); --violet-soft:var(--iris-soft); --violet-line:var(--iris-line);
-    --amber:var(--solar); --red:var(--coral); --blue:var(--azure);
+    /* Aliases — every old name keeps resolving; only the values moved. */
+    --solar:var(--volt); --solar-2:var(--volt-2); --solar-deep:var(--volt-deep);
+    --solar-soft:var(--volt-soft); --solar-line:var(--volt-line);
+    --teal:var(--volt); --teal-2:var(--volt-2);
+    --teal-soft:var(--volt-soft); --teal-line:var(--volt-line);
+    --iris:var(--cyan); --iris-soft:var(--cyan-soft); --iris-line:rgba(34,228,245,.4);
+    --coral:var(--magenta); --coral-soft:var(--magenta-soft); --coral-line:rgba(255,61,154,.4);
+    --mint:var(--lime); --mint-soft:var(--lime-soft);
+    --rose:var(--magenta); --rose-soft:var(--magenta-soft); --rose-line:rgba(255,61,154,.4);
+    --violet:var(--cyan); --violet-soft:var(--cyan-soft); --violet-line:rgba(34,228,245,.4);
+    --amber:var(--tangerine); --red:var(--danger); --blue:var(--azure);
 
-    /* Sky — ambient glow, hue driven by scroll depth (JS). Dawn defaults. */
-    --sky-1:255,176,32;   /* solar */
-    --sky-2:255,107,87;   /* coral */
+    /* Ambient glow, hue driven by scroll depth (JS). */
+    --sky-1:124,92,255;   /* volt */
+    --sky-2:255,61,154;   /* magenta */
     --sky-a1:.15; --sky-a2:.10;
 
     /* Motion — critically damped by default. Bounce is earned, not given. */
@@ -75,7 +83,7 @@
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   img{max-width:100%;display:block}
-  ::selection{background:var(--teal);color:#1B1204}
+  ::selection{background:var(--teal);color:#0A0614}
   /* Tracking is size-specific — letters read too far apart as type grows, and too
      tight when it shrinks. One global letter-spacing is always wrong somewhere. */
   h1,h2,h3{font-family:var(--font-display);text-wrap:balance;font-optical-sizing:auto}
@@ -86,28 +94,38 @@
   .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--teal-2)}
   :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:3px;border-radius:6px}
 
-  /* ---- Sky: fixed ambient layer whose hue is set by scroll ---- */
-  /* ---- Dot grid ----
-     Base dots are faint enough to read as paper texture, not decoration. The
-     cursor lights solar dots inside a 220px radius. Two layers rather than one
-     animated color, because masking a static gradient never repaints the grid.
-     Stacking order: sky (-3) → dots (-2) → stars (-1) → content. */
-  /* The vignette is centred, not top-anchored: this layer is fixed to the viewport,
-     so a mask that fades downward would erase the grid below the fold forever. */
-  .dots{position:fixed;inset:0;z-index:-2;pointer-events:none;
-    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.13) 1px, transparent 0);
-    background-size:26px 26px;
-    -webkit-mask-image:radial-gradient(ellipse 75% 75% at 50% 45%, #000 40%, transparent 100%);
-    mask-image:radial-gradient(ellipse 75% 75% at 50% 45%, #000 40%, transparent 100%)}
-  /* --mx/--my start off-screen so nothing glows until the pointer actually moves. */
-  .dots::after{content:"";position:absolute;inset:0;
-    background-image:radial-gradient(circle at 1px 1px, var(--solar) 1px, transparent 0);
-    background-size:26px 26px;opacity:.65;
-    -webkit-mask-image:radial-gradient(240px circle at var(--mx,-999px) var(--my,-999px), #000 0%, transparent 70%);
-    mask-image:radial-gradient(240px circle at var(--mx,-999px) var(--my,-999px), #000 0%, transparent 70%)}
-  @media (prefers-reduced-transparency:reduce){.dots{display:none}}
+  /* ============================================================
+     BACKGROUND STACK
+     sky (-4) → shader (-3) → grain (-2) → stars (-1) → content
+     The sky ends in an OPAQUE linear-gradient, so it must sit BELOW the shader
+     or it paints straight over it.
+     The dot grid is gone. It was texture pretending to be depth.
+     ============================================================ */
 
-  .sky{position:fixed;inset:0;z-index:-3;pointer-events:none;
+  /* The mesh gradient. GLSL does the work; this is just a canvas pinned behind
+     everything. It sits at the top of the page and fades out — the field belongs
+     to the hero, not to the FAQ. */
+  .field{position:fixed;inset:0 0 auto 0;height:110vh;z-index:-3;pointer-events:none;
+    -webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 100%);
+    mask-image:linear-gradient(to bottom,#000 55%,transparent 100%)}
+  .field canvas{width:100%;height:100%;display:block;
+    /* Blur the canvas rather than the shader: a 30px CSS blur turns crisp fbm into
+       the soft, enormous blobs the reference sites use, and costs one composite
+       pass instead of a gaussian in GLSL. scale() hides the blurred edges. */
+    filter:blur(34px) saturate(1.35);transform:scale(1.18);transform-origin:center top}
+  /* Shown only when WebGL is missing. Same three stops, no motion. */
+  .field.no-gl{background:
+    radial-gradient(60% 55% at 22% 18%, rgba(124,92,255,.34), transparent 62%),
+    radial-gradient(50% 50% at 78% 12%, rgba(255,61,154,.24), transparent 60%),
+    radial-gradient(70% 60% at 55% 40%, rgba(34,228,245,.14), transparent 65%)}
+
+  /* Film grain. Large dark gradients band on cheap panels; grain dissolves the
+     stair-step. Static — animating it is a migraine and a battery drain. */
+  .grain{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.035;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+  @media (prefers-reduced-transparency:reduce){.grain{display:none}}
+
+  .sky{position:fixed;inset:0;z-index:-4;pointer-events:none;
     background:
       radial-gradient(120% 78% at 50% -12%, rgba(var(--sky-1),var(--sky-a1)) 0%, transparent 56%),
       radial-gradient(90% 60% at 82% 8%, rgba(var(--sky-2),var(--sky-a2)) 0%, transparent 60%),
@@ -126,16 +144,16 @@
   /* A translucent material with content scrolling under it — and a scroll-edge fade
      where they meet, instead of a hard 1px rule. The bright top edge is light
      catching the surface. */
-  .nav.scrolled{background:rgba(10,9,18,.72);
+  .nav.scrolled{background:rgba(8,7,14,.72);
     backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
     border-top:1px solid rgba(255,255,255,.06)}
   .nav.scrolled::after{content:"";position:absolute;left:0;right:0;top:100%;height:22px;pointer-events:none;
-    background:linear-gradient(to bottom,rgba(10,9,18,.55),transparent);
+    background:linear-gradient(to bottom,rgba(8,7,14,.55),transparent);
     -webkit-mask-image:linear-gradient(to bottom,#000,transparent);mask-image:linear-gradient(to bottom,#000,transparent)}
   .nav-in{max-width:var(--maxw);margin:0 auto;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
   .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.02em}
-  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#C97A12);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
-  .logo .mark svg{width:17px;height:17px;stroke:#1B1204;stroke-width:2.7;fill:none}
+  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#5B3FD6);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
+  .logo .mark svg{width:17px;height:17px;stroke:#0A0614;stroke-width:2.7;fill:none}
   .logo .dot{color:var(--teal)}
   .nav-links{display:flex;align-items:center;gap:30px}
   /* :not(.btn) matters — a bare `.nav-links a` outranks `.btn-primary` and was
@@ -143,7 +161,7 @@
   .nav-links a:not(.btn){font-size:14px;font-weight:500;color:var(--text-dim);transition:.15s}
   .nav-links a:not(.btn):hover{color:var(--text)}
   .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:12px;transition:transform .16s,background .16s,border-color .16s,box-shadow .16s;white-space:nowrap;line-height:1}
-  .btn-primary{background:var(--teal);color:#1B1204;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
+  .btn-primary{background:var(--teal);color:#0A0614;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
   .btn-primary:hover{background:var(--teal-2);transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--teal-line)}
   .btn-primary svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none}
   .btn-ghost{background:rgba(255,255,255,.03);color:var(--text);padding:12px 19px;font-size:14.5px;border:1px solid var(--line-2)}
@@ -172,7 +190,7 @@
   .rail-now{position:absolute;left:50%;top:15vh;transform:translate(-50%,-50%);z-index:2;
     display:flex;align-items:center;gap:0;pointer-events:none}
   .rail-now .ring{width:15px;height:15px;border-radius:50%;background:var(--bg);border:2px solid var(--teal);
-    box-shadow:0 0 0 4px rgba(255,176,32,.15),0 0 16px var(--teal);position:relative}
+    box-shadow:0 0 0 4px rgba(124,92,255,.15),0 0 16px var(--teal);position:relative}
   .rail-now .ring::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--teal)}
 
   /* ============================================================
@@ -195,9 +213,9 @@
   .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;font-weight:500;
     color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:7px 13px;border-radius:999px;letter-spacing:.02em}
   .kicker .spark{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 var(--teal);animation:pulse 2.6s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,176,32,.55)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(124,92,255,.55)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
   h1.hero-h{font-size:clamp(38px,5.4vw,66px);font-weight:800;margin:24px 0 0;letter-spacing:-.035em;overflow-wrap:break-word;max-width:15ch}
-  h1.hero-h .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal) 55%,#D98A16);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  h1.hero-h .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal) 55%,#6B4AE0);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text-dim);max-width:40ch;margin:24px 0 0;line-height:1.62}
   .hero-cta{display:flex;gap:13px;margin-top:34px;flex-wrap:wrap;align-items:center}
   .hero-note{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:8px}
@@ -255,14 +273,14 @@
   .appcard .as{font-size:11.5px;color:var(--text-faint);margin-top:1px}
   .appcard.miss{border-style:dashed;opacity:.85}
   .appcard.miss .badge{position:absolute;top:-8px;right:10px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--red);background:#1a1017;border:1px solid rgba(255,107,87,.4);padding:2px 8px;border-radius:999px}
+    color:var(--red);background:#1a1017;border:1px solid rgba(255,61,154,.4);padding:2px 8px;border-radius:999px}
   .scramble-copy h3{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-.03em}
   .scramble-copy p{color:var(--text-dim);font-size:16px;line-height:1.62;margin-top:16px}
 
   /* ---- Product showcase browser mock (09:00) ---- */
   .showcase{position:relative}
   .browser{position:relative;max-width:920px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--line-2);
-    box-shadow:0 50px 110px -36px rgba(0,0,0,.9),0 0 0 1px rgba(255,176,32,.12)}
+    box-shadow:0 50px 110px -36px rgba(0,0,0,.9),0 0 0 1px rgba(124,92,255,.12)}
   .bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0a1120;border-bottom:1px solid rgba(255,255,255,.08)}
   .bdot{width:11px;height:11px;border-radius:50%}
   .bdot.r{background:#ff5f57}.bdot.y{background:#febc2e}.bdot.g{background:#28c840}
@@ -270,11 +288,11 @@
   .bapp{display:grid;grid-template-columns:168px 1fr;background:#F4F7FC;color:#201603}
   .msb{background:#fff;border-right:1px solid #E5EAF3;padding:16px 12px}
   .msb-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:18px;font-family:var(--font-display);letter-spacing:-.02em;color:#201603}
-  .msb-logo .m{width:23px;height:23px;border-radius:7px;background:linear-gradient(140deg,#C97A12,#D98A16);display:grid;place-items:center}
+  .msb-logo .m{width:23px;height:23px;border-radius:7px;background:linear-gradient(140deg,#5B3FD6,#6B4AE0);display:grid;place-items:center}
   .msb-logo .m svg{width:12px;height:12px;stroke:#fff;stroke-width:2.7;fill:none}
   .msb-item{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:#5A6A72;padding:8px 10px;border-radius:9px}
   .msb-item svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.9;fill:none}
-  .msb-item.on{background:#D9F3EF;color:#8F560C}
+  .msb-item.on{background:#D9F3EF;color:#4A32B0}
   .mmain{padding:18px 20px 22px}
   .mmain h4{font-family:var(--font-display);font-size:18px;font-weight:800;color:#201603;letter-spacing:-.02em}
   .mmain .msub{font-family:var(--font-mono);font-size:11px;color:#8791A3;margin:3px 0 14px;letter-spacing:.02em}
@@ -310,9 +328,9 @@
   .ps-img{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line-2);
     box-shadow:0 40px 80px -30px rgba(0,0,0,.85);aspect-ratio:4/5;max-height:560px}
   .ps-img img{width:100%;height:100%;object-fit:cover}
-  .ps-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(10,9,18,.5),transparent 45%)}
+  .ps-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,7,14,.5),transparent 45%)}
   .ps-tag{position:absolute;left:16px;bottom:16px;z-index:2;display:flex;align-items:center;gap:9px;
-    font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:rgba(10,9,18,.6);
+    font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:rgba(8,7,14,.6);
     border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:8px 12px;border-radius:999px}
   .ps-tag .cd{width:8px;height:8px;border-radius:50%;background:var(--cc,var(--rose));box-shadow:0 0 8px var(--cc,var(--rose))}
   .ps-copy h3{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:14px 0}
@@ -328,8 +346,8 @@
     background:linear-gradient(140deg,var(--iris),var(--solar));
     mix-blend-mode:color;opacity:.62}
   .band-photo::after{content:"";position:absolute;inset:0;z-index:1;
-    background:linear-gradient(105deg,rgba(10,9,18,.94),rgba(10,9,18,.6) 48%,rgba(27,18,4,.25) 78%,transparent),
-               linear-gradient(to top,rgba(10,9,18,.88),transparent 42%)}
+    background:linear-gradient(105deg,rgba(8,7,14,.94),rgba(8,7,14,.6) 48%,rgba(27,18,4,.25) 78%,transparent),
+               linear-gradient(to top,rgba(8,7,14,.88),transparent 42%)}
   .band-photo .inner{position:relative;z-index:2;width:100%}
   .band-photo .moment{margin-bottom:20px}
   .band-photo h2{font-size:clamp(30px,5vw,56px);font-weight:800;max-width:15ch;letter-spacing:-.035em}
@@ -350,7 +368,7 @@
   .midnight{text-align:center;position:relative;padding:70px 44px;border-radius:26px;overflow:hidden;
     background:linear-gradient(160deg,#140c14,#0b1122);border:1px solid var(--line-2)}
   .midnight::after{content:"";position:absolute;top:-45%;left:50%;transform:translateX(-50%);width:640px;height:420px;max-width:90vw;
-    background:radial-gradient(closest-side,rgba(255,107,87,.16),transparent 70%);pointer-events:none}
+    background:radial-gradient(closest-side,rgba(255,61,154,.16),transparent 70%);pointer-events:none}
   .midnight h2{font-size:clamp(28px,4.2vw,44px);font-weight:800;max-width:20ch;margin:14px auto 0;position:relative;letter-spacing:-.03em}
   .midnight h2 .accent{color:var(--teal)}
   .midnight p{color:var(--text-dim);font-size:16.5px;margin:18px auto 0;max-width:46ch;position:relative}
@@ -370,7 +388,7 @@
   /* ---- Final CTA: tomorrow, dawn again (loop) ---- */
   .final{position:relative;min-height:560px;display:flex;align-items:center;overflow:hidden}
   .final>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;z-index:0}
-  .final::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,var(--bg),rgba(10,9,18,.72) 45%,rgba(10,9,18,.55))}
+  .final::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,var(--bg),rgba(8,7,14,.72) 45%,rgba(8,7,14,.55))}
   .final .inner{position:relative;z-index:2;width:100%;text-align:center}
   .final h2{font-size:clamp(32px,5vw,58px);font-weight:800;letter-spacing:-.035em;max-width:18ch;margin:16px auto 0}
   .final h2 .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -378,7 +396,7 @@
   .final .btn-primary{padding:15px 28px;font-size:16px}
 
   /* ---- Footer ---- */
-  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(10,9,18,.6)}
+  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(8,7,14,.6)}
   .foot-in{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .foot-links{display:flex;gap:26px;flex-wrap:wrap}
   .foot-links a{font-size:14px;color:var(--text-dim);transition:.15s}
@@ -428,7 +446,7 @@
   .feat::before,.step::before{content:"";position:absolute;inset:0;border-radius:inherit;
     pointer-events:none;opacity:0;transition:opacity .35s var(--spring);
     background:radial-gradient(340px circle at var(--cx,50%) var(--cy,50%),
-      rgba(255,176,32,.10),transparent 45%)}
+      rgba(124,92,255,.10),transparent 45%)}
   .feat:hover::before,.step:hover::before{opacity:1}
 
   /* 3 · Magnetic buttons.
@@ -442,6 +460,36 @@
   .hero-grid{perspective:1200px}
   .today{transform-style:preserve-3d;will-change:transform}
   .today.home{transition:transform .6s var(--spring)}
+
+  /* 5 · The marquee. The only thing on the page that moves without being asked,
+     which is why it stops the moment you touch it. Two identical tracks slide left;
+     when the first has travelled its own width, the transform resets and the second
+     is exactly where the first began. The seam is invisible because there isn't one. */
+  .ticker{position:relative;overflow:hidden;padding:22px 0;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    background:linear-gradient(90deg,rgba(124,92,255,.05),rgba(255,61,154,.05));
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+    mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+  .ticker-track{display:flex;width:max-content;animation:slide 32s linear infinite}
+  .ticker:hover .ticker-track{animation-play-state:paused}
+  .ticker-track span{display:inline-flex;align-items:center;gap:18px;padding:0 22px;
+    font-family:var(--font-display);font-size:clamp(22px,3.4vw,38px);font-weight:800;
+    letter-spacing:-.03em;white-space:nowrap;color:var(--text)}
+  .ticker-track span i{font-style:normal;color:var(--cc,var(--volt))}
+  .ticker-track span::after{content:"";width:9px;height:9px;border-radius:50%;
+    background:var(--cc,var(--volt));box-shadow:0 0 18px var(--cc,var(--volt))}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  @media (prefers-reduced-motion:reduce){.ticker-track{animation:none}}
+
+  /* 6 · Custom cursor. Difference blending means it inverts whatever it crosses,
+     so it reads on the shader and on white text without ever picking a colour. */
+  .cursor{position:fixed;top:0;left:0;width:14px;height:14px;border-radius:50%;
+    background:#fff;mix-blend-mode:difference;pointer-events:none;z-index:200;
+    transform:translate(-50%,-50%);will-change:transform;opacity:0;transition:opacity .3s,width .25s var(--spring),height .25s var(--spring)}
+  .cursor.on{opacity:1}
+  .cursor.grow{width:52px;height:52px}
+  @media (pointer:coarse){.cursor{display:none}}
+  @media (prefers-reduced-motion:reduce){.cursor{display:none}}
 
   @media (prefers-reduced-motion:reduce){
     .hero-h .wi{transform:none;transition:none}
@@ -476,7 +524,8 @@
 
 <!-- Ambient sky (hue set by scroll) + starfield -->
 <div class="sky" id="sky" aria-hidden="true"></div>
-<div class="dots" aria-hidden="true"></div>
+<div class="field" id="field" aria-hidden="true"><canvas id="fieldCanvas"></canvas></div>
+<div class="grain" aria-hidden="true"></div>
 <div class="stars" aria-hidden="true"><canvas id="starCanvas"></canvas></div>
 
 <!-- Global scroll progress -->
@@ -506,7 +555,7 @@
 <a id="top"></a>
 
 <!-- ========================= HERO · 06:30 ========================= -->
-<header class="hero" data-time="6.5" data-cc="#FFB020">
+<header class="hero" data-time="6.5" data-cc="#7C5CFF">
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <span class="kicker"><span class="spark"></span> One timeline · class to curfew</span>
@@ -539,9 +588,25 @@
 </header>
 
 <!-- ========================= PROBLEM · 08:00 ========================= -->
-<section class="blk" data-time="8" data-cc="#FF6B57">
+<!-- The day, on a loop. Track is duplicated in JS so the reset is seamless. -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack">
+    <span style="--cc:var(--cyan)"><i>Class</i></span>
+    <span style="--cc:var(--magenta)"><i>Practice</i></span>
+    <span style="--cc:var(--magenta)"><i>Film</i></span>
+    <span style="--cc:var(--lime)"><i>Work shift</i></span>
+    <span style="--cc:var(--tangerine)"><i>Deadline</i></span>
+    <span style="--cc:var(--azure)"><i>Appointment</i></span>
+    <span style="--cc:var(--cyan)"><i>Lecture</i></span>
+    <span style="--cc:var(--magenta)"><i>Game day</i></span>
+  </div>
+</div>
+
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+
+<section class="blk" data-time="8" data-cc="#FF3D9A">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#FF6B57">
+    <div class="moment reveal" style="--cc:#FF3D9A">
       <span class="clock"><span class="cd"></span>8:00 AM</span>
       <span class="label">The morning scramble</span>
       <span class="rule"></span>
@@ -563,9 +628,9 @@
 </section>
 
 <!-- ========================= CLASS · 09:00 (product) ========================= -->
-<section class="blk showcase" id="product" data-time="9" data-cc="#FFB020">
+<section class="blk showcase" id="product" data-time="9" data-cc="#7C5CFF">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#FFB020">
+    <div class="moment reveal" style="--cc:#7C5CFF">
       <span class="clock"><span class="cd"></span>9:00 AM</span>
       <span class="label">First on the timeline · Class</span>
       <span class="rule"></span>
@@ -588,7 +653,7 @@
         <div class="mmain">
           <h4>Your day</h4>
           <div class="msub">TUE · JULY 7</div>
-          <div class="mrow" style="--cc:#C97A12"><div class="mtime">9:00 AM</div><span class="mdot" style="background:#C97A12"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
+          <div class="mrow" style="--cc:#5B3FD6"><div class="mtime">9:00 AM</div><span class="mdot" style="background:#5B3FD6"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
           <div class="mrow" style="--cc:#E0568A"><div class="mtime">12:30 PM</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Offense film</div><div class="mm"><span class="mchip">Athletics</span>East classroom</div></div></div>
           <div class="mnow"><span class="l"></span>NOW · 2:14 PM</div>
           <div class="mrow" style="--cc:#E0568A"><div class="mtime">3:30 PM</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Practice</div><div class="mm"><span class="mchip">Athletics</span>Main field</div></div></div>
@@ -611,9 +676,9 @@
 </section>
 
 <!-- ========================= HOW · 12:30 ========================= -->
-<section class="blk" id="how" data-time="12.5" data-cc="#46E0B0">
+<section class="blk" id="how" data-time="12.5" data-cc="#C8FF3D">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#F2568C">
+    <div class="moment reveal" style="--cc:#FF3D9A">
       <span class="clock"><span class="cd"></span>12:30 PM</span>
       <span class="label">Film session · Athletics built in</span>
       <span class="rule"></span>
@@ -646,9 +711,9 @@
 </section>
 
 <!-- ========================= PRACTICE · 15:30 (photo) ========================= -->
-<section class="blk" data-time="15.5" data-cc="#F2568C">
+<section class="blk" data-time="15.5" data-cc="#FF3D9A">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#F2568C">
+    <div class="moment reveal" style="--cc:#FF3D9A">
       <span class="clock"><span class="cd"></span>3:30 PM</span>
       <span class="label">Practice · Main field</span>
       <span class="rule"></span>
@@ -669,10 +734,10 @@
 </section>
 
 <!-- ========================= WORK · 18:00 (campus sunset band) ========================= -->
-<section class="band-photo" data-time="18" data-cc="#8B7CFF">
+<section class="band-photo" data-time="18" data-cc="#22E4F5">
   <img src="images/campus.jpg" alt="A university campus building glowing at sunset" loading="lazy" width="1600" height="1200">
   <div class="wrap inner">
-    <div class="moment reveal" style="--cc:#8B7CFF">
+    <div class="moment reveal" style="--cc:#22E4F5">
       <span class="clock" style="background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.2)"><span class="cd"></span>6:00 PM</span>
       <span class="label" style="color:#C7D2E4">Sun's down · you're on shift</span>
       <span class="rule" style="background:linear-gradient(to right,rgba(255,255,255,.3),transparent)"></span>
@@ -684,9 +749,9 @@
 </section>
 
 <!-- ========================= FEATURES · 21:00 ========================= -->
-<section class="blk" id="features" data-time="21" data-cc="#58A6FF">
+<section class="blk" id="features" data-time="21" data-cc="#5B8CFF">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#58A6FF">
+    <div class="moment reveal" style="--cc:#5B8CFF">
       <span class="clock"><span class="cd"></span>9:00 PM</span>
       <span class="label">Back at the desk · Homework</span>
       <span class="rule"></span>
@@ -707,9 +772,9 @@
 </section>
 
 <!-- ========================= MIDNIGHT + FAQ · 23:59 ========================= -->
-<section class="blk" id="faq" data-time="23.9" data-cc="#8B7CFF">
+<section class="blk" id="faq" data-time="23.9" data-cc="#22E4F5">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#FF6B57">
+    <div class="moment reveal" style="--cc:#FF3D9A">
       <span class="clock"><span class="cd"></span>11:59 PM</span>
       <span class="label">The deadline · nothing slips</span>
       <span class="rule"></span>
@@ -730,7 +795,7 @@
 </section>
 
 <!-- ========================= TOMORROW · dawn again (loop) ========================= -->
-<section class="final" data-time="6.5" data-cc="#FFB020">
+<section class="final" data-time="6.5" data-cc="#7C5CFF">
   <img src="images/walking.jpg" alt="Students walking across campus with backpacks in the morning" loading="lazy" width="1080" height="1600">
   <div class="wrap inner">
     <div class="reveal">
@@ -786,12 +851,12 @@
      Keyframes: [progress, glow rgb, accent rgb, a1, a2]
      ============================================================ */
   var SKY = [
-    [0.00, [255,176,32],  [255,107,87],  .18, .12],  // dawn — solar + coral
-    [0.22, [255,190,90],  [70,224,176],  .15, .08],  // morning — gold cooling to mint
-    [0.50, [70,224,176],  [88,166,255],  .12, .07],  // midday — mint + azure, the coolest point
-    [0.68, [255,122,60],  [242,86,140],  .21, .14],  // dusk — the campus sunset band
-    [0.86, [139,124,255], [242,86,140],  .17, .10],  // twilight — iris
-    [1.00, [60,50,140],   [255,176,32],  .14, .10]   // night — deep iris, one lamp still on
+    [0.00, [124,92,255],  [255,61,154],  .18, .12],  // volt + magenta
+    [0.22, [34,228,245],  [124,92,255],  .15, .08],  // cyan cooling in
+    [0.50, [34,228,245],  [91,140,255],  .12, .07],  // the coolest point
+    [0.68, [255,61,154],  [255,138,61],  .22, .15],  // sunset band, hottest
+    [0.86, [124,92,255],  [255,61,154],  .17, .10],  // back to volt
+    [1.00, [40,30,90],    [200,255,61],  .14, .09]   // night — one lime lamp still on
   ];
   function lerp(a,b,t){ return a+(b-a)*t; }
   function mix(c1,c2,t){ return [Math.round(lerp(c1[0],c2[0],t)),Math.round(lerp(c1[1],c2[1],t)),Math.round(lerp(c1[2],c2[2],t))]; }
@@ -824,9 +889,9 @@
   var timeSections=[].slice.call(document.querySelectorAll('[data-time]'));
   // Build a tick per unique labelled moment (skip the final dawn loop dup + hero)
   var railStops=[
-    {t:'6:30a', cc:'#FFB020'}, {t:'8:00a', cc:'#FF6B57'}, {t:'9:00a', cc:'#FFB020'},
-    {t:'12:30p', cc:'#F2568C'}, {t:'3:30p', cc:'#F2568C'}, {t:'6:00p', cc:'#8B7CFF'},
-    {t:'9:00p', cc:'#58A6FF'}, {t:'11:59p', cc:'#FF6B57'}
+    {t:'6:30a', cc:'#7C5CFF'}, {t:'8:00a', cc:'#FF3D9A'}, {t:'9:00a', cc:'#7C5CFF'},
+    {t:'12:30p', cc:'#FF3D9A'}, {t:'3:30p', cc:'#FF3D9A'}, {t:'6:00p', cc:'#22E4F5'},
+    {t:'9:00p', cc:'#5B8CFF'}, {t:'11:59p', cc:'#FF3D9A'}
   ];
   var tickEls=[];
   railStops.forEach(function(s,i){
@@ -913,12 +978,12 @@
      ============================================================ */
   // Must match CATS in app.html — the landing page is a promise the app keeps.
   var SCHEDULE=[
-    {m:9*60,     name:'MATH 231 · Lecture', tag:'Class',     cc:'#8B7CFF'},
-    {m:12*60+30, name:'Offense film',       tag:'Athletics', cc:'#FF6B57'},
-    {m:15*60+30, name:'Practice',           tag:'Athletics', cc:'#FF6B57'},
-    {m:18*60,    name:'Work shift',         tag:'Work',      cc:'#46E0B0'},
-    {m:21*60,    name:'Problem Set 4',      tag:'Study',     cc:'#58A6FF'},
-    {m:23*60+59, name:'Problem Set 4 due',  tag:'Due',       cc:'#FFB020'}
+    {m:9*60,     name:'MATH 231 · Lecture', tag:'Class',     cc:'#22E4F5'},
+    {m:12*60+30, name:'Offense film',       tag:'Athletics', cc:'#FF3D9A'},
+    {m:15*60+30, name:'Practice',           tag:'Athletics', cc:'#FF3D9A'},
+    {m:18*60,    name:'Work shift',         tag:'Work',      cc:'#C8FF3D'},
+    {m:21*60,    name:'Problem Set 4',      tag:'Study',     cc:'#5B8CFF'},
+    {m:23*60+59, name:'Problem Set 4 due',  tag:'Due',       cc:'#FF8A3D'}
   ];
   function fmt(mins){
     var h=Math.floor(mins/60)%24, mm=mins%60;
@@ -983,21 +1048,151 @@
    MOTION — word reveal, spotlight, magnetic buttons, card tilt.
    Everything here is a no-op when the user asks for reduced motion.
    ============================================================ */
-/* Dot-grid spotlight. Lives outside the reduced-motion guard below: it responds to
-   the pointer rather than moving on its own, so it isn't vestibular. Fine pointers
-   only — there's nothing to follow on a touchscreen. */
+/* ============================================================
+   THE FIELD — a WebGL mesh gradient behind the hero.
+   Fractal Brownian motion over simplex noise, three colour stops blended in the
+   fragment shader, warped by a sine mesh, with the pointer as a uniform so the
+   field leans toward the cursor. This is the Stripe-gradient technique, written
+   out rather than imported — no Three.js, no build step.
+
+   Degrades in three stages: no WebGL → static CSS gradient; reduced motion →
+   shader renders frame zero and stops; off-screen → the loop pauses entirely.
+   ============================================================ */
 (function(){
-  if (!window.matchMedia || !window.matchMedia('(pointer:fine)').matches) return;
-  var x = 0, y = 0, raf = 0, root = document.documentElement;
-  addEventListener('pointermove', function(e){
-    x = e.clientX; y = e.clientY;
-    if (!raf) raf = requestAnimationFrame(paint);
-  }, {passive:true});
-  function paint(){
-    raf = 0;
-    root.style.setProperty('--mx', x + 'px');
-    root.style.setProperty('--my', y + 'px');
+  var host = document.getElementById('field'),
+      cv   = document.getElementById('fieldCanvas');
+  if (!host || !cv) return;
+
+  var gl = null;
+  try { gl = cv.getContext('webgl', {alpha:true, antialias:false, premultipliedAlpha:false}); } catch(e){}
+  if (!gl) { host.classList.add('no-gl'); return; }   // fall back to the CSS gradient
+
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  var VERT = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+
+  // Ashima simplex noise (public domain), then fbm on top of it. The three colour
+  // stops are mixed by two noise fields rather than by distance, which is what
+  // gives the blobs their wispy, non-circular edges.
+  var FRAG = [
+    'precision highp float;',
+    'uniform vec2 u_res; uniform float u_t; uniform vec2 u_mouse;',
+    'uniform vec3 c1; uniform vec3 c2; uniform vec3 c3;',
+    'vec3 mod289(vec3 x){return x-floor(x*(1./289.))*289.;}',
+    'vec2 mod289(vec2 x){return x-floor(x*(1./289.))*289.;}',
+    'vec3 permute(vec3 x){return mod289(((x*34.)+1.)*x);}',
+    'float snoise(vec2 v){',
+    '  const vec4 C=vec4(.211324865,.366025404,-.577350269,.024390244);',
+    '  vec2 i=floor(v+dot(v,C.yy)); vec2 x0=v-i+dot(i,C.xx);',
+    '  vec2 i1=(x0.x>x0.y)?vec2(1.,0.):vec2(0.,1.);',
+    '  vec4 x12=x0.xyxy+C.xxzz; x12.xy-=i1;',
+    '  i=mod289(i);',
+    '  vec3 p=permute(permute(i.y+vec3(0.,i1.y,1.))+i.x+vec3(0.,i1.x,1.));',
+    '  vec3 m=max(.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.);',
+    '  m=m*m; m=m*m;',
+    '  vec3 x=2.*fract(p*C.www)-1.; vec3 h=abs(x)-.5; vec3 ox=floor(x+.5); vec3 a0=x-ox;',
+    '  m*=1.79284291-.85373473*(a0*a0+h*h);',
+    '  vec3 g; g.x=a0.x*x0.x+h.x*x0.y; g.yz=a0.yz*x12.xz+h.yz*x12.yw;',
+    '  return 130.*dot(m,g);',
+    '}',
+    // Four octaves is the sweet spot: three looks like a blob, five costs frames.
+    'float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<3;i++){s+=a*snoise(p);p*=2.02;a*=.5;}return s;}',
+    'void main(){',
+    '  vec2 uv=gl_FragCoord.xy/u_res.xy;',
+    '  vec2 st=uv; st.x*=u_res.x/u_res.y;',
+    '  float t=u_t*.055;',
+    // The pointer bends the field rather than lighting it: a soft attractor.
+    '  vec2 m=(u_mouse-.5)*vec2(u_res.x/u_res.y,1.);',
+    '  float pull=.35/(1.+8.*dot(st-vec2(.5*u_res.x/u_res.y,.5)-m,st-vec2(.5*u_res.x/u_res.y,.5)-m));',
+    '  vec2 q=vec2(fbm(st*.55+t), fbm(st*.55+vec2(3.2,1.7)-t));',
+    '  vec2 r=vec2(fbm(st*.75+1.8*q+vec2(1.7,9.2)+t*.7), fbm(st*.75+1.8*q+vec2(8.3,2.8)-t*.6));',
+    '  float f=fbm(st*.65+2.0*r+pull);',
+    // Mix in two passes, so no stop ever sits in a flat band.
+    '  vec3 col=mix(c1,c2,clamp(f*1.5+.5,0.,1.));',
+    '  col=mix(col,c3,clamp(length(q)*.85,0.,1.));',
+    // Vignette biased to the upper-left, where the headline lives. The field should
+    // be loudest behind the words and fall away before it reaches the product card.
+    '  float v=smoothstep(1.45,.05,length((uv-vec2(.32,.74))*vec2(1.,1.15)));',
+    '  float a=clamp(f*.30+.44,0.,1.)*v;',
+    '  gl_FragColor=vec4(col*a,a);',
+    '}'
+  ].join('\n');
+
+  function sh(type, src){
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn('field:', gl.getShaderInfoLog(s)); return null; }
+    return s;
   }
+  var vs = sh(gl.VERTEX_SHADER, VERT), fs = sh(gl.FRAGMENT_SHADER, FRAG);
+  if (!vs || !fs) { host.classList.add('no-gl'); return; }
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { host.classList.add('no-gl'); return; }
+  gl.useProgram(prog);
+
+  // One triangle covering clip space beats two: no diagonal seam, one less vertex.
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+  var uRes = gl.getUniformLocation(prog,'u_res'),
+      uT   = gl.getUniformLocation(prog,'u_t'),
+      uM   = gl.getUniformLocation(prog,'u_mouse');
+  // volt, magenta, cyan — the same three the palette is built on.
+  gl.uniform3f(gl.getUniformLocation(prog,'c1'), 0.486, 0.361, 1.0);
+  gl.uniform3f(gl.getUniformLocation(prog,'c2'), 1.0,   0.239, 0.604);
+  gl.uniform3f(gl.getUniformLocation(prog,'c3'), 0.133, 0.894, 0.961);
+
+  var mx = 0.5, my = 0.35, tmx = 0.5, tmy = 0.35;
+  addEventListener('pointermove', function(e){
+    tmx = e.clientX / innerWidth;
+    tmy = 1 - e.clientY / innerHeight;
+  }, {passive:true});
+
+  function size(){
+    // Cap DPR at 1.5: a 4K retina canvas of noise costs frames nobody can see.
+    var dpr = Math.min(devicePixelRatio || 1, 1.5);
+    var w = Math.floor(host.clientWidth * dpr), h = Math.floor(host.clientHeight * dpr);
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; gl.viewport(0,0,w,h); }
+    gl.uniform2f(uRes, w, h);
+  }
+  addEventListener('resize', size, {passive:true});
+  size();
+
+  // Pause when the hero scrolls away, and when the tab is hidden.
+  var visible = true;
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function(es){ visible = es[0].isIntersecting; if (visible && !reduce) tick(); },
+      {threshold:0}).observe(host);
+  }
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden && visible && !reduce) tick(); });
+
+  var start = performance.now(), running = false;
+  function draw(t){
+    mx += (tmx - mx) * 0.06;   // the field trails the cursor rather than snapping
+    my += (tmy - my) * 0.06;
+    gl.uniform2f(uM, mx, my);
+    gl.uniform1f(uT, t);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  function tick(){
+    if (running) return; running = true;
+    (function loop(now){
+      if (!visible || document.hidden || reduce) { running = false; return; }
+      draw((now - start) / 1000);
+      requestAnimationFrame(loop);
+    })(performance.now());
+  }
+
+  if (reduce) { size(); draw(0); }   // one frame, frozen. Still beautiful, never moves.
+  else tick();
 })();
 
 (function(){
@@ -1105,6 +1300,41 @@
       el.style.transitionDelay = (i * 0.045) + 's';
     });
   });
+
+  /* ---- 5 · Marquee ----
+     Duplicate the track's children once. The keyframe travels exactly -50%, so at
+     the moment it resets, copy two sits where copy one started. Duplicating in JS
+     rather than the HTML keeps the source readable and the seam exact. */
+  var track = document.getElementById('tickerTrack');
+  if (track){
+    track.insertAdjacentHTML('beforeend', track.innerHTML);
+  }
+
+  /* ---- 6 · Blend-mode cursor ----
+     Springs toward the pointer instead of tracking it 1:1 — a cursor that lags a
+     little reads as physical, and one that lags a lot reads as broken. 0.22 is
+     the line. Grows over anything clickable. */
+  var cur = document.getElementById('cursor');
+  if (cur && window.matchMedia('(pointer:fine)').matches){
+    var cx = innerWidth/2, cy = innerHeight/2, tx = cx, ty = cy, on = false;
+    addEventListener('pointermove', function(e){
+      tx = e.clientX; ty = e.clientY;
+      if (!on){ on = true; cur.classList.add('on'); }
+    }, {passive:true});
+    addEventListener('pointerdown', function(){ cur.classList.add('grow'); });
+    addEventListener('pointerup',   function(){ cur.classList.remove('grow'); });
+    // Delegate rather than binding to every link: the FAQ and feature cards are
+    // rendered before this runs, but the marquee copy above is not.
+    addEventListener('pointerover', function(e){
+      var hit = e.target.closest && e.target.closest('a,button,.qa-q,.feat,.step');
+      cur.classList.toggle('grow', !!hit);
+    }, {passive:true});
+    (function loop(){
+      cx += (tx - cx) * 0.22; cy += (ty - cy) * 0.22;
+      cur.style.transform = 'translate(' + cx.toFixed(1) + 'px,' + cy.toFixed(1) + 'px) translate(-50%,-50%)';
+      requestAnimationFrame(loop);
+    })();
+  }
 })();
 </script>
 </body>

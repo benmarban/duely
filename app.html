@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Dayflow - your whole day in one place: class, athletics, work, personal, and deadlines.">
-<meta name="theme-color" content="#0A0912">
+<meta name="theme-color" content="#08070E">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.png" sizes="64x64" type="image/png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -19,30 +19,32 @@
      ============================================================ */
   :root{
     /* ---- Dusk & Solar. Values mirror index.html; see DESIGN.md. ---- */
-    --bg:#0A0912; --bg-2:#100E1C; --panel:#171528; --card:#14121F; --card-2:#1A1830; --surface-3:#221F3A;
+    --bg:#08070E; --bg-2:#0D0B16; --panel:#191627; --card:#12101D; --card-2:#191627; --surface-3:#221E36;
     --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15); --line-3:rgba(255,255,255,.24);
-    --text:#ECEAF5; --text-dim:#A09CB8; --text-faint:#6B6785;
+    --text:#F4F3F8; --text-dim:#A5A0BC; --text-faint:#6D6788;
 
-    --solar:#FFB020; --solar-2:#FFD27A; --solar-deep:#C97A12;
-    --solar-soft:rgba(255,176,32,.12); --solar-line:rgba(255,176,32,.34);
-    --ink:#1B1204;
+    --solar:#7C5CFF; --solar-2:#A78BFF; --solar-deep:#5B3FD6;
+    --solar-soft:rgba(124,92,255,.12); --solar-line:rgba(124,92,255,.34);
+    --ink:#0A0614;
 
-    --iris:#8B7CFF; --iris-soft:rgba(139,124,255,.13);
-    --coral:#FF6B57; --coral-soft:rgba(255,107,87,.14);
-    --mint:#46E0B0; --mint-soft:rgba(70,224,176,.14);
-    --azure:#58A6FF;
+    --cyan:#22E4F5; --magenta:#FF3D9A; --lime:#C8FF3D; --tangerine:#FF8A3D;
+    --volt:#7C5CFF; --volt-2:#A78BFF;
+    --iris:#22E4F5; --iris-soft:rgba(34,228,245,.13);
+    --coral:#FF3D9A; --coral-soft:rgba(255,61,154,.14);
+    --mint:#C8FF3D; --mint-soft:rgba(200,255,61,.14);
+    --azure:#5B8CFF;
 
     /* Aliases — old names kept so existing rules resolve unchanged */
     --teal:var(--solar); --teal-2:var(--solar-2); --teal-soft:var(--solar-soft);
     --teal-line:var(--solar-line); --teal-ink:#4a3208;
-    --rose:#F2568C; --rose-soft:rgba(242,86,140,.13);
+    --rose:#FF3D9A; --rose-soft:rgba(255,61,154,.13);
     --violet:var(--iris); --violet-soft:var(--iris-soft);
     --amber:var(--solar); --amber-soft:var(--solar-soft);
     --blue:var(--azure);
     /* Danger is its own hue, not coral. Coral means "athletics"; a delete button
        and a practice block must never read as the same thing. */
-    --danger:#FF4D6A;
-    --red:var(--danger); --red-soft:rgba(255,77,106,.14);
+    --danger:#FF4D5E;
+    --red:var(--danger); --red-soft:rgba(255,77,94,.14);
     --ok:var(--mint); --ok-soft:var(--mint-soft);
     --warn:#E4A93A; --warn-soft:rgba(228,169,58,.12);
 
@@ -61,7 +63,7 @@
   body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.45;overflow-x:hidden}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   input,textarea{font-family:inherit}
-  ::selection{background:var(--teal);color:#1B1204}
+  ::selection{background:var(--teal);color:#0A0614}
   :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:2px;border-radius:6px}
   h1,h2,h3{letter-spacing:-.02em}
   .brand h1,.pagehead .greet,.sec-head h2,.mono-h{font-family:var(--font-display);letter-spacing:-.03em}
@@ -69,19 +71,14 @@
   a.brand{text-decoration:none;color:inherit}
 
   /* ambient aurora behind the header */
-  /* ---- Dot grid ----
-     Fainter than the landing page's: this sits under working UI all day, and
-     texture you notice on hour three is texture you resent. No top-edge mask
-     either, since the app has no hero to fade out of. */
-  .dots{position:fixed;inset:0;z-index:0;pointer-events:none;
-    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.10) 1px, transparent 0);
-    background-size:28px 28px}
-  .dots::after{content:"";position:absolute;inset:0;
-    background-image:radial-gradient(circle at 1px 1px, var(--solar) 1px, transparent 0);
-    background-size:28px 28px;opacity:.5;
-    -webkit-mask-image:radial-gradient(200px circle at var(--mx,-999px) var(--my,-999px), #000 0%, transparent 66%);
-    mask-image:radial-gradient(200px circle at var(--mx,-999px) var(--my,-999px), #000 0%, transparent 66%)}
-  @media (prefers-reduced-transparency:reduce){.dots{display:none}}
+  /* ---- Film grain ----
+     The dot grid is gone. The app gets grain and nothing else: no shader, no
+     marquee, no custom cursor. It's a tool, not a poster. Grain earns its place
+     by killing the banding on the aurora, which is real and visible on cheap
+     laptop panels. */
+  .grain{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.03;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E")}
+  @media (prefers-reduced-transparency:reduce){.grain{display:none}}
 
   .aurora{position:fixed;top:-160px;left:0;right:0;height:520px;z-index:0;pointer-events:none;
     background:radial-gradient(60% 100% at 22% 0,var(--solar-soft),transparent 60%),
@@ -112,8 +109,8 @@
   .sidebar{position:sticky;top:0;height:100vh;height:100dvh;background:linear-gradient(180deg,var(--bg-2),var(--bg));
     border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 14px}
   .brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px}
-  .brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#C97A12);display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 16px -4px var(--teal-line)}
-  .brand .logo svg{width:18px;height:18px;stroke:#1B1204;stroke-width:2.6;fill:none}
+  .brand .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#5B3FD6);display:grid;place-items:center;flex-shrink:0;box-shadow:0 4px 16px -4px var(--teal-line)}
+  .brand .logo svg{width:18px;height:18px;stroke:#0A0614;stroke-width:2.6;fill:none}
   .brand h1{font-size:19px;font-weight:800}
   .brand .dot{color:var(--teal)}
   .nav{display:flex;flex-direction:column;gap:3px}
@@ -124,12 +121,12 @@
   .navitem.active{background:var(--teal-soft);color:var(--teal-2);font-weight:650}
   .navitem.active::before{content:"";position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:3px;height:20px;border-radius:0 3px 3px 0;background:var(--teal)}
   .navitem .nbadge{margin-left:auto;font-family:var(--font-mono);font-size:11px;font-weight:500;background:var(--red);color:#fff;padding:1px 7px;border-radius:999px}
-  .navitem.active .nbadge{background:var(--teal);color:#1B1204}
+  .navitem.active .nbadge{background:var(--teal);color:#0A0614}
   .ask-btn{display:flex;align-items:center;gap:11px;margin:8px 2px 0;padding:11px 13px;border-radius:12px;width:calc(100% - 4px);
     background:linear-gradient(135deg,var(--teal-soft),var(--violet-soft));border:1px solid var(--teal-line);color:var(--text);font-size:14px;font-weight:650;transition:.16s}
   .ask-btn:hover{border-color:var(--teal);box-shadow:0 8px 22px -12px var(--teal-line);transform:translateY(-1px)}
   .ask-btn .spark{width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,var(--teal),var(--violet));display:grid;place-items:center;flex-shrink:0}
-  .ask-btn .spark svg{width:15px;height:15px;stroke:#1B1204;stroke-width:2.2;fill:none}
+  .ask-btn .spark svg{width:15px;height:15px;stroke:#0A0614;stroke-width:2.2;fill:none}
   .sys{margin-top:auto;padding:14px 6px 4px;border-top:1px solid var(--line)}
   .sys-lbl{font-family:var(--font-mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.14em;color:var(--text-faint);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center}
   .sys-lbl button{font-family:var(--font);font-size:11px;font-weight:600;color:var(--teal);text-transform:none;letter-spacing:0}
@@ -149,9 +146,9 @@
   .acct-out:hover{background:var(--red-soft);border-color:var(--red)}
 
   /* ---- Topbar / bottom nav (mobile) ---- */
-  .topbar{display:none;position:sticky;top:0;z-index:30;background:rgba(10,9,18,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;align-items:center;justify-content:space-between}
+  .topbar{display:none;position:sticky;top:0;z-index:30;background:rgba(8,7,14,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;align-items:center;justify-content:space-between}
   .topbar .brand{padding:0}
-  .bottomnav{display:none;position:sticky;bottom:0;z-index:30;background:rgba(10,9,18,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+  .bottomnav{display:none;position:sticky;bottom:0;z-index:30;background:rgba(8,7,14,.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
   .bnav{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;color:var(--text-faint);border-radius:11px;transition:.15s}
   .bnav svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.9;fill:none}
   .bnav span{font-size:10px;font-weight:600}
@@ -163,7 +160,7 @@
   .pagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap}
   .pagehead .greet{font-size:27px;font-weight:800}
   .pagehead .sub{font-family:var(--font-mono);font-size:12.5px;color:var(--text-dim);margin-top:5px;font-weight:500;letter-spacing:.01em}
-  .addbtn{display:inline-flex;align-items:center;gap:7px;background:var(--teal);color:#1B1204;font-size:13.5px;font-weight:700;padding:11px 16px;border-radius:11px;box-shadow:0 8px 24px -10px var(--teal-line);transition:.16s;white-space:nowrap}
+  .addbtn{display:inline-flex;align-items:center;gap:7px;background:var(--teal);color:#0A0614;font-size:13.5px;font-weight:700;padding:11px 16px;border-radius:11px;box-shadow:0 8px 24px -10px var(--teal-line);transition:.16s;white-space:nowrap}
   .addbtn:hover{background:var(--teal-2);transform:translateY(-1px)}
   .addbtn:active{transform:scale(.98)}
   .addbtn svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.6;fill:none}
@@ -185,7 +182,7 @@
   /* ---- Conflict bar ----
      Danger red, not coral: this is the only thing on the dashboard allowed to
      claim it's urgent, and coral already means athletics. */
-  .cfl{border:1px solid rgba(255,77,106,.4);background:linear-gradient(180deg,rgba(255,77,106,.08),transparent),var(--card);
+  .cfl{border:1px solid rgba(255,77,94,.4);background:linear-gradient(180deg,rgba(255,77,94,.08),transparent),var(--card);
     border-radius:var(--r);padding:14px 16px 15px;margin-bottom:18px}
   .cfl-h{display:flex;align-items:center;gap:9px;font-size:14.5px}
   .cfl-h b{font-weight:700}
@@ -240,11 +237,11 @@
   .tl-meta{margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .cat-chip{font-family:var(--font-mono);font-size:9.5px;font-weight:500;padding:2px 8px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em;color:var(--cc,var(--teal));background:color-mix(in srgb,var(--cc,var(--teal)) 15%,transparent);border:1px solid color-mix(in srgb,var(--cc,var(--teal)) 30%,transparent)}
   .tl-loc{font-size:12px;color:var(--text-dim)}
-  .tl-live{font-family:var(--font-mono);font-size:9px;font-weight:500;color:#1B1204;background:var(--teal);padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em}
+  .tl-live{font-family:var(--font-mono);font-size:9px;font-weight:500;color:#0A0614;background:var(--teal);padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.06em}
   .tl-now{display:flex;align-items:center;gap:9px;margin:8px 0 8px 78px;font-family:var(--font-mono);font-size:10px;font-weight:500;color:var(--red);letter-spacing:.1em;text-transform:uppercase}
   .tl-now .ln{flex:1;height:1.5px;border-radius:2px;background:linear-gradient(to right,var(--red),transparent)}
   .tl-now .pulse{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 var(--red);animation:pulse 2.4s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,87,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,61,154,.5)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
   .tl-actions{margin-left:auto;display:flex;gap:2px;flex-shrink:0}
   .tl-edit,.tl-del{width:26px;height:26px;border-radius:7px;color:var(--text-faint);font-size:14px;line-height:1;display:grid;place-items:center;transition:.14s}
   .tl-edit:hover{background:var(--surface-3);color:var(--teal)}
@@ -257,7 +254,7 @@
   .drow+.drow{border-top:1px solid var(--line)}
   .check{flex-shrink:0;width:21px;height:21px;border-radius:50%;border:2px solid var(--line-3);background:transparent;margin-top:1px;display:grid;place-items:center;transition:.15s}
   .check:hover{border-color:var(--teal)}
-  .check svg{width:11px;height:11px;stroke:#1B1204;stroke-width:3.6;fill:none;opacity:0;transform:scale(.5);transition:.15s}
+  .check svg{width:11px;height:11px;stroke:#0A0614;stroke-width:3.6;fill:none;opacity:0;transform:scale(.5);transition:.15s}
   .drow.done .check{background:var(--teal);border-color:var(--teal)}
   .drow.done .check svg{opacity:1;transform:scale(1)}
   .drow.done .dt{text-decoration:line-through;color:var(--text-faint)}
@@ -293,7 +290,7 @@
   .cal-cell:hover{background:rgba(255,255,255,.03)}
   .cal-cell.out{opacity:.34}
   .cal-cell .cd{font-family:var(--font-mono);font-size:12.5px;font-weight:500;color:var(--text-dim);width:24px;height:24px;display:grid;place-items:center;border-radius:8px}
-  .cal-cell.today .cd{background:var(--teal);color:#1B1204;font-weight:700}
+  .cal-cell.today .cd{background:var(--teal);color:#0A0614;font-weight:700}
   .cal-cell.sel{background:var(--teal-soft);box-shadow:inset 0 0 0 1.5px var(--teal-line)}
   .cal-cell .evs{display:flex;flex-direction:column;gap:3px;min-width:0}
   .cal-ev{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -308,8 +305,8 @@
   .filters{display:flex;gap:8px;flex-wrap:wrap;margin:2px 2px 16px}
   .fchip{font-family:var(--font-mono);font-size:11.5px;font-weight:500;padding:7px 13px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);color:var(--text-dim);transition:.15s;letter-spacing:.02em}
   .fchip:hover{border-color:var(--cc);color:var(--text)}
-  .fchip.active{color:#1B1204;background:var(--cc);border-color:var(--cc);font-weight:700}
-  .fchip.active[data-filter="all"]{color:#1B1204}
+  .fchip.active{color:#0A0614;background:var(--cc);border-color:var(--cc);font-weight:700}
+  .fchip.active[data-filter="all"]{color:#0A0614}
 
   /* ---- courses / grades ---- */
   .courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
@@ -334,7 +331,7 @@
   .empty .em svg{width:24px;height:24px;stroke:var(--text-dim);stroke-width:1.8;fill:none}
   .empty h4{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
   .empty p{font-size:13.5px;max-width:320px;margin:0 auto;line-height:1.55}
-  .empty .ebtn{display:inline-flex;align-items:center;gap:7px;margin-top:18px;background:var(--teal);color:#1B1204;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:11px;transition:.15s}
+  .empty .ebtn{display:inline-flex;align-items:center;gap:7px;margin-top:18px;background:var(--teal);color:#0A0614;font-size:13.5px;font-weight:700;padding:10px 16px;border-radius:11px;transition:.15s}
   .empty .ebtn:hover{background:var(--teal-2);transform:translateY(-1px)}
   .empty .ebtn svg{width:15px;height:15px;stroke:currentColor;stroke-width:2.5;fill:none}
 
@@ -374,23 +371,23 @@
   .segs{display:flex;gap:7px;flex-wrap:wrap}
   .seg{flex:1;min-width:66px;padding:10px 8px;border-radius:9px;border:1px solid var(--line-2);background:var(--card);font-size:13px;font-weight:600;color:var(--text-dim);transition:.15s}
   .seg:hover{border-color:var(--cc)}
-  .seg.active{color:#1B1204;background:var(--cc);border-color:var(--cc)}
-  .btn{display:block;width:100%;margin-top:16px;background:var(--teal);color:#1B1204;font-size:14.5px;font-weight:700;padding:13px;border-radius:12px;transition:.14s}
+  .seg.active{color:#0A0614;background:var(--cc);border-color:var(--cc)}
+  .btn{display:block;width:100%;margin-top:16px;background:var(--teal);color:#0A0614;font-size:14.5px;font-weight:700;padding:13px;border-radius:12px;transition:.14s}
   .btn:hover{background:var(--teal-2)}
   .btn:disabled{opacity:.65;pointer-events:none}
   .btn.sec{background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line-2)}
   .btn.sec:hover{background:rgba(255,255,255,.08)}
   .examples{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 0}
   .chip{font-size:12px;font-weight:600;color:var(--teal-2);background:var(--teal-soft);padding:7px 12px;border-radius:999px;border:1px solid var(--teal-line);transition:.14s}
-  .chip:hover{background:var(--teal);color:#1B1204}
+  .chip:hover{background:var(--teal);color:#0A0614}
   .pane-hint{font-size:13px;color:var(--text-dim);margin:10px 2px 0;line-height:1.5}
   .found{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;padding:12px 13px;margin-top:9px;display:flex;align-items:center;gap:11px}
   .found .fb{flex:1;min-width:0}
   .found .ft{font-size:14px;font-weight:600}
   .found .fd{font-family:var(--font-mono);font-size:11.5px;color:var(--text-dim);margin-top:3px}
   .found .fadd{flex-shrink:0;background:var(--teal-soft);color:var(--teal-2);font-size:12.5px;font-weight:650;padding:8px 13px;border-radius:999px;transition:.14s}
-  .found .fadd:hover{background:var(--teal);color:#1B1204}
-  .found.added{opacity:.55}.found.added .fadd{background:var(--ok);color:#1B1204;pointer-events:none}
+  .found .fadd:hover{background:var(--teal);color:#0A0614}
+  .found.added{opacity:.55}.found.added .fadd{background:var(--ok);color:#0A0614;pointer-events:none}
   .detected-lbl{font-family:var(--font-mono);font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text-faint);margin:18px 2px 2px}
   .cv-msg{font-size:12.5px;margin-top:12px;min-height:1.1em;color:var(--ok);line-height:1.4}
   .cv-msg.err{color:var(--red)}
@@ -420,9 +417,9 @@
   /* ---- AI assistant panel ---- */
   .fab{position:fixed;right:22px;bottom:22px;z-index:45;width:56px;height:56px;border-radius:17px;
     background:linear-gradient(140deg,var(--teal),var(--violet));display:grid;place-items:center;
-    box-shadow:0 16px 40px -12px rgba(255,176,32,.5),0 6px 16px -6px rgba(0,0,0,.6);transition:.18s}
+    box-shadow:0 16px 40px -12px rgba(124,92,255,.5),0 6px 16px -6px rgba(0,0,0,.6);transition:.18s}
   .fab:hover{transform:translateY(-2px) scale(1.03)}
-  .fab svg{width:25px;height:25px;stroke:#1B1204;stroke-width:2.1;fill:none}
+  .fab svg{width:25px;height:25px;stroke:#0A0614;stroke-width:2.1;fill:none}
   .fab .fdot{position:absolute;top:-3px;right:-3px;width:14px;height:14px;border-radius:50%;background:var(--red);border:2px solid var(--bg)}
   .assistant{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:100vw;z-index:80;background:var(--panel);border-left:1px solid var(--line-2);
     box-shadow:var(--shadow-lg);display:flex;flex-direction:column;transform:translateX(102%);transition:transform .34s cubic-bezier(.2,.8,.2,1)}
@@ -430,7 +427,7 @@
   @media (prefers-reduced-motion:reduce){.assistant{transition:none}}
   .asst-head{display:flex;align-items:center;gap:11px;padding:16px 16px 14px;border-bottom:1px solid var(--line)}
   .asst-head .spark{width:34px;height:34px;border-radius:10px;background:linear-gradient(140deg,var(--teal),var(--violet));display:grid;place-items:center;flex-shrink:0}
-  .asst-head .spark svg{width:19px;height:19px;stroke:#1B1204;stroke-width:2.1;fill:none}
+  .asst-head .spark svg{width:19px;height:19px;stroke:#0A0614;stroke-width:2.1;fill:none}
   .asst-head .at{flex:1;min-width:0}
   .asst-head .an{font-family:var(--font-display);font-size:16px;font-weight:800}
   .asst-head .ad{font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:6px}
@@ -439,7 +436,7 @@
   .msg{display:flex;gap:9px;max-width:100%;animation:rise .3s both}
   .msg .mav{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center}
   .msg.bot .mav{background:linear-gradient(140deg,var(--teal),var(--violet))}
-  .msg.bot .mav svg{width:16px;height:16px;stroke:#1B1204;stroke-width:2.2;fill:none}
+  .msg.bot .mav svg{width:16px;height:16px;stroke:#0A0614;stroke-width:2.2;fill:none}
   .msg .bubble{background:var(--card);border:1px solid var(--line);border-radius:13px;border-top-left-radius:4px;padding:11px 13px;font-size:13.5px;line-height:1.5;color:var(--text)}
   .msg.user{flex-direction:row-reverse}
   .msg.user .bubble{background:var(--teal-soft);border-color:var(--teal-line);border-radius:13px;border-top-right-radius:4px;color:var(--text)}
@@ -458,7 +455,7 @@
   .asst-sugg button:hover{border-color:var(--teal-line);color:var(--teal-2)}
   .asst-input{display:flex;gap:8px;padding:12px 16px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);align-items:flex-end}
   .asst-input textarea{margin:0;min-height:44px;max-height:120px;border-radius:12px;padding:11px 12px;font-size:14px}
-  .asst-send{width:44px;height:44px;border-radius:12px;background:var(--teal);color:#1B1204;display:grid;place-items:center;flex-shrink:0;transition:.14s}
+  .asst-send{width:44px;height:44px;border-radius:12px;background:var(--teal);color:#0A0614;display:grid;place-items:center;flex-shrink:0;transition:.14s}
   .asst-send:hover{background:var(--teal-2)}
   .asst-send svg{width:19px;height:19px;stroke:currentColor;stroke-width:2.3;fill:none}
   .scrim{position:fixed;inset:0;background:rgba(4,8,16,.5);backdrop-filter:blur(2px);z-index:79;opacity:0;pointer-events:none;transition:.3s}
@@ -477,9 +474,9 @@
 
   /* ---- Dayflow Pro ---- */
   .pro-upsell{display:flex;align-items:center;gap:11px;margin:10px 2px 0;padding:11px 12px;border-radius:12px;width:calc(100% - 4px);text-align:left;
-    background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(139,124,255,.16));border:1px solid var(--teal-line);transition:.16s}
+    background:linear-gradient(135deg,rgba(124,92,255,.14),rgba(34,228,245,.16));border:1px solid var(--teal-line);transition:.16s}
   .pro-upsell:hover{border-color:var(--teal);transform:translateY(-1px);box-shadow:0 10px 26px -14px var(--teal-line)}
-  .pro-upsell .pu-ic{width:28px;height:28px;border-radius:8px;background:linear-gradient(140deg,var(--teal),var(--violet));display:grid;place-items:center;color:#1B1204;font-weight:800;font-size:15px;flex-shrink:0}
+  .pro-upsell .pu-ic{width:28px;height:28px;border-radius:8px;background:linear-gradient(140deg,var(--teal),var(--violet));display:grid;place-items:center;color:#0A0614;font-weight:800;font-size:15px;flex-shrink:0}
   .pro-upsell .pu-t{display:flex;flex-direction:column;min-width:0}
   .pro-upsell .pu-t b{font-size:13.5px;font-weight:700}
   .pro-upsell .pu-t span{font-size:11.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -499,7 +496,7 @@
   .plan .pname{font-size:12.5px;font-weight:650;color:var(--text-dim)}
   .plan .pprice{font-family:var(--font-mono);font-size:22px;font-weight:700;margin-top:5px;letter-spacing:-.02em}
   .plan .pper{font-size:12px;color:var(--text-faint);font-weight:500;margin-top:2px}
-  .plan .psave{position:absolute;top:-9px;right:10px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1B1204;background:var(--teal);padding:2px 8px;border-radius:999px}
+  .plan .psave{position:absolute;top:-9px;right:10px;font-family:var(--font-mono);font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#0A0614;background:var(--teal);padding:2px 8px;border-radius:999px}
   .toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);font-size:13.5px;font-weight:650;padding:11px 18px;border-radius:999px;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:90;white-space:nowrap;display:flex;align-items:center;gap:14px}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .toast.undoable.show{pointer-events:auto}
@@ -521,7 +518,7 @@
 </head>
 <body>
 <div class="aurora" aria-hidden="true"></div>
-<div class="dots" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
 
 <div class="app">
   <aside class="sidebar">
@@ -870,11 +867,11 @@
   // sharing a color makes the timeline unreadable at a glance, which is the whole
   // point of the timeline.
   const CATS={
-    school:{label:'Class',color:'var(--iris)'},
-    athletics:{label:'Athletics',color:'var(--coral)'},
-    work:{label:'Work',color:'var(--mint)'},
+    school:{label:'Class',color:'var(--cyan)'},
+    athletics:{label:'Athletics',color:'var(--magenta)'},
+    work:{label:'Work',color:'var(--lime)'},
     personal:{label:'Personal',color:'var(--azure)'},
-    deadline:{label:'Due',color:'var(--solar)'}
+    deadline:{label:'Due',color:'var(--tangerine)'}
   };
   const catOf=c=>CATS[c]||CATS.personal;
 
@@ -2013,23 +2010,5 @@
 })();
 </script>
 
-<script>
-/* Dot-grid spotlight. Pointer-driven, not self-animating, so it stays on under
-   prefers-reduced-motion. Fine pointers only. One rAF-coalesced listener writes
-   two custom properties; the mask reads them and the grid never repaints. */
-(function(){
-  if (!window.matchMedia || !window.matchMedia('(pointer:fine)').matches) return;
-  var x = 0, y = 0, raf = 0, root = document.documentElement;
-  addEventListener('pointermove', function(e){
-    x = e.clientX; y = e.clientY;
-    if (!raf) raf = requestAnimationFrame(paint);
-  }, {passive:true});
-  function paint(){
-    raf = 0;
-    root.style.setProperty('--mx', x + 'px');
-    root.style.setProperty('--my', y + 'px');
-  }
-})();
-</script>
 </body>
 </html>

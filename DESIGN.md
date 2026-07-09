@@ -1,89 +1,98 @@
-# Dayflow design system — "Dusk & Solar"
+# Dayflow design system — "Voltage"
 
-The old palette was teal-on-navy: cool, competent, and indistinguishable from every
-other productivity SaaS. The new one commits to the metaphor the landing page already
-had but never colored for — **a day, scrolled from dawn to night.**
+Second system. The first ("Dusk & Solar") committed to a sunrise metaphor in amber
+on plum-black. It was coherent and it was quiet. This one is not quiet.
 
-## The idea
+The brief: a landing page that hooks someone in the first second, and an app that
+still reads as a tool at 6am. Those pull in opposite directions, so the landing
+page carries the spectacle and the app inherits only the palette.
 
-A student-athlete's day starts before sunrise and ends after dark. The interface should
-feel like that arc. So the base is a deep plum-black night, and the brand accent is the
-sun coming up over it.
+## Direction
 
-- **Night** (`--bg` family) — deep, warm-shifted black. Not blue-black. Plum-black reads
-  softer at 6am on a phone in a dark dorm room, which is when this app is actually opened.
-- **Solar** (`--solar`) — the brand. Amber-gold. Every primary action, the logo, the time
-  rail's fill, the "now" marker.
-- **Category hues** are a spectrum across the day, not arbitrary labels.
+Research (dark-mode practice as of 2026) converges on three things, and all three
+are load-bearing here:
+
+1. **Never pure black.** `#000` smears on OLED during scroll and reads as a hole.
+   Use a tinted near-black. Ours is violet-tinted: `#0A0912` → `#08070E`.
+2. **Never pure white text.** `#FFF` on near-black vibrates. Soft white `#F4F3F8`.
+3. **One high-salience accent, ~5% of the composition.** Neon everywhere is neon
+   nowhere. Violet leads; lime is the shock and appears on almost nothing.
 
 ## Tokens
 
 ### Surfaces
 | Token | Value | Use |
 | --- | --- | --- |
-| `--bg` | `#0A0912` | page |
-| `--bg-2` | `#100E1C` | raised base, sidebar gradient |
-| `--card` | `#14121F` | widgets, panels |
-| `--card-2` | `#1A1830` | nested cards (timeline rows) |
-| `--surface-3` | `#221F3A` | hover/pressed fills |
+| `--bg` | `#08070E` | page (violet-tinted near-black) |
+| `--bg-2` | `#0D0B16` | raised base |
+| `--card` | `#12101D` | widgets, panels |
+| `--card-2` | `#191627` | nested cards |
+| `--surface-3` | `#221E36` | hover/pressed |
 
 ### Brand
 | Token | Value | Use |
 | --- | --- | --- |
-| `--solar` | `#FFB020` | primary CTA, logo, rail fill |
-| `--solar-2` | `#FFD27A` | hover, links, eyebrows |
-| `--solar-deep` | `#C97A12` | logo gradient end, pressed |
-| `--ink` | `#1B1204` | text **on** solar surfaces |
+| `--volt` | `#7C5CFF` | brand. CTA, logo, rail fill |
+| `--volt-2` | `#A78BFF` | hover, links, eyebrows |
+| `--volt-deep` | `#5B3FD6` | gradient end, pressed |
+| `--ink` | `#0A0614` | text **on** volt |
+| `--lime` | `#C8FF3D` | the shock. "now", live states, nothing else |
 
-`--ink` replaces the old `#04141a` (teal-ink). Never put `--text` on a solar fill.
-
-### Categories — the day's spectrum
+### Categories — six hues, each used once
 | Token | Value | Means |
 | --- | --- | --- |
-| `--iris` | `#8B7CFF` | class, lecture |
-| `--coral` | `#FF6B57` | practice, athletics |
-| `--mint` | `#46E0B0` | work shifts, success |
-| `--solar` | `#FFB020` | deadlines |
-| `--azure` | `#58A6FF` | personal |
-| `--danger` | `#FF4D6A` | overdue, destructive, the **now** line |
+| `--cyan` | `#22E4F5` | class, lecture |
+| `--magenta` | `#FF3D9A` | practice, athletics |
+| `--lime` | `#C8FF3D` | work shifts |
+| `--tangerine` | `#FF8A3D` | deadlines |
+| `--azure` | `#5B8CFF` | personal |
+| `--danger` | `#FF4D5E` | overdue, destructive, the **now** line |
 
-Six hues, each used once. `--danger` is deliberately *not* coral: a delete button and a
-practice block must never read as the same thing. (`--sky-*` was taken — the landing page
-uses it for the scroll-driven ambient glow — hence `--azure`.)
+`--volt` is the brand and never a category. A student must never wonder whether
+purple means "class" or "the button."
 
-These values are the single source of truth for `CATS` in `app.html` **and** `SCHEDULE`
-in `index.html`. The landing page is a promise the app has to keep; if they drift, the
-hero screenshot is lying.
+## Background
 
-### Type
-Tracking is size-specific (per Apple's typography rules — a single `letter-spacing`
-is wrong somewhere):
+The dot grid is gone. It was texture pretending to be depth.
 
-- Display (`clamp(34px, 6vw, 62px)`) → `letter-spacing: -0.035em`, `line-height: 1.02`
-- Section h2 → `-0.028em`, `1.06`
-- Body → `0`, `1.55`
-- Mono eyebrows / time codes → `+0.2em`, uppercase
+**Hero: a WebGL mesh gradient.** Fractal Brownian motion over simplex noise, three
+colour stops (volt, magenta, cyan) blended in the fragment shader, warped by a
+sine mesh, with the pointer passed in as a uniform so the field leans toward the
+cursor. Renders on the GPU at 60fps and pauses when off-screen.
 
-### Motion
-Springs, not fixed-duration curves, for anything the user can touch.
+Falls back to a static CSS radial-gradient when WebGL is unavailable, which also
+covers `prefers-reduced-motion` — the shader's time uniform simply stops.
 
-- **Default UI**: critically damped, no overshoot. `cubic-bezier(.32,.72,0,1)` @ 380ms.
-- **Momentum only** (a flick, a drag release): slight bounce, `damping ~0.8`.
-- **Press feedback fires on `:active`, not on click** — instant, `scale(.97)`.
-- Reveal-on-scroll: opacity + 12px rise, never a slide from off-screen.
-- Everything collapses to a cross-fade under `prefers-reduced-motion: reduce`.
+**Everywhere: film grain.** A fixed SVG `feTurbulence` layer at 3.5% opacity.
+Large dark gradients band on cheap laptop panels; grain dissolves the stair-step
+and adds a filmic surface. Static, no animation, near-zero cost.
 
-### Materials
-Chrome is translucent and content scrolls *under* it:
-`background: rgba(10,9,18,.72)` + `backdrop-filter: blur(20px) saturate(1.6)`.
-A bright top edge (`border-top: 1px solid rgba(255,255,255,.06)`) reads as light
-catching the material. Under `prefers-reduced-transparency`, surfaces go solid.
+## Motion
+
+Everything springs, nothing eases linearly. Hand-rolled — no GSAP, no Lenis, no
+Three.js, because Dayflow has no build step and a landing page is not a reason to
+grow one.
+
+| Effect | Technique | Reference |
+| --- | --- | --- |
+| Hero field | GLSL fbm + simplex, pointer uniform | Stripe's gradient |
+| Headline | per-word clip mask, 45ms stagger | — |
+| Section pinning | tall wrapper + `position:sticky`, scroll progress → CSS var | Codrops sticky-grid |
+| Feature stack | cards scale + translate as they pin | Apple product pages |
+| Marquee | duplicated track, `transform: translateX`, paused on hover | — |
+| Cursor | `mix-blend-mode: difference` dot, springs to pointer | Awwwards house style |
+| Buttons | magnetic pull, 6px cap | Arc |
+| Cards | pointer-tracked spotlight via `--cx/--cy` | Linear |
+
+**Reduced motion collapses all of it.** The shader freezes on frame zero, the
+marquee stops, the cursor is removed, reveals become cross-fades. Not "less
+motion" — none.
 
 ## Rules
 
-1. Never stack a translucent surface on another translucent surface.
-2. Category color is carried on `--cc` and inherited — a timeline row sets it once and
-   the dot, chip, and left border all read from it.
-3. The "now" line is the only pulsing element on any screen. Motion is a scarce resource.
-4. Photos are duotoned into the palette (`--iris` shadows, `--solar` highlights) so
-   they belong to the system rather than sitting on top of it.
+1. `--lime` appears at most twice per viewport. It means *live, now, happening*.
+2. Category colour rides on `--cc` and is inherited. Set it once per row.
+3. The app gets the palette and the grain. It does not get the shader, the
+   marquee, or the custom cursor. It's a tool, not a poster.
+4. Every animation reads the pointer or the scroll. Nothing loops on a timer
+   except the marquee, and it stops when you touch it.
