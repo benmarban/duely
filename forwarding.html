@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Forward your school, work, or personal email to your Dayflow address and every date files itself. Step-by-step setup for Gmail, Outlook, Yahoo, and iCloud.">
+<meta name="theme-color" content="#080D1A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<title>Link your email — Dayflow</title>
+<style>
+  :root{
+    --bg:#080D1A; --bg-2:#0A1122; --panel:#0F1A30; --card:#0E1728; --card-2:#101d33;
+    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+    --text:#EDF2FB; --text-dim:#98A7C2; --text-faint:#61708C;
+    --teal:#2DD4BF; --teal-2:#6BEAD9; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.34);
+    --rose:#F4699A; --violet:#9A7BFF; --amber:#F2B03C; --red:#F86A5B; --blue:#5B92F5;
+    --r:18px;
+    --font:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --font-display:"Schibsted Grotesk","Hanken Grotesk",-apple-system,system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --maxw:900px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;background:var(--bg)}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  ::selection{background:var(--teal);color:#04141a}
+  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;line-height:1.06;text-wrap:balance}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--teal-2)}
+  :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:3px;border-radius:6px}
+
+  .sky{position:fixed;inset:0;z-index:-1;pointer-events:none;
+    background:
+      radial-gradient(120% 70% at 50% -14%, rgba(45,212,191,.13) 0%, transparent 58%),
+      radial-gradient(90% 55% at 84% 4%, rgba(154,123,255,.09) 0%, transparent 60%),
+      linear-gradient(to bottom, var(--bg-2), var(--bg) 42%)}
+
+  /* ---- Nav ---- */
+  .nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:.3s;border-bottom:1px solid transparent}
+  .nav.scrolled{background:rgba(8,13,26,.78);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom-color:var(--line)}
+  .nav-in{max-width:1140px;margin:0 auto;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+  .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.02em}
+  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#0E9E8E);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
+  .logo .mark svg{width:17px;height:17px;stroke:#04141a;stroke-width:2.7;fill:none}
+  .logo .dot{color:var(--teal)}
+  .nav-links{display:flex;align-items:center;gap:30px}
+  .nav-links a:not(.btn){font-size:14px;font-weight:500;color:var(--text-dim);transition:.15s}
+  .nav-links a:not(.btn):hover{color:var(--text)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:650;border-radius:12px;transition:transform .16s,background .16s,border-color .16s,box-shadow .16s;white-space:nowrap;line-height:1}
+  .btn-primary{background:var(--teal);color:#04141a;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
+  .btn-primary:hover{background:var(--teal-2);transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--teal-line)}
+  .btn-primary svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none}
+  .btn-ghost{background:rgba(255,255,255,.03);color:var(--text);padding:12px 19px;font-size:14.5px;border:1px solid var(--line-2)}
+  .btn-ghost:hover{border-color:var(--teal-line);background:var(--teal-soft)}
+  @media (max-width:720px){.nav-links a:not(.btn){display:none}}
+
+  /* ---- Hero ---- */
+  .hero{padding:132px 0 40px}
+  .hero h1{font-size:clamp(34px,6vw,54px);font-weight:800;margin:14px 0 16px}
+  .hero p.lede{font-size:clamp(16px,2.1vw,19px);color:var(--text-dim);max-width:62ch}
+  .hero .mins{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-family:var(--font-mono);font-size:12px;letter-spacing:.06em;color:var(--text-faint);border:1px solid var(--line);border-radius:999px;padding:8px 14px}
+  .hero .mins b{color:var(--teal-2);font-weight:500}
+
+  /* ---- The address card ---- */
+  .addr{margin:38px 0 12px;border:1px solid var(--teal-line);border-radius:var(--r);background:
+      linear-gradient(180deg,rgba(45,212,191,.07),rgba(45,212,191,.02)),var(--card);
+    padding:24px;box-shadow:0 24px 60px -34px rgba(45,212,191,.5)}
+  .addr .lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal-2)}
+  .addr-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .addr code{font-family:var(--font-mono);font-size:clamp(15px,2.6vw,21px);font-weight:500;color:var(--text);
+    background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:11px;padding:13px 16px;flex:1 1 300px;
+    overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch}
+  .addr code.muted{color:var(--text-faint)}
+  .addr .note{margin-top:13px;font-size:14px;color:var(--text-dim)}
+  .addr .note a{color:var(--teal-2);border-bottom:1px solid var(--teal-line)}
+  #copyBtn{padding:14px 20px;font-size:14.5px}
+  #copyBtn.done{background:var(--teal-2)}
+
+  .why{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:30px 0 8px}
+  .why div{border:1px solid var(--line);border-radius:14px;padding:16px 18px;background:rgba(255,255,255,.015);font-size:14.5px;color:var(--text-dim)}
+  .why b{display:block;color:var(--text);font-weight:650;margin-bottom:4px;font-size:15px}
+
+  /* ---- Sections ---- */
+  section{padding:56px 0}
+  section > .wrap > .eyebrow{margin-bottom:12px}
+  h2{font-size:clamp(25px,3.6vw,34px);font-weight:800;margin-bottom:10px}
+  .sub{color:var(--text-dim);font-size:16px;max-width:60ch;margin-bottom:26px}
+
+  /* ---- Provider tabs ---- */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px}
+  .tab{display:inline-flex;align-items:center;gap:9px;padding:11px 16px;border-radius:12px;border:1px solid var(--line-2);
+    background:rgba(255,255,255,.02);color:var(--text-dim);font-size:14.5px;font-weight:600;transition:.15s}
+  .tab:hover{color:var(--text);border-color:var(--teal-line)}
+  .tab[aria-selected="true"]{background:var(--teal-soft);border-color:var(--teal);color:var(--text)}
+  .tab .ic{width:19px;height:19px;flex-shrink:0}
+
+  .panel[hidden]{display:none}
+  .panel{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:clamp(20px,3.4vw,32px)}
+  .panel > h3{font-size:21px;font-weight:750;margin-bottom:6px}
+  .panel > p.intro{color:var(--text-dim);font-size:15px;margin-bottom:22px}
+
+  /* ---- Steps ---- */
+  ol.steps{list-style:none;counter-reset:s;position:relative}
+  ol.steps::before{content:"";position:absolute;left:15px;top:10px;bottom:24px;width:1.5px;
+    background:linear-gradient(to bottom,var(--teal-line),transparent)}
+  ol.steps li{counter-increment:s;position:relative;padding:0 0 24px 48px}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:-2px;width:31px;height:31px;border-radius:50%;
+    display:grid;place-items:center;background:var(--bg);border:1.5px solid var(--teal-line);color:var(--teal-2);
+    font-family:var(--font-mono);font-size:13px;font-weight:700}
+  ol.steps li:last-child{padding-bottom:0}
+  ol.steps b{color:var(--text);font-weight:650}
+  ol.steps li{color:var(--text-dim);font-size:15.5px}
+  .kbd{font-family:var(--font-mono);font-size:13px;background:rgba(255,255,255,.05);border:1px solid var(--line-2);
+    border-radius:6px;padding:2px 7px;color:var(--text);white-space:nowrap}
+  .sub-note{display:block;margin-top:6px;font-size:14px;color:var(--text-faint)}
+
+  /* ---- Callouts ---- */
+  .call{display:flex;gap:13px;border-radius:14px;padding:15px 17px;margin:8px 0 22px;font-size:14.5px;line-height:1.5}
+  .call svg{width:19px;height:19px;flex-shrink:0;margin-top:2px;stroke-width:2;fill:none}
+  .call b{font-weight:700}
+  .call.teal{background:var(--teal-soft);border:1px solid var(--teal-line);color:var(--text-dim)}
+  .call.teal svg{stroke:var(--teal-2)}
+  .call.teal b{color:var(--teal-2)}
+  .call.amber{background:rgba(242,176,60,.1);border:1px solid rgba(242,176,60,.34);color:var(--text-dim)}
+  .call.amber svg{stroke:var(--amber)}
+  .call.amber b{color:var(--amber)}
+
+  /* ---- Privacy strip ---- */
+  .priv{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:640px){.priv{grid-template-columns:1fr}}
+  .priv > div{border:1px solid var(--line);border-radius:var(--r);padding:22px;background:rgba(255,255,255,.015)}
+  .priv h3{font-size:16px;font-weight:750;margin-bottom:14px;display:flex;align-items:center;gap:9px}
+  .priv h3 svg{width:18px;height:18px;stroke-width:2.2;fill:none}
+  .priv li{list-style:none;font-size:14.5px;color:var(--text-dim);padding:7px 0 7px 26px;position:relative}
+  .priv li::before{position:absolute;left:0;top:7px;font-family:var(--font-mono);font-size:13px}
+  .does h3 svg{stroke:var(--teal)}
+  .does li::before{content:"✓";color:var(--teal)}
+  .doesnt h3 svg{stroke:var(--text-faint)}
+  .doesnt li::before{content:"✕";color:var(--text-faint)}
+
+  /* ---- FAQ ---- */
+  details.faq{border-bottom:1px solid var(--line);padding:4px 0}
+  details.faq summary{list-style:none;cursor:pointer;padding:18px 40px 18px 0;font-weight:650;font-size:16.5px;position:relative}
+  details.faq summary::-webkit-details-marker{display:none}
+  details.faq summary::after{content:"+";position:absolute;right:6px;top:50%;transform:translateY(-50%);
+    font-family:var(--font-mono);font-size:20px;color:var(--teal-2);transition:.2s}
+  details.faq[open] summary::after{content:"–"}
+  details.faq p{padding:0 0 18px;color:var(--text-dim);font-size:15px;max-width:70ch}
+  details.faq p + p{padding-top:0}
+
+  /* ---- Closing CTA ---- */
+  .cta{text-align:center;border:1px solid var(--line);border-radius:24px;padding:48px 28px;background:
+      radial-gradient(90% 130% at 50% 0%, rgba(45,212,191,.09), transparent 60%),var(--card)}
+  .cta h2{margin-bottom:10px}
+  .cta p{color:var(--text-dim);max-width:48ch;margin:0 auto 24px}
+
+  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(8,13,26,.6);margin-top:40px}
+  .foot-in{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+  .foot-links{display:flex;gap:26px;flex-wrap:wrap}
+  .foot-links a{font-size:14px;color:var(--text-dim);transition:.15s}
+  .foot-links a:hover{color:var(--text)}
+  .foot-copy{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);letter-spacing:.02em}
+
+  .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,80px);background:var(--panel);
+    border:1px solid var(--teal-line);color:var(--text);padding:13px 20px;border-radius:13px;font-size:14.5px;font-weight:600;
+    box-shadow:0 18px 44px -18px #000;opacity:0;transition:.28s;z-index:80;pointer-events:none}
+  .toast.show{transform:translate(-50%,0);opacity:1}
+</style>
+</head>
+<body>
+<div class="sky"></div>
+
+<nav class="nav" id="nav">
+  <div class="nav-in">
+    <a href="index.html" class="logo"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow<span class="dot">.</span></a>
+    <div class="nav-links">
+      <a href="index.html#how">How it works</a>
+      <a href="index.html#features">Features</a>
+      <a href="index.html#faq">FAQ</a>
+      <a class="btn btn-primary" href="app.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow">Email intake</div>
+    <h1>Link your email once.<br>Never enter a date again.</h1>
+    <p class="lede">Every Dayflow account gets its own private forwarding address. Point your inbox at it and Dayflow reads each email as it arrives, pulls out the dates — practices, deadlines, shift changes, appointments — and files them on your timeline.</p>
+    <div class="mins"><b>~2 minutes</b> · one-time setup · works with any email provider</div>
+
+    <div class="addr" id="addrCard">
+      <span class="lbl">Your Dayflow address</span>
+      <div class="addr-row">
+        <code id="addrText" class="muted">Checking your account…</code>
+        <button class="btn btn-primary" id="copyBtn" hidden>Copy address</button>
+      </div>
+      <p class="note" id="addrNote">This is unique to you. Anything sent here lands in your timeline, so don't share it.</p>
+    </div>
+
+    <div class="why">
+      <div><b>Any provider</b>Gmail, Outlook, Yahoo, iCloud, or your school address — no Google sign-in needed.</div>
+      <div><b>Nothing to install</b>You're changing one setting in your email, not adding an app.</div>
+      <div><b>Off in one click</b>Turn forwarding off in your email settings whenever you like.</div>
+    </div>
+  </div>
+</header>
+
+<section id="setup">
+  <div class="wrap">
+    <div class="eyebrow">Step by step</div>
+    <h2>Pick your email provider</h2>
+    <p class="sub">The names of the buttons change, but it's the same idea everywhere: find <b>Forwarding</b> in your mail settings and paste your Dayflow address.</p>
+
+    <div class="tabs" role="tablist" aria-label="Email provider">
+      <button class="tab" role="tab" id="tab-gmail" aria-controls="p-gmail" aria-selected="true" data-p="gmail">
+        <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M3 7l9 6 9-6" stroke="#EA4335" stroke-width="2" stroke-linecap="round"/><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>Gmail</button>
+      <button class="tab" role="tab" id="tab-outlook" aria-controls="p-outlook" aria-selected="false" data-p="outlook">
+        <svg class="ic" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><circle cx="9" cy="12" r="3.2" stroke="#0F6CBD" stroke-width="2"/></svg>Outlook</button>
+      <button class="tab" role="tab" id="tab-yahoo" aria-controls="p-yahoo" aria-selected="false" data-p="yahoo">
+        <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M5 6l4.5 7v5M9.5 13L14.5 6" stroke="#7B0099" stroke-width="2" stroke-linecap="round"/><circle cx="18" cy="17" r="1.6" fill="#7B0099"/></svg>Yahoo</button>
+      <button class="tab" role="tab" id="tab-icloud" aria-controls="p-icloud" aria-selected="false" data-p="icloud">
+        <svg class="ic" viewBox="0 0 24 24" fill="none"><path d="M7 18a4 4 0 010-8 5.5 5.5 0 0110.5 1.5A3.5 3.5 0 0117 18H7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>iCloud</button>
+      <button class="tab" role="tab" id="tab-other" aria-controls="p-other" aria-selected="false" data-p="other">
+        <svg class="ic" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 7l8.5 6 8.5-6" stroke="currentColor" stroke-width="1.6"/></svg>Something else</button>
+    </div>
+
+    <!-- ===== Gmail ===== -->
+    <div class="panel" role="tabpanel" id="p-gmail" aria-labelledby="tab-gmail" tabindex="0">
+      <h3>Gmail (and Google Workspace)</h3>
+      <p class="intro">Gmail makes you confirm the address with a code. Dayflow catches that code for you — you never have to go hunting for it.</p>
+      <ol class="steps">
+        <li><b>Copy your Dayflow address</b> from the top of this page.</li>
+        <li>Open Gmail on a computer. Click the <span class="kbd">⚙ gear</span> in the top-right, then <b>See all settings</b>.
+          <span class="sub-note">Gmail's mobile app can't set up forwarding — you need a browser, but a phone browser works.</span></li>
+        <li>Go to the <b>Forwarding and POP/IMAP</b> tab and click <b>Add a forwarding address</b>.</li>
+        <li>Paste your Dayflow address, click <b>Next</b>, then <b>Proceed</b>.</li>
+        <li>Gmail sends a confirmation code to that address. <b>It shows up inside Dayflow</b> — open <a href="app.html" style="color:var(--teal-2)">the app</a> and look under <b>Connections → Emails</b>.
+          <span class="sub-note">It usually lands within a few seconds. Paste the code back into Gmail and hit <b>Verify</b>.</span></li>
+        <li>Back on the <b>Forwarding and POP/IMAP</b> tab, select <b>Forward a copy of incoming mail to</b> and choose your Dayflow address.</li>
+        <li>Leave the second dropdown on <b>keep Gmail's copy in the Inbox</b>, then click <b>Save Changes</b> at the very bottom.</li>
+      </ol>
+      <div class="call teal"><svg viewBox="0 0 24 24"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><b>Save Changes is easy to miss.</b> It's a small link at the bottom of a long settings page. If forwarding doesn't seem to work, this is almost always why.</span></div>
+      <div class="call amber"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <span><b>Don't want to forward everything?</b> Use <b>Filters and Blocked Addresses → Create a new filter</b>, match the senders you care about (your coach, your school, your job), and choose <b>Forward it to</b> your Dayflow address.</span></div>
+    </div>
+
+    <!-- ===== Outlook ===== -->
+    <div class="panel" role="tabpanel" id="p-outlook" aria-labelledby="tab-outlook" tabindex="0" hidden>
+      <h3>Outlook, Hotmail &amp; Microsoft 365</h3>
+      <p class="intro">This covers outlook.com, hotmail.com, live.com, and most school accounts running on Microsoft 365.</p>
+      <ol class="steps">
+        <li><b>Copy your Dayflow address</b> from the top of this page.</li>
+        <li>Open Outlook on the web and click the <span class="kbd">⚙ gear</span> in the top-right corner.</li>
+        <li>Choose <b>Mail</b> in the left column, then <b>Forwarding</b>.</li>
+        <li>Tick <b>Enable forwarding</b> and paste your Dayflow address into the box.</li>
+        <li>Tick <b>Keep a copy of forwarded messages</b> so mail still shows up in your own inbox.
+          <span class="sub-note">Without this, forwarded mail can skip your inbox entirely.</span></li>
+        <li>Click <b>Save</b>.</li>
+      </ol>
+      <div class="call amber"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <span><b>On a school or work account?</b> Many universities block forwarding to outside addresses, so the setting may be greyed out or your mail may bounce. If that happens, forward the specific emails you care about by hand, or ask your IT help desk whether external forwarding can be enabled.</span></div>
+      <div class="call teal"><svg viewBox="0 0 24 24"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><b>Only want certain mail?</b> Under <b>Mail → Rules</b>, create a rule with a condition (say, sender is your coach) and the action <b>Redirect to</b> your Dayflow address.</span></div>
+    </div>
+
+    <!-- ===== Yahoo ===== -->
+    <div class="panel" role="tabpanel" id="p-yahoo" aria-labelledby="tab-yahoo" tabindex="0" hidden>
+      <h3>Yahoo Mail</h3>
+      <p class="intro">Yahoo puts automatic forwarding behind its paid tier. If you're on the free plan, skip to the workaround below.</p>
+      <div class="call amber"><svg viewBox="0 0 24 24"><path d="M12 9v4M12 17h.01M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>
+        <span><b>Heads up:</b> automatic forwarding needs <b>Yahoo Mail Plus</b>, a paid subscription. Free accounts don't get the setting.</span></div>
+      <ol class="steps">
+        <li><b>Copy your Dayflow address</b> from the top of this page.</li>
+        <li>Open Yahoo Mail in a browser and click the <span class="kbd">⚙ gear</span>, then <b>More Settings</b>.</li>
+        <li>Choose <b>Mailboxes</b> in the left column and click on your Yahoo address.</li>
+        <li>Scroll to <b>Forwarding</b>, paste your Dayflow address, and click <b>Verify</b>.</li>
+        <li>Yahoo sends a confirmation link to that address. <b>Dayflow surfaces it for you</b> — open <a href="app.html" style="color:var(--teal-2)">the app</a> and check <b>Connections → Emails</b>.</li>
+        <li>Once verified, make sure forwarding is switched <b>on</b> and save.</li>
+      </ol>
+      <div class="call teal"><svg viewBox="0 0 24 24"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><b>On the free plan?</b> Forward the emails that matter by hand — open one, hit <b>Forward</b>, send it to your Dayflow address. The dates get filed exactly the same way.</span></div>
+    </div>
+
+    <!-- ===== iCloud ===== -->
+    <div class="panel" role="tabpanel" id="p-icloud" aria-labelledby="tab-icloud" tabindex="0" hidden>
+      <h3>iCloud Mail</h3>
+      <p class="intro">iCloud forwards to one address at a time, and the setting lives on iCloud.com rather than in the Mail app.</p>
+      <ol class="steps">
+        <li><b>Copy your Dayflow address</b> from the top of this page.</li>
+        <li>Go to <b>icloud.com/mail</b> in a browser and sign in.</li>
+        <li>Click the <span class="kbd">⚙ gear</span> at the top of the mailbox list, then <b>Settings</b> (older layouts call it <b>Preferences</b>).</li>
+        <li>Open the <b>General</b> tab and tick <b>Forward my email to:</b>.</li>
+        <li>Paste your Dayflow address into the field.</li>
+        <li>Leave <b>Delete messages after forwarding</b> <u>unchecked</u> — otherwise iCloud erases your mail once it's sent on.
+          <span class="sub-note">This one matters. Checked, your only copy leaves your inbox.</span></li>
+        <li>Click <b>Done</b>.</li>
+      </ol>
+      <div class="call teal"><svg viewBox="0 0 24 24"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><b>Already forwarding somewhere else?</b> iCloud only allows a single forwarding address. If yours is taken, set up a rule instead: <b>Settings → Rules → Add a Rule</b>, then <b>Forward to</b> your Dayflow address.</span></div>
+    </div>
+
+    <!-- ===== Other ===== -->
+    <div class="panel" role="tabpanel" id="p-other" aria-labelledby="tab-other" tabindex="0" hidden>
+      <h3>Any other email</h3>
+      <p class="intro">Proton, Zoho, Fastmail, your school's webmail, whatever your internet provider gave you — forwarding is a standard feature and the shape of it is always the same.</p>
+      <ol class="steps">
+        <li><b>Copy your Dayflow address</b> from the top of this page.</li>
+        <li>Open your email in a browser and find <b>Settings</b> — usually a gear icon.</li>
+        <li>Look for a section called <b>Forwarding</b>, <b>Auto-forward</b>, <b>Filters</b>, or <b>Rules</b>.
+          <span class="sub-note">Searching the web for "<i>your provider</i> + forward email automatically" gets you there fast.</span></li>
+        <li>Paste your Dayflow address as the destination and save.</li>
+        <li>If your provider emails a confirmation code or link, <b>look for it inside Dayflow</b> under <b>Connections → Emails</b> — that mail arrives at your Dayflow address, not your inbox.</li>
+        <li>Keep any "save a copy in my inbox" option turned on.</li>
+      </ol>
+      <div class="call teal"><svg viewBox="0 0 24 24"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+        <span><b>No forwarding setting anywhere?</b> You can always forward individual emails by hand. Open the message, tap <b>Forward</b>, and send it to your Dayflow address — same result, just one email at a time.</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <div class="eyebrow">What happens to your mail</div>
+    <h2>Dayflow is looking for dates. That's all.</h2>
+    <p class="sub">Forwarding your inbox is a real thing to trust someone with, so here's exactly what happens on the other end.</p>
+    <div class="priv">
+      <div class="does">
+        <h3><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>What it does</h3>
+        <ul>
+          <li>Reads each email for a date, a time, and a title</li>
+          <li>Files what it finds onto your timeline</li>
+          <li>Shows you the source email behind every event</li>
+          <li>Catches forwarding confirmation codes so you don't have to</li>
+        </ul>
+      </div>
+      <div class="doesnt">
+        <h3><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>What it doesn't</h3>
+        <ul>
+          <li>Sell or share your mail with anyone</li>
+          <li>Keep emails that hold no date — they're dropped</li>
+          <li>Reply, send, or act on anything in your name</li>
+          <li>Touch your inbox — forwarding is one-way, and copies stay with you</li>
+        </ul>
+      </div>
+    </div>
+    <div class="call teal" style="margin-top:20px"><svg viewBox="0 0 24 24"><path d="M12 16v-4M12 8h.01"/><circle cx="12" cy="12" r="9"/></svg>
+      <span><b>Your address is a secret.</b> Anyone who has it can put events on your timeline. Treat it like a password — don't post it, and don't hand it out.</span></div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="eyebrow">Loose ends</div>
+    <h2>Common questions</h2>
+    <div style="margin-top:24px">
+      <details class="faq"><summary>How long until my first email shows up?</summary>
+        <p>Seconds. Forward one email by hand as a test — if it has a date in it, the event appears on your timeline almost immediately. If nothing shows up after a minute, the email probably didn't contain a date Dayflow recognized.</p></details>
+      <details class="faq"><summary>Will my inbox get emptied out?</summary>
+        <p>No. Forwarding sends a <i>copy</i>. The original stays right where it is, as long as you leave options like Gmail's "keep Gmail's copy in the Inbox" or iCloud's "delete messages after forwarding" set the way this guide describes.</p></details>
+      <details class="faq"><summary>Can I link more than one inbox?</summary>
+        <p>Yes — point your school email, your personal email, and your work email at the same Dayflow address. Everything lands in one timeline. Free accounts can link one inbox; Pro removes the limit.</p></details>
+      <details class="faq"><summary>Gmail never sent me the confirmation code.</summary>
+        <p>The code goes to your Dayflow address, not your inbox, which is why it feels like it vanished. Open the app and look under <b>Connections → Emails</b> — Dayflow catches the code and shows it there. If it's still missing, double-check you pasted the address exactly, with no spaces on either end.</p></details>
+      <details class="faq"><summary>What about promos, receipts, and newsletters?</summary>
+        <p>Ignored. Dayflow only keeps an email if it can find a real date and event in it. Everything else is thrown away rather than stored.</p></details>
+      <details class="faq"><summary>How do I turn this off?</summary>
+        <p>Go back to the same forwarding setting in your email provider and switch it off. Dayflow stops receiving anything the moment you do — there's nothing to cancel on our end.</p></details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="cta">
+      <h2>Set it once. Forget it forever.</h2>
+      <p>Your address is waiting in the app, under Connections → Emails.</p>
+      <a class="btn btn-primary" href="app.html" style="padding:14px 24px;font-size:15.5px"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open Dayflow</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <a href="index.html" class="logo"><span class="mark"><svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg></span>Dayflow<span class="dot">.</span></a>
+    <div class="foot-links"><a href="index.html#how">How it works</a><a href="index.html#features">Features</a><a href="index.html#faq">FAQ</a><a href="app.html">Open the app</a></div>
+    <div class="foot-copy">© 2026 Dayflow · made for students &amp; student-athletes</div>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ---- nav shadow ---- */
+  var nav=document.getElementById('nav');
+  function onScroll(){nav.classList.toggle('scrolled',window.scrollY>10);}
+  onScroll();addEventListener('scroll',onScroll,{passive:true});
+
+  /* ---- toast ---- */
+  var toastEl=document.getElementById('toast'),toastT;
+  function toast(m){toastEl.textContent=m;toastEl.classList.add('show');clearTimeout(toastT);
+    toastT=setTimeout(function(){toastEl.classList.remove('show');},2200);}
+
+  /* ================= Provider tabs ================= */
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  function select(name,focus){
+    tabs.forEach(function(t){
+      var on=t.dataset.p===name;
+      t.setAttribute('aria-selected',on?'true':'false');
+      t.tabIndex=on?0:-1;
+      document.getElementById('p-'+t.dataset.p).hidden=!on;
+      if(on&&focus)t.focus();
+    });
+    if(history.replaceState)history.replaceState(null,'','#'+name);
+  }
+  tabs.forEach(function(t){t.addEventListener('click',function(){select(t.dataset.p);});});
+  // Arrow keys move between tabs, per the tablist pattern.
+  document.querySelector('.tabs').addEventListener('keydown',function(e){
+    var i=tabs.findIndex(function(t){return t.getAttribute('aria-selected')==='true';});
+    if(e.key==='ArrowRight')select(tabs[(i+1)%tabs.length].dataset.p,true);
+    else if(e.key==='ArrowLeft')select(tabs[(i-1+tabs.length)%tabs.length].dataset.p,true);
+    else return;
+    e.preventDefault();
+  });
+  var hash=(location.hash||'').slice(1);
+  if(tabs.some(function(t){return t.dataset.p===hash;}))select(hash);else select('gmail');
+
+  /* ================= The user's forwarding address ================= */
+  // Same project + publishable key as app.html. The address is stored on the
+  // user's row as `data.intake`; app.html mints it on first load, so a brand-new
+  // account that has never opened the app won't have one yet.
+  var SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',
+      SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
+  var addrText=document.getElementById('addrText'),
+      addrNote=document.getElementById('addrNote'),
+      copyBtn=document.getElementById('copyBtn'),
+      address='';
+
+  function show(text,note,muted){
+    addrText.textContent=text;
+    addrText.classList.toggle('muted',!!muted);
+    addrNote.innerHTML=note;
+    copyBtn.hidden=!!muted;
+  }
+
+  function signedOut(){
+    show('df-••••••••••••@dayflo.org',
+      '<a href="login.html">Sign in</a> to see the address for your account.',true);
+  }
+
+  (async function loadAddress(){
+    var sb=null;
+    try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){}
+    if(!sb){signedOut();return;}
+    try{
+      var s=await sb.auth.getSession();
+      var user=s&&s.data&&s.data.session&&s.data.session.user;
+      if(!user){signedOut();return;}
+      var res=await sb.from('user_state').select('data').eq('user_id',user.id).maybeSingle();
+      var token=res&&res.data&&res.data.data&&res.data.data.intake;
+      if(!token){
+        show('df-••••••••••••@dayflo.org',
+          'Your address is created the first time you open the app. <a href="app.html">Open Dayflow</a>, then come back here.',true);
+        return;
+      }
+      address=token+'@dayflo.org';
+      show(address,"This is unique to you. Anything sent here lands in your timeline, so don't share it.",false);
+    }catch(e){signedOut();}
+  })();
+
+  copyBtn.addEventListener('click',function(){
+    if(!address)return;
+    var done=function(){copyBtn.textContent='Copied ✓';copyBtn.classList.add('done');toast('Address copied ✓');
+      setTimeout(function(){copyBtn.textContent='Copy address';copyBtn.classList.remove('done');},2000);};
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(address).then(done,fallback);
+    }else fallback();
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=address;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      var ok=false;
+      try{ok=document.execCommand('copy');}catch(e){} // returns false rather than throwing when blocked
+      document.body.removeChild(ta);
+      if(ok)done();else toast('Select the address and copy it');
+    }
+  });
+})();
+</script>
+</body>
+</html>

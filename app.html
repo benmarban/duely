@@ -1268,8 +1268,7 @@
     box.innerHTML='<div class="gmail-card"><span class="gc-ic" style="color:var(--teal-2)">@</span>'+
       '<div class="gc-t"><b>Your forwarding address</b><span>'+esc(addr)+'</span></div>'+
       '<button class="btn sec" id="copyFwd" style="width:auto;padding:8px 13px;margin:0;flex-shrink:0">Copy</button></div>'+
-      '<details class="email-manual"><summary>Forward from any email (Outlook, school, anything)</summary>'+
-      '<p class="pane-hint" style="margin-top:10px">In your email\'s settings, add <b>'+esc(addr)+'</b> as a forwarding address (in Gmail: Settings → Forwarding and POP/IMAP → Add a forwarding address). Anything you forward there, Dayflow reads the dates from — automatically, forever.</p></details>';
+      '<a class="btn sec" href="forwarding.html" target="_blank" rel="noopener" style="width:auto;padding:8px 14px;margin:10px 0 2px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Show me how to forward →</a>';
   }
   (function(){var f=document.getElementById('fwdAddress');if(f)f.addEventListener('click',function(e){
     if(e.target.closest('#copyFwd')){var a=intakeAddr();if(a){try{navigator.clipboard.writeText(a);}catch(_){}toast('Address copied ✓');}}
