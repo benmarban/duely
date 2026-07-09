@@ -282,8 +282,9 @@
   .field{margin-top:14px;display:flex;flex-direction:column;gap:6px}
   .field label{font-size:12.5px;font-weight:600;color:var(--text-dim)}
   .field label .opt{color:var(--text-faint);font-weight:500}
-  .field input,textarea{background:var(--card);color:var(--text);border:1px solid var(--line-2);border-radius:10px;padding:11px 12px;font-size:14px;width:100%}
-  .field input:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+  .field input,.field select,textarea{background:var(--card);color:var(--text);border:1px solid var(--line-2);border-radius:10px;padding:11px 12px;font-size:14px;width:100%}
+  .field select{appearance:none;-webkit-appearance:none;cursor:pointer}
+  .field input:focus,.field select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
   .field input::placeholder,textarea::placeholder{color:var(--text-faint)}
   input[type=date],input[type=time]{color-scheme:dark}
   textarea{min-height:120px;resize:vertical;line-height:1.5;margin-top:14px}
@@ -580,6 +581,18 @@
         <button type="button" class="seg" data-cat="personal" style="--cc:var(--amber)">Personal</button>
       </div></div>
       <div class="field"><label>Day</label><input id="evDate" type="date"></div>
+      <div class="field-row" id="evRepeatRow">
+        <div class="field"><label>Repeat</label>
+          <select id="evRepeat">
+            <option value="none">Doesn't repeat</option>
+            <option value="daily">Every day</option>
+            <option value="weekly">Every week</option>
+            <option value="biweekly">Every 2 weeks</option>
+            <option value="monthly">Every month</option>
+          </select>
+        </div>
+        <div class="field" id="evUntilField" hidden><label>Until <span class="opt">(optional)</span></label><input id="evUntil" type="date"></div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Start</label><input id="evStart" type="time" value="15:30"></div>
         <div class="field"><label>End</label><input id="evEnd" type="time" value="17:00"></div>
@@ -1077,6 +1090,9 @@
     document.getElementById('evTitle').value='';document.getElementById('evLoc').value='';
     document.getElementById('evStart').value='15:30';document.getElementById('evEnd').value='17:00';
     setSeg('athletics');document.getElementById('evDate').value=isoDate(selDate&&curView()==='calendar'?selDate:now);
+    // Recurrence is offered only when creating; reset it and reveal the row.
+    document.getElementById('evRepeat').value='none';document.getElementById('evUntil').value='';
+    document.getElementById('evUntilField').hidden=true;document.getElementById('evRepeatRow').hidden=false;
     document.getElementById('evAdd').textContent='Add to my schedule';
   }
   function openEditModal(ev){
@@ -1085,7 +1101,31 @@
     document.getElementById('evTitle').value=ev.title;document.getElementById('evLoc').value=ev.loc||'';
     document.getElementById('evDate').value=ev.date;
     document.getElementById('evStart').value=pad(ev.sh)+':'+pad(ev.sm);document.getElementById('evEnd').value=pad(ev.eh)+':'+pad(ev.em);
-    setSeg(ev.cat);document.getElementById('evAdd').textContent='Save changes';
+    setSeg(ev.cat);
+    // Editing tweaks a single occurrence — hide the repeat controls so we don't re-expand.
+    document.getElementById('evRepeatRow').hidden=true;
+    document.getElementById('evAdd').textContent='Save changes';
+  }
+  // Show the "Until" date only when a repeat is chosen.
+  document.getElementById('evRepeat').addEventListener('change',function(){
+    document.getElementById('evUntilField').hidden=this.value==='none';
+  });
+  // Expand a recurrence into the list of dates it lands on (bounded).
+  function expandRecurrence(startIso,repeat,untilIso){
+    var p=startIso.split('-').map(Number);var d=new Date(p[0],p[1]-1,p[2]);
+    var end;
+    if(untilIso){var up=untilIso.split('-').map(Number);end=new Date(up[0],up[1]-1,up[2]);}
+    else{end=new Date(d);end.setMonth(end.getMonth()+4);} // no end date → 4-month horizon
+    var out=[],cap=120; // hard cap so a bad range can't create thousands
+    while(d<=end&&out.length<cap){
+      out.push(isoDate(d));
+      if(repeat==='daily')d.setDate(d.getDate()+1);
+      else if(repeat==='weekly')d.setDate(d.getDate()+7);
+      else if(repeat==='biweekly')d.setDate(d.getDate()+14);
+      else if(repeat==='monthly')d.setMonth(d.getMonth()+1);
+      else break;
+    }
+    return out;
   }
   function closeModal(){modalBg.classList.remove('show');}
   document.getElementById('mclose').addEventListener('click',closeModal);
@@ -1108,9 +1148,22 @@
     if(!st){toast('Add a start time');return;}
     const sp=st.split(':').map(Number);let sh=sp[0],sm=sp[1],eh,em;
     if(en){const ep=en.split(':').map(Number);eh=ep[0];em=ep[1];}else{eh=sh;em=sm;}
+    var added=1;
     if(editingId){const ev=USEREVENTS.find(x=>x.id===editingId);if(ev){ev.title=title;ev.cat=cat;ev.date=date;ev.sh=sh;ev.sm=sm;ev.eh=eh;ev.em=em;ev.loc=loc;}}
-    else{USEREVENTS.push({id:'e'+Date.now(),title:title,cat:cat,date:date,sh:sh,sm:sm,eh:eh,em:em,loc:loc});}
-    saveEvents();const wasEdit=!!editingId;editingId=null;closeModal();toast(wasEdit?'Event updated ✓':'Added to your schedule ✓');rerender();
+    else{
+      var repeat=document.getElementById('evRepeat').value||'none';
+      if(repeat==='none'){USEREVENTS.push({id:'e'+Date.now(),title:title,cat:cat,date:date,sh:sh,sm:sm,eh:eh,em:em,loc:loc});}
+      else{
+        var until=document.getElementById('evUntil').value||'';
+        var dates=expandRecurrence(date,repeat,until);
+        // Shared series id so deleting any one occurrence clears the whole run.
+        var series='ser'+Date.now();var base=Date.now();
+        dates.forEach(function(dt,i){USEREVENTS.push({id:'e'+base+'_'+i,title:title,cat:cat,date:dt,sh:sh,sm:sm,eh:eh,em:em,loc:loc,series:series});});
+        added=dates.length;
+      }
+    }
+    saveEvents();const wasEdit=!!editingId;editingId=null;closeModal();
+    toast(wasEdit?'Event updated ✓':(added>1?('Added '+added+' repeats ✓'):'Added to your schedule ✓'));rerender();
   });
   document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeConn();closeAsst();closePro();}});
 
@@ -1141,6 +1194,13 @@
   function deleteEvent(id){
     const idx=USEREVENTS.findIndex(x=>x.id===id);if(idx<0)return;
     const row=USEREVENTS[idx];
+    // A recurring occurrence: removing one clears the whole run (undo restores all).
+    if(row.series){
+      const removed=USEREVENTS.filter(x=>x.series===row.series);
+      USEREVENTS=USEREVENTS.filter(x=>x.series!==row.series);saveEvents();rerender();
+      toast('Recurring event removed ('+removed.length+')',function(){USEREVENTS=USEREVENTS.concat(removed);saveEvents();rerender();});
+      return;
+    }
     USEREVENTS.splice(idx,1);forget(id);saveEvents();saveDismissed();rerender();
     toast('Event removed',function(){unforget(id);USEREVENTS.splice(idx,0,row);saveEvents();saveDismissed();rerender();});
   }
