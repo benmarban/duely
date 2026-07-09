@@ -178,6 +178,22 @@ Deno.serve(async (req: Request) => {
     }
     if (!userId) return json({ ignored: true, reason: "no matching account", to: cleanAddress(to), from: cleanAddress(from) }, 200);
 
+    // Gmail forwarding confirmation? When a user points their Gmail at their df- address,
+    // Google emails a one-time code/link *to that address* — i.e. to us, not their inbox.
+    // Catch it and stash the code+link on their account so the app can show it, instead of
+    // letting Gemini try to make a calendar item out of it.
+    if (cleanAddress(from).includes("forwarding-noreply@google.com") || /forwarding confirmation/i.test(text)) {
+      const codeM = text.match(/(?:confirmation code:?\s*|\(#)\s*(\d{6,12})/i);
+      const urlM = text.match(/https:\/\/mail\.google\.com\/\S+/);
+      const code = codeM ? codeM[1] : "";
+      const url = urlM ? urlM[0].replace(/["')>\].,]+$/, "") : "";
+      const { data: r } = await supa.from("user_state").select("data").eq("user_id", userId).maybeSingle();
+      const s: any = (r && (r as any).data) || {};
+      s.fwdConfirm = { code, url, at: Date.now() };
+      await supa.from("user_state").upsert({ user_id: userId, data: s, updated_at: new Date().toISOString() });
+      return json({ ok: true, reason: "forwarding confirmation captured", hasCode: !!code, hasUrl: !!url });
+    }
+
     const { promotional, items: extracted } = await geminiExtract(text.slice(0, MAX_TEXT), from);
     if (promotional) return json({ ignored: true, reason: "promotional", from: cleanAddress(from) }, 200);
 
