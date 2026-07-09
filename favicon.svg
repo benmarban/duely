@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Dayflow mark. Same gradient and check as .logo .mark in index.html.
+       The tile is drawn edge-to-edge: at 16px a favicon has no room for padding,
+       and the rounded square reads as the shape rather than a dot in a field. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFB020"/>
+      <stop offset="1" stop-color="#C97A12"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#g)"/>
+  <path d="M46 21 L27 41 L18 32"
+        fill="none" stroke="#1B1204" stroke-width="7"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
