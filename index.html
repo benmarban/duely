@@ -64,7 +64,11 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth;background:var(--bg)}
   @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
-  body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
+  /* body must stay transparent. Because <html> carries a background, body's own
+     background stops propagating to the canvas and paints as a real box — which
+     buries every negative-z-index layer under it (.sky, .dots, .stars). The page
+     colour lives on <html> above. */
+  body{background:transparent;color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   img{max-width:100%;display:block}
@@ -80,7 +84,27 @@
   :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:3px;border-radius:6px}
 
   /* ---- Sky: fixed ambient layer whose hue is set by scroll ---- */
-  .sky{position:fixed;inset:0;z-index:-2;pointer-events:none;
+  /* ---- Dot grid ----
+     Base dots are faint enough to read as paper texture, not decoration. The
+     cursor lights solar dots inside a 220px radius. Two layers rather than one
+     animated color, because masking a static gradient never repaints the grid.
+     Stacking order: sky (-3) → dots (-2) → stars (-1) → content. */
+  /* The vignette is centred, not top-anchored: this layer is fixed to the viewport,
+     so a mask that fades downward would erase the grid below the fold forever. */
+  .dots{position:fixed;inset:0;z-index:-2;pointer-events:none;
+    background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.13) 1px, transparent 0);
+    background-size:26px 26px;
+    -webkit-mask-image:radial-gradient(ellipse 75% 75% at 50% 45%, #000 40%, transparent 100%);
+    mask-image:radial-gradient(ellipse 75% 75% at 50% 45%, #000 40%, transparent 100%)}
+  /* --mx/--my start off-screen so nothing glows until the pointer actually moves. */
+  .dots::after{content:"";position:absolute;inset:0;
+    background-image:radial-gradient(circle at 1px 1px, var(--solar) 1px, transparent 0);
+    background-size:26px 26px;opacity:.65;
+    -webkit-mask-image:radial-gradient(240px circle at var(--mx,-999px) var(--my,-999px), #000 0%, transparent 70%);
+    mask-image:radial-gradient(240px circle at var(--mx,-999px) var(--my,-999px), #000 0%, transparent 70%)}
+  @media (prefers-reduced-transparency:reduce){.dots{display:none}}
+
+  .sky{position:fixed;inset:0;z-index:-3;pointer-events:none;
     background:
       radial-gradient(120% 78% at 50% -12%, rgba(var(--sky-1),var(--sky-a1)) 0%, transparent 56%),
       radial-gradient(90% 60% at 82% 8%, rgba(var(--sky-2),var(--sky-a2)) 0%, transparent 60%),
@@ -400,7 +424,7 @@
   .feat,.step{position:relative}
   .feat::before,.step::before{content:"";position:absolute;inset:0;border-radius:inherit;
     pointer-events:none;opacity:0;transition:opacity .35s var(--spring);
-    background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),
+    background:radial-gradient(340px circle at var(--cx,50%) var(--cy,50%),
       rgba(255,176,32,.10),transparent 45%)}
   .feat:hover::before,.step:hover::before{opacity:1}
 
@@ -449,6 +473,7 @@
 
 <!-- Ambient sky (hue set by scroll) + starfield -->
 <div class="sky" id="sky" aria-hidden="true"></div>
+<div class="dots" aria-hidden="true"></div>
 <div class="stars" aria-hidden="true"><canvas id="starCanvas"></canvas></div>
 
 <!-- Global scroll progress -->
@@ -955,6 +980,23 @@
    MOTION — word reveal, spotlight, magnetic buttons, card tilt.
    Everything here is a no-op when the user asks for reduced motion.
    ============================================================ */
+/* Dot-grid spotlight. Lives outside the reduced-motion guard below: it responds to
+   the pointer rather than moving on its own, so it isn't vestibular. Fine pointers
+   only — there's nothing to follow on a touchscreen. */
+(function(){
+  if (!window.matchMedia || !window.matchMedia('(pointer:fine)').matches) return;
+  var x = 0, y = 0, raf = 0, root = document.documentElement;
+  addEventListener('pointermove', function(e){
+    x = e.clientX; y = e.clientY;
+    if (!raf) raf = requestAnimationFrame(paint);
+  }, {passive:true});
+  function paint(){
+    raf = 0;
+    root.style.setProperty('--mx', x + 'px');
+    root.style.setProperty('--my', y + 'px');
+  }
+})();
+
 (function(){
   "use strict";
   var mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)');
@@ -1000,8 +1042,8 @@
   document.querySelectorAll('.feat,.step').forEach(function(card){
     card.addEventListener('pointermove', function(e){
       var r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
-      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+      card.style.setProperty('--cx', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--cy', ((e.clientY - r.top) / r.height * 100) + '%');
     });
   });
 
