@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Dayflow pulls your entire day - class, practice, film, work shifts, and deadlines - into one timeline, sorted by what's next.">
-<meta name="theme-color" content="#080D1A">
+<meta name="theme-color" content="#0A0912">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -17,22 +17,42 @@
      Single-theme by design.
      ============================================================ */
   :root{
-    /* Constant dark base — keeps text contrast safe at every scroll depth */
-    --bg:#080D1A; --bg-2:#0A1122; --panel:#0F1A30; --card:#0E1728; --card-2:#101d33;
-    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
-    --text:#EDF2FB; --text-dim:#98A7C2; --text-faint:#61708C;
+    /* ---- Dusk & Solar. See DESIGN.md. ----
+       Plum-black night, sunrise-amber brand. The old names (--teal, --rose…) survive
+       as aliases so ~1300 lines of rules keep resolving; only these values moved. */
 
-    /* Category system — the language of the timeline */
-    --teal:#2DD4BF; --teal-2:#6BEAD9; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.34);
-    --rose:#F4699A; --rose-soft:rgba(244,105,154,.13); --rose-line:rgba(244,105,154,.4);
-    --violet:#9A7BFF; --violet-soft:rgba(154,123,255,.13); --violet-line:rgba(154,123,255,.4);
-    --amber:#F2B03C; --red:#F86A5B;
-    --blue:#5B92F5;
+    /* Night — warm-shifted black, not blue-black. Softer at 6am in a dark room. */
+    --bg:#0A0912; --bg-2:#100E1C; --panel:#171528; --card:#14121F; --card-2:#1A1830;
+    --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+    --text:#ECEAF5; --text-dim:#A09CB8; --text-faint:#6B6785;
 
-    /* Sky — the two ambient glow colors, driven by scroll (JS). Dawn defaults. */
-    --sky-1:232,163,23;   /* warm amber */
-    --sky-2:244,105,154;  /* rose */
-    --sky-a1:.16; --sky-a2:.10;
+    /* Brand */
+    --solar:#FFB020; --solar-2:#FFD27A; --solar-deep:#C97A12;
+    --solar-soft:rgba(255,176,32,.12); --solar-line:rgba(255,176,32,.34);
+    --ink:#1B1204;                 /* text ON solar. Never --text on a solar fill. */
+
+    /* Categories — a spectrum across the day, not arbitrary labels */
+    --iris:#8B7CFF;  --iris-soft:rgba(139,124,255,.13);  --iris-line:rgba(139,124,255,.4);
+    --coral:#FF6B57; --coral-soft:rgba(255,107,87,.13);  --coral-line:rgba(255,107,87,.4);
+    --mint:#46E0B0;  --mint-soft:rgba(70,224,176,.13);
+    --azure:#58A6FF;
+    --danger:#FF4D6A;
+
+    /* Aliases — old names, new blood */
+    --teal:var(--solar); --teal-2:var(--solar-2);
+    --teal-soft:var(--solar-soft); --teal-line:var(--solar-line);
+    --rose:#F2568C; --rose-soft:rgba(242,86,140,.13); --rose-line:rgba(242,86,140,.4);
+    --violet:var(--iris); --violet-soft:var(--iris-soft); --violet-line:var(--iris-line);
+    --amber:var(--solar); --red:var(--coral); --blue:var(--azure);
+
+    /* Sky — ambient glow, hue driven by scroll depth (JS). Dawn defaults. */
+    --sky-1:255,176,32;   /* solar */
+    --sky-2:255,107,87;   /* coral */
+    --sky-a1:.15; --sky-a2:.10;
+
+    /* Motion — critically damped by default. Bounce is earned, not given. */
+    --spring:cubic-bezier(.32,.72,0,1);
+    --spring-bounce:cubic-bezier(.34,1.46,.64,1);
 
     --r:18px;
     --font:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
@@ -48,8 +68,13 @@
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
   img{max-width:100%;display:block}
-  ::selection{background:var(--teal);color:#04141a}
-  h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;line-height:1.03;text-wrap:balance}
+  ::selection{background:var(--teal);color:#1B1204}
+  /* Tracking is size-specific — letters read too far apart as type grows, and too
+     tight when it shrinks. One global letter-spacing is always wrong somewhere. */
+  h1,h2,h3{font-family:var(--font-display);text-wrap:balance;font-optical-sizing:auto}
+  h1{letter-spacing:-.035em;line-height:1.02}
+  h2{letter-spacing:-.028em;line-height:1.06}
+  h3{letter-spacing:-.018em;line-height:1.2}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
   .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--teal-2)}
   :focus-visible{outline:2.5px solid var(--teal-2);outline-offset:3px;border-radius:6px}
@@ -70,18 +95,28 @@
     background:linear-gradient(90deg,var(--teal),var(--teal-2));box-shadow:0 0 12px var(--teal-line)}
 
   /* ---- Nav ---- */
-  .nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:.3s;border-bottom:1px solid transparent}
-  .nav.scrolled{background:rgba(8,13,26,.78);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom-color:var(--line)}
+  .nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .3s var(--spring),backdrop-filter .3s var(--spring)}
+  /* A translucent material with content scrolling under it — and a scroll-edge fade
+     where they meet, instead of a hard 1px rule. The bright top edge is light
+     catching the surface. */
+  .nav.scrolled{background:rgba(10,9,18,.72);
+    backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
+    border-top:1px solid rgba(255,255,255,.06)}
+  .nav.scrolled::after{content:"";position:absolute;left:0;right:0;top:100%;height:22px;pointer-events:none;
+    background:linear-gradient(to bottom,rgba(10,9,18,.55),transparent);
+    -webkit-mask-image:linear-gradient(to bottom,#000,transparent);mask-image:linear-gradient(to bottom,#000,transparent)}
   .nav-in{max-width:var(--maxw);margin:0 auto;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
   .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.02em}
-  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#0E9E8E);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
-  .logo .mark svg{width:17px;height:17px;stroke:#04141a;stroke-width:2.7;fill:none}
+  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#C97A12);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
+  .logo .mark svg{width:17px;height:17px;stroke:#1B1204;stroke-width:2.7;fill:none}
   .logo .dot{color:var(--teal)}
   .nav-links{display:flex;align-items:center;gap:30px}
-  .nav-links a{font-size:14px;font-weight:500;color:var(--text-dim);transition:.15s}
-  .nav-links a:hover{color:var(--text)}
+  /* :not(.btn) matters — a bare `.nav-links a` outranks `.btn-primary` and was
+     painting the CTA label --text-dim on a solid brand fill. */
+  .nav-links a:not(.btn){font-size:14px;font-weight:500;color:var(--text-dim);transition:.15s}
+  .nav-links a:not(.btn):hover{color:var(--text)}
   .btn{display:inline-flex;align-items:center;gap:8px;font-weight:650;border-radius:12px;transition:transform .16s,background .16s,border-color .16s,box-shadow .16s;white-space:nowrap;line-height:1}
-  .btn-primary{background:var(--teal);color:#04141a;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
+  .btn-primary{background:var(--teal);color:#1B1204;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
   .btn-primary:hover{background:var(--teal-2);transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--teal-line)}
   .btn-primary svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none}
   .btn-ghost{background:rgba(255,255,255,.03);color:var(--text);padding:12px 19px;font-size:14.5px;border:1px solid var(--line-2)}
@@ -110,7 +145,7 @@
   .rail-now{position:absolute;left:50%;top:15vh;transform:translate(-50%,-50%);z-index:2;
     display:flex;align-items:center;gap:0;pointer-events:none}
   .rail-now .ring{width:15px;height:15px;border-radius:50%;background:var(--bg);border:2px solid var(--teal);
-    box-shadow:0 0 0 4px rgba(45,212,191,.15),0 0 16px var(--teal);position:relative}
+    box-shadow:0 0 0 4px rgba(255,176,32,.15),0 0 16px var(--teal);position:relative}
   .rail-now .ring::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--teal)}
 
   /* ============================================================
@@ -133,9 +168,9 @@
   .kicker{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;font-weight:500;
     color:var(--teal-2);background:var(--teal-soft);border:1px solid var(--teal-line);padding:7px 13px;border-radius:999px;letter-spacing:.02em}
   .kicker .spark{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 0 var(--teal);animation:pulse 2.6s infinite}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(45,212,191,.55)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,176,32,.55)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
   h1.hero-h{font-size:clamp(38px,5.4vw,66px);font-weight:800;margin:24px 0 0;letter-spacing:-.035em;overflow-wrap:break-word;max-width:15ch}
-  h1.hero-h .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal) 55%,#0FA396);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  h1.hero-h .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal) 55%,#D98A16);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
   .hero-sub{font-size:clamp(16px,2vw,19px);color:var(--text-dim);max-width:40ch;margin:24px 0 0;line-height:1.62}
   .hero-cta{display:flex;gap:13px;margin-top:34px;flex-wrap:wrap;align-items:center}
   .hero-note{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:flex;align-items:center;gap:8px}
@@ -193,35 +228,35 @@
   .appcard .as{font-size:11.5px;color:var(--text-faint);margin-top:1px}
   .appcard.miss{border-style:dashed;opacity:.85}
   .appcard.miss .badge{position:absolute;top:-8px;right:10px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--red);background:#1a1017;border:1px solid rgba(248,106,91,.4);padding:2px 8px;border-radius:999px}
+    color:var(--red);background:#1a1017;border:1px solid rgba(255,107,87,.4);padding:2px 8px;border-radius:999px}
   .scramble-copy h3{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-.03em}
   .scramble-copy p{color:var(--text-dim);font-size:16px;line-height:1.62;margin-top:16px}
 
   /* ---- Product showcase browser mock (09:00) ---- */
   .showcase{position:relative}
   .browser{position:relative;max-width:920px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid var(--line-2);
-    box-shadow:0 50px 110px -36px rgba(0,0,0,.9),0 0 0 1px rgba(45,212,191,.12)}
+    box-shadow:0 50px 110px -36px rgba(0,0,0,.9),0 0 0 1px rgba(255,176,32,.12)}
   .bbar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#0a1120;border-bottom:1px solid rgba(255,255,255,.08)}
   .bdot{width:11px;height:11px;border-radius:50%}
   .bdot.r{background:#ff5f57}.bdot.y{background:#febc2e}.bdot.g{background:#28c840}
   .burl{margin:0 auto;font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);background:#0f1a2e;border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 18px}
-  .bapp{display:grid;grid-template-columns:168px 1fr;background:#F4F7FC;color:#12201b}
+  .bapp{display:grid;grid-template-columns:168px 1fr;background:#F4F7FC;color:#201603}
   .msb{background:#fff;border-right:1px solid #E5EAF3;padding:16px 12px}
-  .msb-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:18px;font-family:var(--font-display);letter-spacing:-.02em;color:#12201b}
-  .msb-logo .m{width:23px;height:23px;border-radius:7px;background:linear-gradient(140deg,#0D9488,#0EA5A5);display:grid;place-items:center}
+  .msb-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;margin-bottom:18px;font-family:var(--font-display);letter-spacing:-.02em;color:#201603}
+  .msb-logo .m{width:23px;height:23px;border-radius:7px;background:linear-gradient(140deg,#C97A12,#D98A16);display:grid;place-items:center}
   .msb-logo .m svg{width:12px;height:12px;stroke:#fff;stroke-width:2.7;fill:none}
   .msb-item{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:#5A6A72;padding:8px 10px;border-radius:9px}
   .msb-item svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.9;fill:none}
-  .msb-item.on{background:#D9F3EF;color:#0F766E}
+  .msb-item.on{background:#D9F3EF;color:#8F560C}
   .mmain{padding:18px 20px 22px}
-  .mmain h4{font-family:var(--font-display);font-size:18px;font-weight:800;color:#12201b;letter-spacing:-.02em}
+  .mmain h4{font-family:var(--font-display);font-size:18px;font-weight:800;color:#201603;letter-spacing:-.02em}
   .mmain .msub{font-family:var(--font-mono);font-size:11px;color:#8791A3;margin:3px 0 14px;letter-spacing:.02em}
   .mrow{display:flex;gap:11px;padding:7px 0}
   .mrow+.mrow{border-top:1px solid #EEF1F8}
   .mtime{width:50px;text-align:right;font-family:var(--font-mono);font-size:10.5px;font-weight:500;color:#8791A3;font-variant-numeric:tabular-nums;padding-top:10px;flex-shrink:0}
   .mdot{width:9px;height:9px;border-radius:50%;margin-top:11px;flex-shrink:0;box-shadow:0 0 0 3px #fff}
   .mcard{flex:1;min-width:0;background:#F1F5FB;border:1px solid #E5EAF3;border-left:3px solid var(--cc);border-radius:10px;padding:8px 12px}
-  .mcard .mt{font-size:13px;font-weight:650;color:#12201b}
+  .mcard .mt{font-size:13px;font-weight:650;color:#201603}
   .mcard .mm{font-size:11px;color:#5A6A72;margin-top:3px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .mchip{font-family:var(--font-mono);font-size:9px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px;color:var(--cc);background:color-mix(in srgb,var(--cc) 13%,transparent)}
   .mnow{display:flex;align-items:center;gap:8px;margin:6px 0 6px 61px;font-family:var(--font-mono);font-size:9px;font-weight:700;color:#CE4038;letter-spacing:.12em}
@@ -248,20 +283,26 @@
   .ps-img{position:relative;border-radius:22px;overflow:hidden;border:1px solid var(--line-2);
     box-shadow:0 40px 80px -30px rgba(0,0,0,.85);aspect-ratio:4/5;max-height:560px}
   .ps-img img{width:100%;height:100%;object-fit:cover}
-  .ps-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,13,26,.5),transparent 45%)}
+  .ps-img::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(10,9,18,.5),transparent 45%)}
   .ps-tag{position:absolute;left:16px;bottom:16px;z-index:2;display:flex;align-items:center;gap:9px;
-    font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:rgba(8,13,26,.6);
+    font-family:var(--font-mono);font-size:11px;font-weight:500;color:#fff;background:rgba(10,9,18,.6);
     border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(8px);padding:8px 12px;border-radius:999px}
   .ps-tag .cd{width:8px;height:8px;border-radius:50%;background:var(--cc,var(--rose));box-shadow:0 0 8px var(--cc,var(--rose))}
   .ps-copy h3{font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:14px 0}
   .ps-copy p{color:var(--text-dim);font-size:16.5px;line-height:1.62;margin-bottom:24px}
 
   /* ---- Dusk photo band: campus sunset (18:00) ---- */
-  .band-photo{position:relative;min-height:520px;display:flex;align-items:center;overflow:hidden}
-  .band-photo>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .band-photo{position:relative;min-height:520px;display:flex;align-items:center;overflow:hidden;isolation:isolate}
+  /* Duotone: crush the photo to luminance, then re-tint it iris-in-shadow,
+     solar-in-highlight so it belongs to the palette instead of sitting on top of it. */
+  .band-photo>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;
+    filter:grayscale(1) contrast(1.12) brightness(.82)}
+  .band-photo::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+    background:linear-gradient(140deg,var(--iris),var(--solar));
+    mix-blend-mode:color;opacity:.62}
   .band-photo::after{content:"";position:absolute;inset:0;z-index:1;
-    background:linear-gradient(105deg,rgba(8,13,26,.94),rgba(8,13,26,.6) 48%,rgba(20,10,4,.25) 78%,transparent),
-               linear-gradient(to top,rgba(8,13,26,.85),transparent 40%)}
+    background:linear-gradient(105deg,rgba(10,9,18,.94),rgba(10,9,18,.6) 48%,rgba(27,18,4,.25) 78%,transparent),
+               linear-gradient(to top,rgba(10,9,18,.88),transparent 42%)}
   .band-photo .inner{position:relative;z-index:2;width:100%}
   .band-photo .moment{margin-bottom:20px}
   .band-photo h2{font-size:clamp(30px,5vw,56px);font-weight:800;max-width:15ch;letter-spacing:-.035em}
@@ -282,7 +323,7 @@
   .midnight{text-align:center;position:relative;padding:70px 44px;border-radius:26px;overflow:hidden;
     background:linear-gradient(160deg,#140c14,#0b1122);border:1px solid var(--line-2)}
   .midnight::after{content:"";position:absolute;top:-45%;left:50%;transform:translateX(-50%);width:640px;height:420px;max-width:90vw;
-    background:radial-gradient(closest-side,rgba(248,106,91,.16),transparent 70%);pointer-events:none}
+    background:radial-gradient(closest-side,rgba(255,107,87,.16),transparent 70%);pointer-events:none}
   .midnight h2{font-size:clamp(28px,4.2vw,44px);font-weight:800;max-width:20ch;margin:14px auto 0;position:relative;letter-spacing:-.03em}
   .midnight h2 .accent{color:var(--teal)}
   .midnight p{color:var(--text-dim);font-size:16.5px;margin:18px auto 0;max-width:46ch;position:relative}
@@ -302,7 +343,7 @@
   /* ---- Final CTA: tomorrow, dawn again (loop) ---- */
   .final{position:relative;min-height:560px;display:flex;align-items:center;overflow:hidden}
   .final>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 35%;z-index:0}
-  .final::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,var(--bg),rgba(8,13,26,.72) 45%,rgba(8,13,26,.55))}
+  .final::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(to top,var(--bg),rgba(10,9,18,.72) 45%,rgba(10,9,18,.55))}
   .final .inner{position:relative;z-index:2;width:100%;text-align:center}
   .final h2{font-size:clamp(32px,5vw,58px);font-weight:800;letter-spacing:-.035em;max-width:18ch;margin:16px auto 0}
   .final h2 .grad{background:linear-gradient(100deg,var(--teal-2),var(--teal));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -310,7 +351,7 @@
   .final .btn-primary{padding:15px 28px;font-size:16px}
 
   /* ---- Footer ---- */
-  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(8,13,26,.6)}
+  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(10,9,18,.6)}
   .foot-in{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .foot-links{display:flex;gap:26px;flex-wrap:wrap}
   .foot-links a{font-size:14px;color:var(--text-dim);transition:.15s}
@@ -318,9 +359,25 @@
   .foot-copy{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);letter-spacing:.02em}
 
   /* ---- Scroll reveal ---- */
-  .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+  /* Rise, don't slide. 12px is enough to read as arrival; 24px reads as travel. */
+  .reveal{opacity:0;transform:translateY(12px);transition:opacity .55s var(--spring),transform .55s var(--spring)}
   .reveal.in{opacity:1;transform:none}
-  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.kicker .spark{animation:none}}
+
+  /* Reduced motion is not "no feedback" — it's a gentler, non-vestibular equivalent.
+     Keep the cross-fade, drop the travel. */
+  @media (prefers-reduced-motion:reduce){
+    .reveal{transform:none;transition:opacity .3s ease}
+    .kicker .spark,.aurora{animation:none}
+    *{scroll-behavior:auto}
+  }
+  /* Frostier, not see-through, when the user asks for less transparency. */
+  @media (prefers-reduced-transparency:reduce){
+    .nav.scrolled{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
+  }
+
+  /* Press feedback fires on pointer-down, not on click. Waiting for the release
+     to acknowledge a tap is the single cheapest way to feel dead. */
+  .btn:active{transform:scale(.97);transition:transform 100ms ease-out}
 
   /* ---- Responsive ---- */
   @media (max-width:900px){
@@ -377,7 +434,7 @@
 <a id="top"></a>
 
 <!-- ========================= HERO · 06:30 ========================= -->
-<header class="hero" data-time="6.5" data-cc="#2DD4BF">
+<header class="hero" data-time="6.5" data-cc="#FFB020">
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <span class="kicker"><span class="spark"></span> One timeline · class to curfew</span>
@@ -410,9 +467,9 @@
 </header>
 
 <!-- ========================= PROBLEM · 08:00 ========================= -->
-<section class="blk" data-time="8" data-cc="#F86A5B">
+<section class="blk" data-time="8" data-cc="#FF6B57">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#F86A5B">
+    <div class="moment reveal" style="--cc:#FF6B57">
       <span class="clock"><span class="cd"></span>8:00 AM</span>
       <span class="label">The morning scramble</span>
       <span class="rule"></span>
@@ -434,9 +491,9 @@
 </section>
 
 <!-- ========================= CLASS · 09:00 (product) ========================= -->
-<section class="blk showcase" id="product" data-time="9" data-cc="#2DD4BF">
+<section class="blk showcase" id="product" data-time="9" data-cc="#FFB020">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#2DD4BF">
+    <div class="moment reveal" style="--cc:#FFB020">
       <span class="clock"><span class="cd"></span>9:00 AM</span>
       <span class="label">First on the timeline · Class</span>
       <span class="rule"></span>
@@ -459,7 +516,7 @@
         <div class="mmain">
           <h4>Your day</h4>
           <div class="msub">TUE · JULY 7</div>
-          <div class="mrow" style="--cc:#0D9488"><div class="mtime">9:00 AM</div><span class="mdot" style="background:#0D9488"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
+          <div class="mrow" style="--cc:#C97A12"><div class="mtime">9:00 AM</div><span class="mdot" style="background:#C97A12"></span><div class="mcard"><div class="mt">MATH 231 · Lecture</div><div class="mm"><span class="mchip">Class</span>Warren Hall 210</div></div></div>
           <div class="mrow" style="--cc:#E0568A"><div class="mtime">12:30 PM</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Offense film</div><div class="mm"><span class="mchip">Athletics</span>East classroom</div></div></div>
           <div class="mnow"><span class="l"></span>NOW · 2:14 PM</div>
           <div class="mrow" style="--cc:#E0568A"><div class="mtime">3:30 PM</div><span class="mdot" style="background:#E0568A"></span><div class="mcard"><div class="mt">Practice</div><div class="mm"><span class="mchip">Athletics</span>Main field</div></div></div>
@@ -482,9 +539,9 @@
 </section>
 
 <!-- ========================= HOW · 12:30 ========================= -->
-<section class="blk" id="how" data-time="12.5" data-cc="#F4699A">
+<section class="blk" id="how" data-time="12.5" data-cc="#46E0B0">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#F4699A">
+    <div class="moment reveal" style="--cc:#F2568C">
       <span class="clock"><span class="cd"></span>12:30 PM</span>
       <span class="label">Film session · Athletics built in</span>
       <span class="rule"></span>
@@ -517,9 +574,9 @@
 </section>
 
 <!-- ========================= PRACTICE · 15:30 (photo) ========================= -->
-<section class="blk" data-time="15.5" data-cc="#F4699A">
+<section class="blk" data-time="15.5" data-cc="#F2568C">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#F4699A">
+    <div class="moment reveal" style="--cc:#F2568C">
       <span class="clock"><span class="cd"></span>3:30 PM</span>
       <span class="label">Practice · Main field</span>
       <span class="rule"></span>
@@ -540,10 +597,10 @@
 </section>
 
 <!-- ========================= WORK · 18:00 (campus sunset band) ========================= -->
-<section class="band-photo" data-time="18" data-cc="#9A7BFF">
+<section class="band-photo" data-time="18" data-cc="#8B7CFF">
   <img src="images/campus.jpg" alt="A university campus building glowing at sunset" loading="lazy" width="1600" height="1200">
   <div class="wrap inner">
-    <div class="moment reveal" style="--cc:#9A7BFF">
+    <div class="moment reveal" style="--cc:#8B7CFF">
       <span class="clock" style="background:rgba(0,0,0,.35);border-color:rgba(255,255,255,.2)"><span class="cd"></span>6:00 PM</span>
       <span class="label" style="color:#C7D2E4">Sun's down · you're on shift</span>
       <span class="rule" style="background:linear-gradient(to right,rgba(255,255,255,.3),transparent)"></span>
@@ -555,9 +612,9 @@
 </section>
 
 <!-- ========================= FEATURES · 21:00 ========================= -->
-<section class="blk" id="features" data-time="21" data-cc="#5B92F5">
+<section class="blk" id="features" data-time="21" data-cc="#58A6FF">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#5B92F5">
+    <div class="moment reveal" style="--cc:#58A6FF">
       <span class="clock"><span class="cd"></span>9:00 PM</span>
       <span class="label">Back at the desk · Homework</span>
       <span class="rule"></span>
@@ -578,9 +635,9 @@
 </section>
 
 <!-- ========================= MIDNIGHT + FAQ · 23:59 ========================= -->
-<section class="blk" id="faq" data-time="23.9" data-cc="#F86A5B">
+<section class="blk" id="faq" data-time="23.9" data-cc="#8B7CFF">
   <div class="wrap">
-    <div class="moment reveal" style="--cc:#F86A5B">
+    <div class="moment reveal" style="--cc:#FF6B57">
       <span class="clock"><span class="cd"></span>11:59 PM</span>
       <span class="label">The deadline · nothing slips</span>
       <span class="rule"></span>
@@ -601,7 +658,7 @@
 </section>
 
 <!-- ========================= TOMORROW · dawn again (loop) ========================= -->
-<section class="final" data-time="6.5" data-cc="#2DD4BF">
+<section class="final" data-time="6.5" data-cc="#FFB020">
   <img src="images/walking.jpg" alt="Students walking across campus with backpacks in the morning" loading="lazy" width="1080" height="1600">
   <div class="wrap inner">
     <div class="reveal">
@@ -657,12 +714,12 @@
      Keyframes: [progress, glow rgb, accent rgb, a1, a2]
      ============================================================ */
   var SKY = [
-    [0.00, [232,163,23],  [244,105,154], .17, .11],  // dawn — amber + rose
-    [0.22, [45,212,191],  [91,146,245],  .14, .08],  // morning — teal + blue
-    [0.50, [91,146,245],  [45,212,191],  .13, .08],  // midday — cool
-    [0.68, [240,128,60],  [200,86,138],  .20, .13],  // dusk — orange/magenta (campus sunset)
-    [0.86, [76,58,120],   [45,212,191],  .16, .10],  // twilight — violet
-    [1.00, [30,60,150],   [45,212,191],  .13, .10]   // night — deep blue + teal
+    [0.00, [255,176,32],  [255,107,87],  .18, .12],  // dawn — solar + coral
+    [0.22, [255,190,90],  [70,224,176],  .15, .08],  // morning — gold cooling to mint
+    [0.50, [70,224,176],  [88,166,255],  .12, .07],  // midday — mint + azure, the coolest point
+    [0.68, [255,122,60],  [242,86,140],  .21, .14],  // dusk — the campus sunset band
+    [0.86, [139,124,255], [242,86,140],  .17, .10],  // twilight — iris
+    [1.00, [60,50,140],   [255,176,32],  .14, .10]   // night — deep iris, one lamp still on
   ];
   function lerp(a,b,t){ return a+(b-a)*t; }
   function mix(c1,c2,t){ return [Math.round(lerp(c1[0],c2[0],t)),Math.round(lerp(c1[1],c2[1],t)),Math.round(lerp(c1[2],c2[2],t))]; }
@@ -695,9 +752,9 @@
   var timeSections=[].slice.call(document.querySelectorAll('[data-time]'));
   // Build a tick per unique labelled moment (skip the final dawn loop dup + hero)
   var railStops=[
-    {t:'6:30a', cc:'#2DD4BF'}, {t:'8:00a', cc:'#F86A5B'}, {t:'9:00a', cc:'#2DD4BF'},
-    {t:'12:30p', cc:'#F4699A'}, {t:'3:30p', cc:'#F4699A'}, {t:'6:00p', cc:'#9A7BFF'},
-    {t:'9:00p', cc:'#5B92F5'}, {t:'11:59p', cc:'#F86A5B'}
+    {t:'6:30a', cc:'#FFB020'}, {t:'8:00a', cc:'#FF6B57'}, {t:'9:00a', cc:'#FFB020'},
+    {t:'12:30p', cc:'#F2568C'}, {t:'3:30p', cc:'#F2568C'}, {t:'6:00p', cc:'#8B7CFF'},
+    {t:'9:00p', cc:'#58A6FF'}, {t:'11:59p', cc:'#FF6B57'}
   ];
   var tickEls=[];
   railStops.forEach(function(s,i){
@@ -782,13 +839,14 @@
   /* ============================================================
      LIVE "TODAY" CARD — real clock + computed "up next"
      ============================================================ */
+  // Must match CATS in app.html — the landing page is a promise the app keeps.
   var SCHEDULE=[
-    {m:9*60,     name:'MATH 231 · Lecture', tag:'Class',     cc:'#2DD4BF'},
-    {m:12*60+30, name:'Offense film',       tag:'Athletics', cc:'#F4699A'},
-    {m:15*60+30, name:'Practice',           tag:'Athletics', cc:'#F4699A'},
-    {m:18*60,    name:'Work shift',         tag:'Work',      cc:'#9A7BFF'},
-    {m:21*60,    name:'Problem Set 4',      tag:'Study',     cc:'#5B92F5'},
-    {m:23*60+59, name:'Problem Set 4 due',  tag:'Due',       cc:'#F86A5B'}
+    {m:9*60,     name:'MATH 231 · Lecture', tag:'Class',     cc:'#8B7CFF'},
+    {m:12*60+30, name:'Offense film',       tag:'Athletics', cc:'#FF6B57'},
+    {m:15*60+30, name:'Practice',           tag:'Athletics', cc:'#FF6B57'},
+    {m:18*60,    name:'Work shift',         tag:'Work',      cc:'#46E0B0'},
+    {m:21*60,    name:'Problem Set 4',      tag:'Study',     cc:'#58A6FF'},
+    {m:23*60+59, name:'Problem Set 4 due',  tag:'Due',       cc:'#FFB020'}
   ];
   function fmt(mins){
     var h=Math.floor(mins/60)%24, mm=mins%60;

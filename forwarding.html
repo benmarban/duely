@@ -4,18 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Forward your school, work, or personal email to your Dayflow address and every date files itself. Step-by-step setup for Gmail, Outlook, Yahoo, and iCloud.">
-<meta name="theme-color" content="#080D1A">
+<meta name="theme-color" content="#0A0912">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..800&family=Schibsted+Grotesk:wght@500..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <title>Link your email — Dayflow</title>
 <style>
   :root{
-    --bg:#080D1A; --bg-2:#0A1122; --panel:#0F1A30; --card:#0E1728; --card-2:#101d33;
-    --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
-    --text:#EDF2FB; --text-dim:#98A7C2; --text-faint:#61708C;
-    --teal:#2DD4BF; --teal-2:#6BEAD9; --teal-soft:rgba(45,212,191,.12); --teal-line:rgba(45,212,191,.34);
-    --rose:#F4699A; --violet:#9A7BFF; --amber:#F2B03C; --red:#F86A5B; --blue:#5B92F5;
+    /* ---- Dusk & Solar. See DESIGN.md. ---- */
+    --bg:#0A0912; --bg-2:#100E1C; --panel:#171528; --card:#14121F; --card-2:#1A1830;
+    --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+    --text:#ECEAF5; --text-dim:#A09CB8; --text-faint:#6B6785;
+    --solar:#FFB020; --solar-2:#FFD27A; --ink:#1B1204;
+    --teal:var(--solar); --teal-2:var(--solar-2); --teal-soft:rgba(255,176,32,.12); --teal-line:rgba(255,176,32,.34);
+    --rose:#F2568C; --violet:#8B7CFF; --amber:#FFB020; --red:#FF6B57; --blue:#58A6FF;
+    --spring:cubic-bezier(.32,.72,0,1);
     --r:18px;
     --font:"Hanken Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
     --font-display:"Schibsted Grotesk","Hanken Grotesk",-apple-system,system-ui,sans-serif;
@@ -28,7 +31,7 @@
   body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.55;overflow-x:hidden}
   a{color:inherit;text-decoration:none}
   button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-  ::selection{background:var(--teal);color:#04141a}
+  ::selection{background:var(--teal);color:#1B1204}
   h1,h2,h3{font-family:var(--font-display);letter-spacing:-.03em;line-height:1.06;text-wrap:balance}
   .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
   .eyebrow{font-family:var(--font-mono);font-size:11.5px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--teal-2)}
@@ -36,23 +39,23 @@
 
   .sky{position:fixed;inset:0;z-index:-1;pointer-events:none;
     background:
-      radial-gradient(120% 70% at 50% -14%, rgba(45,212,191,.13) 0%, transparent 58%),
-      radial-gradient(90% 55% at 84% 4%, rgba(154,123,255,.09) 0%, transparent 60%),
+      radial-gradient(120% 70% at 50% -14%, rgba(255,176,32,.13) 0%, transparent 58%),
+      radial-gradient(90% 55% at 84% 4%, rgba(139,124,255,.09) 0%, transparent 60%),
       linear-gradient(to bottom, var(--bg-2), var(--bg) 42%)}
 
   /* ---- Nav ---- */
   .nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:.3s;border-bottom:1px solid transparent}
-  .nav.scrolled{background:rgba(8,13,26,.78);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom-color:var(--line)}
+  .nav.scrolled{background:rgba(10,9,18,.78);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);border-bottom-color:var(--line)}
   .nav-in{max-width:1140px;margin:0 auto;padding:15px 24px;display:flex;align-items:center;justify-content:space-between;gap:20px}
   .logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:19px;font-weight:800;letter-spacing:-.02em}
-  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#0E9E8E);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
-  .logo .mark svg{width:17px;height:17px;stroke:#04141a;stroke-width:2.7;fill:none}
+  .logo .mark{width:31px;height:31px;border-radius:9px;background:linear-gradient(140deg,var(--teal),#C97A12);display:grid;place-items:center;box-shadow:0 4px 18px -4px var(--teal-line)}
+  .logo .mark svg{width:17px;height:17px;stroke:#1B1204;stroke-width:2.7;fill:none}
   .logo .dot{color:var(--teal)}
   .nav-links{display:flex;align-items:center;gap:30px}
   .nav-links a:not(.btn){font-size:14px;font-weight:500;color:var(--text-dim);transition:.15s}
   .nav-links a:not(.btn):hover{color:var(--text)}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:650;border-radius:12px;transition:transform .16s,background .16s,border-color .16s,box-shadow .16s;white-space:nowrap;line-height:1}
-  .btn-primary{background:var(--teal);color:#04141a;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
+  .btn-primary{background:var(--teal);color:#1B1204;padding:12px 19px;font-size:14.5px;box-shadow:0 8px 26px -10px var(--teal-line)}
   .btn-primary:hover{background:var(--teal-2);transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--teal-line)}
   .btn-primary svg{width:16px;height:16px;stroke:currentColor;stroke-width:2.5;fill:none}
   .btn-ghost{background:rgba(255,255,255,.03);color:var(--text);padding:12px 19px;font-size:14.5px;border:1px solid var(--line-2)}
@@ -68,8 +71,8 @@
 
   /* ---- The address card ---- */
   .addr{margin:38px 0 12px;border:1px solid var(--teal-line);border-radius:var(--r);background:
-      linear-gradient(180deg,rgba(45,212,191,.07),rgba(45,212,191,.02)),var(--card);
-    padding:24px;box-shadow:0 24px 60px -34px rgba(45,212,191,.5)}
+      linear-gradient(180deg,rgba(255,176,32,.07),rgba(255,176,32,.02)),var(--card);
+    padding:24px;box-shadow:0 24px 60px -34px rgba(255,176,32,.5)}
   .addr .lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal-2)}
   .addr-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
   .addr code{font-family:var(--font-mono);font-size:clamp(15px,2.6vw,21px);font-weight:500;color:var(--text);
@@ -126,7 +129,7 @@
   .call.teal{background:var(--teal-soft);border:1px solid var(--teal-line);color:var(--text-dim)}
   .call.teal svg{stroke:var(--teal-2)}
   .call.teal b{color:var(--teal-2)}
-  .call.amber{background:rgba(242,176,60,.1);border:1px solid rgba(242,176,60,.34);color:var(--text-dim)}
+  .call.amber{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.34);color:var(--text-dim)}
   .call.amber svg{stroke:var(--amber)}
   .call.amber b{color:var(--amber)}
 
@@ -155,11 +158,11 @@
 
   /* ---- Closing CTA ---- */
   .cta{text-align:center;border:1px solid var(--line);border-radius:24px;padding:48px 28px;background:
-      radial-gradient(90% 130% at 50% 0%, rgba(45,212,191,.09), transparent 60%),var(--card)}
+      radial-gradient(90% 130% at 50% 0%, rgba(255,176,32,.09), transparent 60%),var(--card)}
   .cta h2{margin-bottom:10px}
   .cta p{color:var(--text-dim);max-width:48ch;margin:0 auto 24px}
 
-  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(8,13,26,.6);margin-top:40px}
+  footer{border-top:1px solid var(--line);padding:44px 0 64px;background:rgba(10,9,18,.6);margin-top:40px}
   .foot-in{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
   .foot-links{display:flex;gap:26px;flex-wrap:wrap}
   .foot-links a{font-size:14px;color:var(--text-dim);transition:.15s}
