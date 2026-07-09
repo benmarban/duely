@@ -135,25 +135,48 @@ async function findUserByEmail(supa: any, from: string): Promise<string | null> 
   return data && data.length ? data[0].user_id : null;
 }
 
+// Each account has its own secret forwarding address, df-<token>@dayflo.org. When a
+// catch-all forwards mail here, we route by that recipient token, not the sender — so
+// it works no matter who the original mail was from, for any email provider, with no
+// Google/OAuth in the loop. The `df-` prefix keeps the legacy inbox@ address (which
+// has no token) falling through to sender routing below.
+function tokenFromAddress(to: string): string {
+  const addr = cleanAddress(to);
+  const m = addr.match(/^([^@]+)@/);
+  const local = m ? m[1] : "";
+  return /^df-[a-z0-9]+$/i.test(local) ? local : "";
+}
+async function findUserByToken(supa: any, token: string): Promise<string | null> {
+  if (!token) return null;
+  const { data, error } = await supa
+    .from("user_state").select("user_id").contains("data", { intake: token }).limit(1);
+  if (error) { console.warn("token lookup failed:", error.message); return null; }
+  return data && data.length ? data[0].user_id : null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
-    const { text, secret, from, verified } = await req.json().catch(() => ({}));
+    const { text, secret, from, to, verified } = await req.json().catch(() => ({}));
     if (secret !== Deno.env.get("INBOUND_SECRET")) return json({ error: "Unauthorized" }, 401);
     if (!text || typeof text !== "string") return json({ error: "No email text" }, 400);
 
-    // Anti-spoofing gate. Off by default (Val.town can't produce a verified signal);
-    // flip INBOUND_REQUIRE_VERIFIED=true once you're behind a forwarder that checks
-    // SPF/DKIM and passes { verified: true }, and forged senders get turned away here.
-    if (Deno.env.get("INBOUND_REQUIRE_VERIFIED") === "true" && verified !== true) {
-      return json({ ignored: true, reason: "sender not verified", from: cleanAddress(from) }, 200);
-    }
-
     const supa = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Route by sender; fall back to the legacy single-account env if unmatched.
-    const userId = (await findUserByEmail(supa, from)) || Deno.env.get("TARGET_USER_ID") || "";
-    if (!userId) return json({ ignored: true, reason: "sender not linked to any account", from: cleanAddress(from) }, 200);
+    // Prefer the per-user forwarding address (df-<token>@dayflo.org): the secret token
+    // in the recipient IS the credential, so it needs no sender check and can't be
+    // spoofed without knowing it. Fall back to sender matching (legacy inbox@) + env.
+    const token = tokenFromAddress(to);
+    let userId = await findUserByToken(supa, token);
+    const routedByToken = !!userId;
+    if (!userId) {
+      // Sender-routed mail is spoofable, so honour the anti-spoofing gate here only.
+      if (Deno.env.get("INBOUND_REQUIRE_VERIFIED") === "true" && verified !== true) {
+        return json({ ignored: true, reason: "sender not verified", from: cleanAddress(from) }, 200);
+      }
+      userId = (await findUserByEmail(supa, from)) || Deno.env.get("TARGET_USER_ID") || "";
+    }
+    if (!userId) return json({ ignored: true, reason: "no matching account", to: cleanAddress(to), from: cleanAddress(from) }, 200);
 
     const { promotional, items: extracted } = await geminiExtract(text.slice(0, MAX_TEXT), from);
     if (promotional) return json({ ignored: true, reason: "promotional", from: cleanAddress(from) }, 200);

@@ -62,10 +62,13 @@ export default {
     }
     if (!text.trim()) return;
 
+    // `to` is the address the mail was forwarded to — a per-user df-<token>@dayflo.org.
+    // email-inbound routes on that token, so any provider's forward lands in the right
+    // account with no sender guessing.
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from, text, secret, verified }),
+      body: JSON.stringify({ from, to: message.to, text, secret, verified }),
     });
     const out = await res.json().catch(() => ({}));
     console.log("email-inbound →", res.status, JSON.stringify(out), "verified=" + verified);

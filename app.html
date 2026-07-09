@@ -647,6 +647,7 @@
     <div class="mpane" id="conn-emails" hidden>
       <p class="pane-hint" style="margin-top:14px">Connect Gmail once and Dayflow reads your important dates automatically — no forwarding, no setup, forever.</p>
       <div id="gmailConnect"></div>
+      <div id="fwdAddress"></div>
       <details class="email-manual"><summary>Or link an inbox manually (forwarding)</summary>
         <p class="pane-hint" style="margin-top:10px">Prefer to forward? Add the addresses you'll forward from — Dayflow files dates from any of them to <b>this</b> account.</p>
         <div id="emailList"></div>
@@ -688,14 +689,14 @@
 
   /* ================= Supabase (cloud accounts + sync) ================= */
   const SB_URL='https://aefmntlnwbmsgeoqqarw.supabase.co',SB_KEY='sb_publishable_kt-AFWXUqRm7vNZeFerpPA_eZzr7RPa';
-  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly',gmailState=null;
+  let sb=null,userId=null,userEmail=null,cloudT=null,canvasFeed='',workConns={},emails=[],schoolFeeds={},curLMS=null,savePending=false,proState=null,proPlan='yearly',gmailState=null,intakeToken='';
   try{if(window.supabase&&window.supabase.createClient)sb=window.supabase.createClient(SB_URL,SB_KEY);}catch(e){sb=null;}
   const hasCloud=!!sb;
   // NB: `pro` is deliberately absent from this payload. Entitlement lives in the
   // user_pro table, which the browser may read and never write — see refetchPro().
   // Putting it back here would hand every customer a free subscription.
   function cloudSave(){if(!sb||!userId)return;savePending=true;clearTimeout(cloudT);cloudT=setTimeout(function(){
-    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed,gmail:gmailState},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
+    try{sb.from('user_state').upsert({user_id:userId,data:{items:items,events:USEREVENTS,canvasFeed:(schoolFeeds.canvas||canvasFeed||''),schoolFeeds:schoolFeeds,workConns:workConns,emails:emails,dismissed:dismissed,gmail:gmailState,intake:intakeToken},updated_at:new Date().toISOString()}).then(function(r){savePending=false;if(r&&r.error)console.warn('cloud save:',r.error.message);},function(){savePending=false;});}catch(e){savePending=false;}
   },600);}
 
   /* ---- Pro entitlement (read-only to this client) ---- */
@@ -1255,8 +1256,26 @@
     if(btn){btn.disabled=false;btn.textContent='Connect';}
   }
   (function(){var g=document.getElementById('gmailConnect');if(g)g.addEventListener('click',function(e){if(e.target.closest('#gmailBtn'))connectGmail();});})();
+
+  /* ---- personal forwarding address (works with any email, no Google) ---- */
+  function genToken(){var c='abcdefghijklmnopqrstuvwxyz0123456789',s='',a;try{a=new Uint8Array(12);crypto.getRandomValues(a);}catch(e){a=null;}for(var i=0;i<12;i++)s+=c[(a?a[i]:Math.floor(Math.random()*256))%36];return 'df-'+s;}
+  function ensureIntake(){if(!intakeToken){intakeToken=genToken();cloudSave();}renderIntake();}
+  function intakeAddr(){return intakeToken?intakeToken+'@dayflo.org':'';}
+  function renderIntake(){
+    var box=document.getElementById('fwdAddress');if(!box)return;
+    var addr=intakeAddr();
+    if(!addr){box.innerHTML='';return;}
+    box.innerHTML='<div class="gmail-card"><span class="gc-ic" style="color:var(--teal-2)">@</span>'+
+      '<div class="gc-t"><b>Your forwarding address</b><span>'+esc(addr)+'</span></div>'+
+      '<button class="btn sec" id="copyFwd" style="width:auto;padding:8px 13px;margin:0;flex-shrink:0">Copy</button></div>'+
+      '<details class="email-manual"><summary>Forward from any email (Outlook, school, anything)</summary>'+
+      '<p class="pane-hint" style="margin-top:10px">In your email\'s settings, add <b>'+esc(addr)+'</b> as a forwarding address (in Gmail: Settings → Forwarding and POP/IMAP → Add a forwarding address). Anything you forward there, Dayflow reads the dates from — automatically, forever.</p></details>';
+  }
+  (function(){var f=document.getElementById('fwdAddress');if(f)f.addEventListener('click',function(e){
+    if(e.target.closest('#copyFwd')){var a=intakeAddr();if(a){try{navigator.clipboard.writeText(a);}catch(_){}toast('Address copied ✓');}}
+  });})();
   function renderEmails(){
-    normalizeEmails();renderGmail();
+    normalizeEmails();renderGmail();renderIntake();
     var st=document.getElementById('emailStatus');if(st)st.textContent=emails.length+' linked';
     var box=document.getElementById('emailList');if(!box)return;
     box.innerHTML=emails.map(function(e){
@@ -1497,7 +1516,7 @@
 
   /* ================= live auto-update (realtime + polling + feed re-pull) ================= */
   // Pro is not part of this snapshot: it comes from user_pro, not user_state.data.
-  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,dismissed,gmailState]);}
+  function snapshotState(){return JSON.stringify([items,USEREVENTS,schoolFeeds,workConns,emails,dismissed,gmailState,intakeToken]);}
   function applyCloud(d){
     if(!d)return false;
     var nextItems=Array.isArray(d.items)?d.items.filter(function(it){return it&&!FAKE_IDS.has(it.id);}):items;
@@ -1507,15 +1526,16 @@
     var nextEmails=Array.isArray(d.emails)?d.emails:emails;
     var nextDismissed=Array.isArray(d.dismissed)?d.dismissed:dismissed;
     var nextGmail=('gmail' in d)?d.gmail:gmailState; // the callback writes this server-side
+    var nextIntake=(typeof d.intake==='string')?d.intake:intakeToken;
     // Another device may have deleted a row we still hold. Honour its tombstones
     // before we compare, or this device re-renders the row and syncs it back.
     nextItems=nextItems.filter(function(it){return nextDismissed.indexOf(it.id)<0;});
     nextEvents=nextEvents.filter(function(u){return nextDismissed.indexOf(u.id)<0;});
-    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextDismissed,nextGmail]);
+    var incoming=JSON.stringify([nextItems,nextEvents,nextSchool,nextWork,nextEmails,nextDismissed,nextGmail,nextIntake]);
     if(incoming===snapshotState())return false; // unchanged (also swallows echoes of our own saves)
     var wasGmail=gmailState&&gmailState.connected;
     var before=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
-    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;dismissed=nextDismissed;gmailState=nextGmail;
+    items=nextItems;USEREVENTS=nextEvents;schoolFeeds=nextSchool;workConns=nextWork;emails=nextEmails;dismissed=nextDismissed;gmailState=nextGmail;intakeToken=nextIntake;
     updateBadge();refreshSub();renderLMS();renderProviders();renderEmails();rerender();
     if(!wasGmail&&gmailState&&gmailState.connected)toast('Gmail connected ✓');
     var after=items.filter(function(i){return !i.done;}).length+USEREVENTS.length;
@@ -1763,6 +1783,7 @@
           if(Array.isArray(d.emails))emails=d.emails;
           if(Array.isArray(d.dismissed))dismissed=d.dismissed;
           if(d.gmail&&typeof d.gmail==='object')gmailState=d.gmail;
+          if(typeof d.intake==='string')intakeToken=d.intake;
           // A feed sync on another device can re-add a row this device deleted.
           items=items.filter(function(it){return !isDismissed(it.id);});
           USEREVENTS=USEREVENTS.filter(function(u){return !isDismissed(u.id);});
@@ -1772,6 +1793,7 @@
         await refetchPro(true); // separate table, separate read
       }catch(err){console.warn('auth/load failed:',err);}
     }
+    ensureIntake(); // every account gets its own forwarding address, made on first load
     renderExamples();renderSugg();renderProviders();renderEmails();renderLMS();renderProStatus();updateBadge();refreshSub();
     // Stripe bounces the user back here the moment checkout completes, which can beat
     // the webhook. Poll a few times before falling back to the 90s refresh.
