@@ -379,6 +379,50 @@
      to acknowledge a tap is the single cheapest way to feel dead. */
   .btn:active{transform:scale(.97);transition:transform 100ms ease-out}
 
+  /* ============================================================
+     MOTION SYSTEM — four techniques, each doing one job.
+     All of them degrade to nothing under prefers-reduced-motion.
+     ============================================================ */
+
+  /* 1 · Word-mask headline reveal.
+     Each word rides up out of a clipping box on a stagger. The mask is what sells
+     it; text sliding in without one just looks like it moved. Padding plus a
+     negative margin keeps descenders (the y in "day") from being sheared off. */
+  .hero-h .w{display:inline-block;overflow:hidden;vertical-align:top;
+    padding-bottom:.14em;margin-bottom:-.14em}
+  .hero-h .wi{display:inline-block;transform:translateY(110%);
+    transition:transform .9s var(--spring)}
+  .hero-h.lit .wi{transform:none}
+
+  /* 2 · Cursor spotlight on cards.
+     A radial highlight tracks the pointer inside the card. JS writes --mx/--my on
+     pointermove and the gradient reads them, so no layout ever runs. */
+  .feat,.step{position:relative}
+  .feat::before,.step::before{content:"";position:absolute;inset:0;border-radius:inherit;
+    pointer-events:none;opacity:0;transition:opacity .35s var(--spring);
+    background:radial-gradient(340px circle at var(--mx,50%) var(--my,50%),
+      rgba(255,176,32,.10),transparent 45%)}
+  .feat:hover::before,.step:hover::before{opacity:1}
+
+  /* 3 · Magnetic buttons.
+     The label leans toward the cursor as it approaches, then springs home. Travel
+     is capped at 6px; past that it reads as a bug rather than a response. */
+  .btn.mag{will-change:transform}
+  .btn.mag.home{transition:transform .5s var(--spring-bounce)}
+
+  /* 4 · Pointer tilt on the today card. Four degrees maximum. Perspective lives on
+     the parent so the card rotates in the page's space, not its own. */
+  .hero-grid{perspective:1200px}
+  .today{transform-style:preserve-3d;will-change:transform}
+  .today.home{transition:transform .6s var(--spring)}
+
+  @media (prefers-reduced-motion:reduce){
+    .hero-h .wi{transform:none;transition:none}
+    .hero-h .w{overflow:visible}
+    .feat::before,.step::before{display:none}
+    .btn.mag,.today{transform:none !important}
+  }
+
   /* ---- Responsive ---- */
   @media (max-width:900px){
     .nav-links{position:fixed;inset:64px 12px auto 12px;flex-direction:column;align-items:stretch;gap:6px;
@@ -439,7 +483,7 @@
     <div class="hero-copy">
       <span class="kicker"><span class="spark"></span> One timeline · class to curfew</span>
       <h1 class="hero-h">Your whole day, in the order it <span class="grad">actually happens.</span></h1>
-      <p class="hero-sub">Class, practice, film, your work shift, every deadline — Dayflow merges your entire schedule into one living timeline, so you always know what's next without checking five apps.</p>
+      <p class="hero-sub">Dayflow pulls your classes, practices, shifts, and deadlines onto one timeline. You open one app instead of five, and the next thing you owe someone sits at the top.</p>
       <div class="hero-cta">
         <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
         <a class="btn btn-ghost" href="#how">See how it works</a>
@@ -477,7 +521,7 @@
     <div class="scramble">
       <div class="scramble-copy reveal">
         <h3>Five apps before you've even had coffee.</h3>
-        <p>Canvas for assignments. Email for the coach who moved film to 6am. A group chat for the practice change. A notes app for your work shifts. You stitch it together in your head every morning — and still get blindsided.</p>
+        <p>Your assignments live in Canvas. Your coach moved film to 6am over email, the practice change came through a group chat, and your work shifts sit in a notes app. You rebuild the schedule in your head before breakfast, and something still slips.</p>
         <p style="color:var(--text)">Dayflow does the stitching for you.</p>
       </div>
       <div class="apps reveal">
@@ -500,7 +544,7 @@
     </div>
     <div class="sec-head reveal" style="margin-bottom:34px">
       <h2>One screen for the whole day.</h2>
-      <p>Everything — merged, color-coded by type, and sorted by what's happening next. A live "Now" line shows exactly where you are in the day.</p>
+      <p>One timeline, colored by what kind of thing it is, ordered by what happens next. A live Now line marks where you are in the day.</p>
     </div>
     <div class="browser reveal">
       <div class="bbar"><span class="bdot r"></span><span class="bdot y"></span><span class="bdot g"></span><span class="burl">dayflow.app / today</span></div>
@@ -548,26 +592,26 @@
     </div>
     <div class="sec-head reveal">
       <h2>From scattered to sorted in three steps.</h2>
-      <p>Connect once — then Dayflow keeps itself current. Practice, film, and game days sit right alongside your classes and deadlines.</p>
+      <p>Connect your accounts once and Dayflow keeps the timeline current. Practice, film, and game days sit beside your classes and deadlines.</p>
     </div>
     <div class="steps">
       <div class="step reveal">
         <div class="num">STEP 01</div>
         <div class="sic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 12h6M12 9v6"/></svg></div>
         <h3>Connect everything</h3>
-        <p>Link Canvas, your email, and your team and work calendars. A couple of taps — nothing to configure.</p>
+        <p>Link Canvas, your email, and your team calendar. Two taps, nothing to configure.</p>
       </div>
       <div class="step reveal" style="transition-delay:.1s">
         <div class="num">STEP 02</div>
         <div class="sic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></div>
         <h3>Dayflow gathers your day</h3>
-        <p>It pulls assignments, practice and film times, game days, work shifts, and dates hiding in your email — all into one place.</p>
+        <p>Dayflow pulls your assignments, practice and film times, game days, work shifts, and the dates buried in your email into one place.</p>
       </div>
       <div class="step reveal" style="transition-delay:.2s">
         <div class="num">STEP 03</div>
         <div class="sic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h6"/></svg></div>
         <h3>See what's next</h3>
-        <p>Everything you've got going on, on one timeline, sorted by what's happening next — with a live "Now" line.</p>
+        <p>Your whole day on one timeline, ordered by what happens next, with a live Now line.</p>
       </div>
     </div>
   </div>
@@ -585,7 +629,7 @@
       <div class="ps-copy reveal">
         <span class="eyebrow">For every kind of student</span>
         <h3>Athlete, worker, or just over-committed — Dayflow keeps up.</h3>
-        <p>It doesn't matter how packed your week is. Everything you're balancing lands in one place, sorted by what's next — so you can stop running the schedule in your head and just show up.</p>
+        <p>Pack the week as full as you want. Everything you are balancing lands in one place, ordered by what comes next, so you can stop running the schedule in your head and show up.</p>
         <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
       </div>
       <div class="ps-img reveal">
@@ -606,7 +650,7 @@
       <span class="rule" style="background:linear-gradient(to right,rgba(255,255,255,.3),transparent)"></span>
     </div>
     <h2 class="reveal">The most on-top-of-it person <span class="accent">on campus?</span> That's you now.</h2>
-    <p class="reveal">Class wrapped, practice done, and you're clocking in — with tonight's deadlines already in view. Dayflow keeps the whole day in front of you so nothing slips after dark.</p>
+    <p class="reveal">Class wrapped, practice done, and you are clocking in with tonight's deadlines already in view. Dayflow holds the whole day in front of you so nothing slips after dark.</p>
   </div>
   <span class="credit">golden hour · your campus</span>
 </section>
@@ -621,14 +665,14 @@
     </div>
     <div class="sec-head reveal">
       <h2>Everything you juggle, in one command center.</h2>
-      <p>Six things doing the work of five apps — quietly, in the background.</p>
+      <p>Six features that replace five apps, running in the background.</p>
     </div>
     <div class="feat-grid">
       <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg></div><h3>Your whole day, one timeline</h3><p>Classes, practice, film, work shifts, and deadlines merged into a single schedule, in order.</p></div>
-      <div class="feat reveal" style="transition-delay:.05s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--rose)"><path d="M6 9l6-5 6 5"/><path d="M6 9v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/><path d="M10 22v-6h4v6"/></svg></div><h3>Athletics built in</h3><p>Practice, film sessions, workouts, and game days — with reminders so you're never late.</p></div>
-      <div class="feat reveal" style="transition-delay:.1s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--violet)"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Work shifts</h3><p>Know exactly when you're on the clock. Add shifts or sync them from your scheduling app.</p></div>
-      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--amber)"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg></div><h3>Smart email reading</h3><p>Paste or sync an email and Dayflow pulls the date out — "film moved to 6am" just works.</p></div>
-      <div class="feat reveal" style="transition-delay:.05s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Deadlines &amp; grades</h3><p>Canvas assignments and your grades, so school never slips through the cracks.</p></div>
+      <div class="feat reveal" style="transition-delay:.05s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--rose)"><path d="M6 9l6-5 6 5"/><path d="M6 9v7a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9"/><path d="M10 22v-6h4v6"/></svg></div><h3>Athletics built in</h3><p>Practice, film sessions, workouts, and game days, with reminders that reach you before you are late.</p></div>
+      <div class="feat reveal" style="transition-delay:.1s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--violet)"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div><h3>Work shifts</h3><p>Know when you are on the clock. Add shifts by hand or sync them from your scheduling app.</p></div>
+      <div class="feat reveal"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--amber)"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 7l9 6 9-6"/></svg></div><h3>Smart email reading</h3><p>Paste or sync an email and Dayflow finds the date inside it. "Film moved to 6am" lands on your timeline.</p></div>
+      <div class="feat reveal" style="transition-delay:.05s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div><h3>Deadlines &amp; grades</h3><p>Canvas assignments and your grades, so school stops slipping through the cracks.</p></div>
       <div class="feat reveal" style="transition-delay:.1s"><div class="fic"><svg viewBox="0 0 24 24" stroke="var(--teal-2)"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div><h3>Works on your phone</h3><p>Add it to your home screen and it opens fullscreen, like a native app.</p></div>
     </div>
   </div>
@@ -645,14 +689,14 @@
     <div class="midnight reveal" style="margin-bottom:56px">
       <span class="eyebrow">Class at 9 · film at noon · shift at 6 · three assignments due</span>
       <h2>A day that used to blindside you, <span class="accent">handled.</span></h2>
-      <p>Every part of your day on one screen, sorted by what's next — so 11:59 PM never sneaks up again.</p>
+      <p>Your whole day on one screen, ordered by what comes next. 11:59 PM stops sneaking up on you.</p>
     </div>
     <div class="sec-head center reveal"><span class="eyebrow">FAQ</span><h2>Good questions.</h2></div>
     <div class="faq">
-      <div class="qa reveal"><button class="qa-q">Is this just for athletes, or just for school?<span class="plus"></span></button><div class="qa-a"><p>Neither — it's for your whole life. Dayflow started with classes and deadlines, but it handles anything on your schedule: practice, film, games, work shifts, club meetings, appointments. If it's part of your day, it goes in Dayflow.</p></div></div>
-      <div class="qa reveal"><button class="qa-q">Which schools does it work with?<span class="plus"></span></button><div class="qa-a"><p>Any school that uses Canvas — which is most of them. Dayflow connects through your personal Canvas calendar feed, so it works no matter which campus you're on.</p></div></div>
-      <div class="qa reveal"><button class="qa-q">Do I have to enter everything by hand?<span class="plus"></span></button><div class="qa-a"><p>No. Dayflow pulls classes and deadlines from Canvas and dates from your email automatically. You can add one-off things — a practice change, a shift, an appointment — in a couple of taps.</p></div></div>
-      <div class="qa reveal"><button class="qa-q">Is it free?<span class="plus"></span></button><div class="qa-a"><p>Yes, it's free to start. Dayflow is an early-stage product built by students, for students — you can use the core dashboard at no cost.</p></div></div>
+      <div class="qa reveal"><button class="qa-q">Is this just for athletes, or just for school?<span class="plus"></span></button><div class="qa-a"><p>Both, and the rest of your life too. Dayflow started with classes and deadlines, then grew to handle practice, film, games, work shifts, club meetings, and appointments. If it takes up part of your day, it belongs on the timeline.</p></div></div>
+      <div class="qa reveal"><button class="qa-q">Which schools does it work with?<span class="plus"></span></button><div class="qa-a"><p>Any school running Canvas, which covers most of them. Dayflow connects through your personal Canvas calendar feed, so your campus does not matter.</p></div></div>
+      <div class="qa reveal"><button class="qa-q">Do I have to enter everything by hand?<span class="plus"></span></button><div class="qa-a"><p>No. Dayflow pulls your classes and deadlines out of Canvas and reads the dates in your email. Adding a one-off practice change or a shift takes two taps.</p></div></div>
+      <div class="qa reveal"><button class="qa-q">Is it free?<span class="plus"></span></button><div class="qa-a"><p>Yes, free to start. Students built Dayflow for students, and the core dashboard costs nothing.</p></div></div>
     </div>
   </div>
 </section>
@@ -664,7 +708,7 @@
     <div class="reveal">
       <span class="eyebrow" style="color:var(--teal-2)">Tomorrow · 6:30 AM</span>
       <h2>Walk into every day <span class="grad">already knowing the plan.</span></h2>
-      <p>No more scrambling the night before or hearing about a change too late. Dayflow reads it, files it, and keeps it in front of you — automatically.</p>
+      <p>You stop scrambling the night before, and you hear about the change when it happens. Dayflow reads your email, files the date, and keeps it in front of you.</p>
       <a class="btn btn-primary" href="login.html"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Open the app</a>
     </div>
   </div>
@@ -903,6 +947,119 @@
 
   // initial paint
   onScroll();
+})();
+</script>
+
+<script>
+/* ============================================================
+   MOTION — word reveal, spotlight, magnetic buttons, card tilt.
+   Everything here is a no-op when the user asks for reduced motion.
+   ============================================================ */
+(function(){
+  "use strict";
+  var mq = window.matchMedia && window.matchMedia('(prefers-reduced-motion:reduce)');
+  if (mq && mq.matches) return;
+
+  /* ---- 1 · Word-mask headline reveal ----
+     Split only the h1's own text nodes. A child element (the gradient span) is
+     wrapped whole: splitting inside it would restart the gradient on every word. */
+  function splitWords(h){
+    var out = document.createDocumentFragment(), i = 0;
+    [].slice.call(h.childNodes).forEach(function(node){
+      if (node.nodeType === 3){
+        node.nodeValue.split(/(\s+)/).forEach(function(tok){
+          if (!tok.trim()){ if (tok) out.appendChild(document.createTextNode(' ')); return; }
+          out.appendChild(wrap(document.createTextNode(tok), i++));
+        });
+      } else {
+        out.appendChild(wrap(node.cloneNode(true), i++));
+      }
+    });
+    h.innerHTML = '';
+    h.appendChild(out);
+    return i;
+  }
+  function wrap(child, i){
+    var w = document.createElement('span'), inner = document.createElement('span');
+    w.className = 'w'; inner.className = 'wi';
+    inner.style.transitionDelay = (i * 0.045) + 's';
+    inner.appendChild(child); w.appendChild(inner);
+    return w;
+  }
+  var h1 = document.querySelector('.hero-h');
+  if (h1){
+    splitWords(h1);
+    // Two frames: one for the split to land in layout, one for the transition to
+    // have a "from" value to animate out of. A single rAF drops the animation.
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ h1.classList.add('lit'); }); });
+  }
+
+  /* ---- 2 · Cursor spotlight ----
+     Write percentages into custom properties. The gradient reads them; nothing
+     reflows. Coordinates come off the event, not getBoundingClientRect per move. */
+  document.querySelectorAll('.feat,.step').forEach(function(card){
+    card.addEventListener('pointermove', function(e){
+      var r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100) + '%');
+      card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%');
+    });
+  });
+
+  /* ---- 3 · Magnetic buttons ----
+     Pull the button toward the cursor while it's inside a padded hit area, then
+     let it spring home. 6px of travel; more than that reads as broken. */
+  var PULL = 0.28, MAX = 6;
+  document.querySelectorAll('.hero-cta .btn, .final .btn').forEach(function(btn){
+    btn.classList.add('mag','home');
+    btn.addEventListener('pointermove', function(e){
+      if (e.pointerType === 'touch') return;
+      var r = btn.getBoundingClientRect();
+      var dx = (e.clientX - (r.left + r.width/2)) * PULL;
+      var dy = (e.clientY - (r.top + r.height/2)) * PULL;
+      dx = Math.max(-MAX, Math.min(MAX, dx));
+      dy = Math.max(-MAX, Math.min(MAX, dy));
+      btn.classList.remove('home');           // follow the finger 1:1, no easing
+      btn.style.transform = 'translate(' + dx.toFixed(2) + 'px,' + dy.toFixed(2) + 'px)';
+    });
+    btn.addEventListener('pointerleave', function(){
+      btn.classList.add('home');              // bounce back — momentum earned it
+      btn.style.transform = '';
+    });
+  });
+
+  /* ---- 4 · Pointer tilt on the today card ----
+     Track the pointer across the hero, not just the card, so the tilt starts
+     before the cursor arrives. Reversing mid-motion never jumps because the
+     transform is written from the live pointer position every frame. */
+  var card = document.getElementById('todayCard'),
+      hero = document.querySelector('.hero-grid');
+  if (card && hero && window.matchMedia('(pointer:fine)').matches){
+    var TILT = 4, raf = 0, px = 0, py = 0;
+    hero.addEventListener('pointermove', function(e){
+      var r = card.getBoundingClientRect();
+      px = (e.clientX - (r.left + r.width/2)) / r.width;
+      py = (e.clientY - (r.top + r.height/2)) / r.height;
+      if (!raf) raf = requestAnimationFrame(paint);
+    });
+    hero.addEventListener('pointerleave', function(){
+      card.classList.add('home'); card.style.transform = '';
+    });
+    function paint(){
+      raf = 0;
+      card.classList.remove('home');
+      var rx = Math.max(-TILT, Math.min(TILT, -py * TILT * 2));
+      var ry = Math.max(-TILT, Math.min(TILT,  px * TILT * 2));
+      card.style.transform = 'rotateX(' + rx.toFixed(2) + 'deg) rotateY(' + ry.toFixed(2) + 'deg)';
+    }
+  }
+
+  /* ---- Stagger the existing reveals by their position in a row ----
+     Siblings that arrive together look like a wall. 45ms apart looks intentional. */
+  document.querySelectorAll('.feat-grid,.steps,.faq-list').forEach(function(row){
+    [].slice.call(row.querySelectorAll('.reveal')).forEach(function(el, i){
+      el.style.transitionDelay = (i * 0.045) + 's';
+    });
+  });
 })();
 </script>
 </body>
